@@ -1,0 +1,48 @@
+name: Lastys
+options:
+  bundleIdPrefix: com.lastys
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+targets:
+  Lastys:
+    type: application
+    platform: iOS
+    sources:
+      - path: Lastys
+    info:
+      path: Lastys/Info.plist
+      properties:
+        CFBundleDisplayName: Lastys
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIAppFonts:
+          - PlusJakartaSans.ttf
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Light
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lastys.app
+        PRODUCT_NAME: Lastys
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.0"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_STYLE: Automatic
+
+schemes:
+  Lastys:
+    build:
+      targets:
+        Lastys: all
+    run:
+      config: Debug
+    archive:
+      config: Release
