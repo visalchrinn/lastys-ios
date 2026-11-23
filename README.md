@@ -25,4 +25,6 @@ Requires Xcode 15 or later. Deployment target is iOS 16.
 
 Every push to `main` runs the **Build IPA** GitHub Actions workflow on a macOS runner. It builds an **unsigned** `Lastys.ipa` and attaches it to a GitHub Release (`build-<run number>`), plus a workflow artifact.
 
+The same build is also defined for [Codemagic](https://codemagic.io) in `codemagic.yaml` (workflow **Lastys unsigned IPA**). Connect the repo in Codemagic, start the workflow, and download `Lastys.ipa` from the build's Artifacts.
+
 An unsigned IPA must be signed before it can be installed on an iPhone, for example with Sideloadly or AltStore (free Apple ID), or by re-signing with your Apple Developer certificate.

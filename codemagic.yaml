@@ -1,0 +1,40 @@
+workflows:
+  ios-unsigned-ipa:
+    name: Lastys unsigned IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      xcode: latest
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+      - name: Generate Xcode project
+        script: xcodegen generate
+      - name: Build (unsigned, device)
+        script: |
+          set -o pipefail
+          xcodebuild \
+            -project Lastys.xcodeproj \
+            -scheme Lastys \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+      - name: Package IPA
+        script: |
+          rm -rf Payload && mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/Lastys.app Payload/
+          zip -qry Lastys.ipa Payload
+          ls -la Lastys.ipa
+    artifacts:
+      - Lastys.ipa
