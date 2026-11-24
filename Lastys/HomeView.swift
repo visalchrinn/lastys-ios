@@ -19,7 +19,9 @@ struct HomeView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
                 header
-                statusCard
+                if model.showsStatusCard {
+                    statusCard
+                }
                 if let request = model.outgoingRequest, request.status == .pending {
                     waitingCard(for: request)
                 }
@@ -61,6 +63,21 @@ struct HomeView: View {
                     .foregroundStyle(Theme.muted)
             }
             Spacer()
+            if model.canUseQuickHide {
+                Button {
+                    model.setQuickHide(!model.isQuickHideOn)
+                } label: {
+                    Image(systemName: model.isQuickHideOn ? "eye.slash" : "eye")
+                        .font(.system(size: 18, weight: .semibold))
+                        // The same quiet look either way, so it never draws an onlooker's eye.
+                        .foregroundStyle(Theme.muted)
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(PressableStyle())
+                .accessibilityLabel(Text("Quick hide"))
+                .accessibilityValue(Text(model.isQuickHideOn ? "On" : "Off"))
+                .accessibilityHint(Text("Hides your status and Shared Moments on this screen. Scans of you still show the truth."))
+            }
             Button(action: openMe) {
                 Text(String(model.nickname.prefix(1)).uppercased())
                     .font(.jakarta(16, .heavy))

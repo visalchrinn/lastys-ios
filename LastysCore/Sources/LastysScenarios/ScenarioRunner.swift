@@ -103,6 +103,9 @@ private final class Run: @unchecked Sendable {
         case "report-safety-concern":
             try await client.reportSafetyConcern()
             return [:]
+        case "turn-on-quick-hide", "turn-off-quick-hide":
+            // Quick hide lives on the phone only: it never reaches Trustee, so it can never change a Scan.
+            return [:]
         case "wait":
             let minutes = Double(step.arguments["minutes"] ?? "0") ?? 0
             let days = Double(step.arguments["days"] ?? "0") ?? 0

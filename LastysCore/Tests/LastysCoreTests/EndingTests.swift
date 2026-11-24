@@ -10,12 +10,7 @@ struct EndingTests {
         await dara.onboard(as: "Dara")
         let me = TestPhone(nearby: dara)
         await me.onboard()
-        await me.model.scan(try #require(dara.model.myLastysQR(at: Date())).payload)
-        await me.model.sendRelationshipRequest()
-        let request = try #require(me.model.outgoingRequest)
-        try await dara.trustee.client(forPhone: dara.key.trusteeID).respondToRelationshipRequest(id: request.id, accept: true)
-        await me.model.start()
-        await dara.model.start()
+        try await me.becomePartners(with: dara)
         return (dara, me)
     }
 

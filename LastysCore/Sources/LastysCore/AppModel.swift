@@ -395,19 +395,41 @@ public final class AppModel {
         screen = .home
     }
 
+    // MARK: Quick hide
+
+    /// Quick hide keeps the status card and Shared Moments off this phone's screen, for when someone
+    /// may be looking at it. It never reaches Trustee, so a Scan of this Lastys ID still shows the truth.
+    public var isQuickHideOn: Bool { phone.isQuickHideOn }
+
+    /// Offered to everyone once onboarded, Single or Taken: if only Taken people had it, its presence
+    /// on screen would give their status away.
+    public var canUseQuickHide: Bool { phone.hasFinishedOnboarding }
+
+    public var showsStatusCard: Bool { !isQuickHideOn }
+
+    public func setQuickHide(_ on: Bool) {
+        guard canUseQuickHide else { return }
+        phone.isQuickHideOn = on
+    }
+
     // MARK: Moments
 
     /// The start of today on this phone.
     private var today: Date { calendar.startOfDay(for: now()) }
 
+    /// The Moments this screen may show: Quick hide leaves out Shared Moments.
+    private var visibleMoments: [Moment] {
+        isQuickHideOn ? moments.filter { !$0.isShared } : moments
+    }
+
     /// The next three Moments from today, soonest first.
     public var upcomingMoments: [Moment] {
-        Array(moments.filter(isUpcoming).sorted { $0.date < $1.date }.prefix(3))
+        Array(visibleMoments.filter(isUpcoming).sorted { $0.date < $1.date }.prefix(3))
     }
 
     /// Every Moment, newest first.
     public var timeline: [Moment] {
-        moments.sorted { $0.date > $1.date }
+        visibleMoments.sorted { $0.date > $1.date }
     }
 
     public func isUpcoming(_ moment: Moment) -> Bool {

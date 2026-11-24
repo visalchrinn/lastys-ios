@@ -32,6 +32,18 @@ struct RelationshipView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     RelationshipStageCard(status: model.relationship)
 
+                    Toggle(isOn: Binding(get: { model.isQuickHideOn }, set: { model.setQuickHide($0) })) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Quick hide")
+                                .font(.jakarta(15, .bold))
+                            Text("Hides your status card and Shared Moments on this phone's screen. Anyone who Scans you still sees Taken.")
+                                .font(.jakarta(13))
+                                .foregroundStyle(Theme.muted)
+                        }
+                    }
+                    .tint(Theme.rose)
+                    .card()
+
                     ForEach(model.endingActions, id: \.self) { action in
                         Button(action.title) {
                             if action.needsConfirmation {
@@ -61,6 +73,10 @@ struct RelationshipView: View {
         .foregroundStyle(Theme.ink)
         .background(Theme.background.ignoresSafeArea())
         .onAppear { model.clearEndingProblem() }
+        // Quick hide means nothing about the Relationship stays on screen, this sheet included.
+        .onChange(of: model.isQuickHideOn) { _, hidden in
+            if hidden { dismiss() }
+        }
         // Once the Relationship has ended (or never was), Home shows the Cooling-off period instead.
         .onChange(of: model.partnerNickname.isEmpty) { _, ended in
             if ended { dismiss() }

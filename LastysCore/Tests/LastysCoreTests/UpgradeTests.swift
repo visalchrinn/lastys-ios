@@ -18,6 +18,7 @@ struct UpgradeTests {
         #expect(phone.model.lastysID == LastysID(personalID: "LT-8K2F-91QA"))
         #expect(phone.model.nickname == "Srey Pich")
         #expect(phone.model.shareLevel == .statusOnly)
+        #expect(!phone.model.isQuickHideOn)
     }
 
     @Test func trusteeSavedByAnEarlierBuildKeepsTheLastysIDAndNickname() async throws {

@@ -17,7 +17,8 @@ final class TestPhone {
     private var recorder: RecordingTrustee
 
     /// Where the app keeps this phone's own state.
-    var phoneFile: URL { folder.appendingPathComponent("phone.json") }
+    var phoneFile: URL { folder.appendingPathComponent(Self.phoneFileName) }
+    private static let phoneFileName = "phone.json"
     /// Every request that has crossed into Trustee since the last launch, arguments included.
     var trusteeRequests: [String] { recorder.requests }
     /// Whether the phone has internet.
@@ -26,22 +27,39 @@ final class TestPhone {
         set { connectivity.isOnline = newValue }
     }
 
-    init(nearby other: TestPhone? = nil) {
+    /// The Moments this phone keeps; Moments get their own store in a later slice.
+    private let moments: [Moment]
+
+    init(nearby other: TestPhone? = nil, moments: [Moment] = []) {
         folder = FileManager.default.temporaryDirectory.appendingPathComponent("lastys-tests-\(UUID().uuidString)")
         try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let clock = other?.clock ?? TestClock()
         self.clock = clock
+        self.moments = moments
         trustee = other?.trustee ?? FakeTrustee(savingTo: folder.appendingPathComponent("trustee.json"), now: { clock.now })
-        let launched = Self.launch(folder: folder, key: key, trustee: trustee, connectivity: connectivity, clock: clock)
-        model = launched.0
-        recorder = launched.1
+        (model, recorder) = Self.open(
+            key: key, trustee: trustee, phoneFile: folder.appendingPathComponent(Self.phoneFileName),
+            connectivity: connectivity, moments: moments, clock: clock
+        )
     }
 
     /// Quits the app and opens it again with whatever this phone saved.
     func relaunch() {
-        let launched = Self.launch(folder: folder, key: key, trustee: trustee, connectivity: connectivity, clock: clock)
-        model = launched.0
-        recorder = launched.1
+        (model, recorder) = Self.open(
+            key: key, trustee: trustee, phoneFile: phoneFile, connectivity: connectivity, moments: moments, clock: clock
+        )
+    }
+
+    /// Opens the app on this phone: what a launch builds from what the phone saved.
+    private static func open(
+        key: PhoneKey, trustee: FakeTrustee, phoneFile: URL, connectivity: Connectivity, moments: [Moment], clock: TestClock
+    ) -> (AppModel, RecordingTrustee) {
+        let recorder = RecordingTrustee(trustee.client(forPhone: key.trusteeID))
+        let model = AppModel(
+            phoneKey: key, trustee: recorder, store: FilePhoneStore(url: phoneFile),
+            connectivity: connectivity, moments: moments, now: { clock.now }
+        )
+        return (model, recorder)
     }
 
     /// Trustee already holds a Lastys ID for this phone's key, which the app itself doesn't know about.
@@ -58,6 +76,17 @@ final class TestPhone {
         await model.continueFromConsent()
     }
 
+    /// Scans `other`, sends them a Relationship request, and has them accept it, so the two become Partners.
+    func becomePartners(with other: TestPhone) async throws {
+        guard let qr = other.model.myLastysQR(at: clock.now) else { throw TestPhoneError.notOnboarded }
+        await model.scan(qr.payload)
+        await model.sendRelationshipRequest()
+        guard let request = model.outgoingRequest else { throw TestPhoneError.requestNotSent }
+        try await other.trustee.client(forPhone: other.key.trusteeID).respondToRelationshipRequest(id: request.id, accept: true)
+        await model.start()
+        await other.model.start()
+    }
+
     /// Goes through all of onboarding to Home.
     func onboard(as nickname: String = "Srey Pich") async {
         await createLastysID()
@@ -68,19 +97,6 @@ final class TestPhone {
         await model.finishProfile()
     }
 
-    private static func launch(
-        folder: URL, key: PhoneKey, trustee: FakeTrustee, connectivity: Connectivity, clock: TestClock
-    ) -> (AppModel, RecordingTrustee) {
-        let recorder = RecordingTrustee(trustee.client(forPhone: key.trusteeID))
-        let model = AppModel(
-            phoneKey: key,
-            trustee: recorder,
-            store: FilePhoneStore(url: folder.appendingPathComponent("phone.json")),
-            connectivity: connectivity,
-            now: { clock.now }
-        )
-        return (model, recorder)
-    }
 }
 
 final class SwitchableConnectivity: Connectivity, @unchecked Sendable {
@@ -103,4 +119,9 @@ final class TestClock: @unchecked Sendable {
     func advance(days: Double) {
         lock.withLock { current += days * 86_400 }
     }
+}
+
+enum TestPhoneError: Error {
+    case notOnboarded
+    case requestNotSent
 }

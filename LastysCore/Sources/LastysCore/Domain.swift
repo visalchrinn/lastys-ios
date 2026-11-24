@@ -108,13 +108,19 @@ public struct Moment: Identifiable, Equatable, Sendable {
     public var title: String
     public var date: Date
     public var repeatsOnKhmerLunarDate: Bool
+    /// Shared into the Relationship, so the Partner sees it too. Quick hide hides these.
+    public var isShared: Bool
 
-    public init(id: UUID = UUID(), type: String, title: String, date: Date, repeatsOnKhmerLunarDate: Bool = false) {
+    public init(
+        id: UUID = UUID(), type: String, title: String, date: Date,
+        repeatsOnKhmerLunarDate: Bool = false, isShared: Bool = false
+    ) {
         self.id = id
         self.type = type
         self.title = title
         self.date = date
         self.repeatsOnKhmerLunarDate = repeatsOnKhmerLunarDate
+        self.isShared = isShared
     }
 }
 

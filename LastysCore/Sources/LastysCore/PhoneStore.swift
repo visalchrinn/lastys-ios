@@ -15,6 +15,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var shareLevel: ShareLevel = .statusOnly
     /// The last Relationship status Trustee gave.
     public var relationship: RelationshipStatus = .none
+    /// Quick hide: the status card and Shared Moments stay off this phone's screen. Never sent to Trustee.
+    public var isQuickHideOn = false
 
     public init() {}
 
@@ -33,6 +35,7 @@ public struct PhoneState: Codable, Equatable, Sendable {
         shareLevel = try c.decodeIfPresent(ShareLevel.self, forKey: .shareLevel) ?? defaults.shareLevel
         // Only a cache of what Trustee said: if this build can't read it, start from nothing rather than lose the phone.
         relationship = ((try? c.decodeIfPresent(RelationshipStatus.self, forKey: .relationship)) ?? nil) ?? defaults.relationship
+        isQuickHideOn = try c.decodeIfPresent(Bool.self, forKey: .isQuickHideOn) ?? defaults.isQuickHideOn
     }
 }
 
