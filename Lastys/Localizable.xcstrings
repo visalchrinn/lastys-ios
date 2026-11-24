@@ -1,0 +1,116 @@
+{
+  "sourceLanguage" : "km",
+  "strings" : {
+    "%@ · Khmer lunar date (sample)" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ · Khmer lunar date (sample)"
+          }
+        }
+      }
+    },
+    "+ Add" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+ Add"
+          }
+        }
+      }
+    },
+    "Dating safety tips" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dating safety tips"
+          }
+        }
+      }
+    },
+    "My timeline" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My timeline"
+          }
+        }
+      }
+    },
+    "No upcoming moments yet. Tap + Add." : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No upcoming moments yet. Tap + Add."
+          }
+        }
+      }
+    },
+    "Not linked to anyone" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not linked to anyone"
+          }
+        }
+      }
+    },
+    "Share my Verified Single card" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share my Verified Single card"
+          }
+        }
+      }
+    },
+    "This screen is coming in the next build." : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This screen is coming in the next build."
+          }
+        }
+      }
+    },
+    "Upcoming moments" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upcoming moments"
+          }
+        }
+      }
+    },
+    "Verified Single" : {
+      "comment" : "Khmer translation pending; the key is the English placeholder.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verified Single"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

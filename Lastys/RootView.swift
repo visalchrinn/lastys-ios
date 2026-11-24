@@ -1,3 +1,4 @@
+import LastysCore
 import SwiftUI
 
 enum AppTab: CaseIterable {
@@ -125,4 +126,5 @@ struct ComingSoonView: View {
 
 #Preview {
     RootView()
+        .environment(AppModel.preview)
 }

@@ -11,6 +11,23 @@ SwiftUI implementation of the **Lastys** iPhone prototype. This first build cont
 
 Font: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) (SIL Open Font License, see `Lastys/Resources/OFL.txt`).
 
+## Layout
+
+- `Lastys/`: the SwiftUI app. Screens render from `AppModel` and decide nothing themselves.
+- `LastysCore/`: a Swift package holding the domain.
+  - `LastysCore`: `AppModel` (all domain-visible state and the person's intents), `TrusteeClient` (the app's only boundary to Trustee) and `FakeTrustee` (Phase A's on-phone Trustee). The "Demo: …" hooks are compiled only in Debug.
+  - `LastysScenarios`: the Swift runner for the shared scenarios. Only the tests link it.
+- `scenarios/`: shared domain scenarios as data. See `scenarios/README.md`.
+- `Lastys/Localizable.xcstrings`: String Catalog. Khmer is the development language, with English available. Khmer values are placeholders until the translations arrive.
+
+## Test
+
+```sh
+swift test --package-path LastysCore
+```
+
+This runs on macOS, Linux and Windows. On Windows, run it from a Visual Studio developer shell with the C++ build tools; recent toolchains also need `--build-system native`.
+
 ## Build locally (macOS)
 
 ```sh
@@ -19,11 +36,11 @@ xcodegen generate
 open Lastys.xcodeproj
 ```
 
-Requires Xcode 15 or later. Deployment target is iOS 16.
+Requires Xcode 16 or later. Deployment target is iOS 17.
 
 ## Get the IPA
 
-Every push to `main` runs the **Build IPA** GitHub Actions workflow on a macOS runner. It builds an **unsigned** `Lastys.ipa` and attaches it to a GitHub Release (`build-<run number>`), plus a workflow artifact.
+Every push to `main` runs the **Build IPA** GitHub Actions workflow on a macOS runner. It runs the unit tests (a failure stops the build), then builds an **unsigned** `Lastys.ipa` and attaches it to a GitHub Release (`build-<run number>`), plus a workflow artifact.
 
 The same build is also defined for [Codemagic](https://codemagic.io) in `codemagic.yaml` (workflow **Lastys unsigned IPA**). Connect the repo in Codemagic, start the workflow, and download `Lastys.ipa` from the build's Artifacts.
 

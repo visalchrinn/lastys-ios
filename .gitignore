@@ -7,3 +7,5 @@ Payload/
 *.ipa
 xcuserdata/
 .idea/
+.build/
+.swiftpm/

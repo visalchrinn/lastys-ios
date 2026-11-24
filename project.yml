@@ -2,8 +2,13 @@ name: Lastys
 options:
   bundleIdPrefix: com.lastys
   deploymentTarget:
-    iOS: "16.0"
+    iOS: "17.0"
+  developmentLanguage: km
   createIntermediateGroups: true
+
+packages:
+  LastysCore:
+    path: LastysCore
 
 targets:
   Lastys:
@@ -11,9 +16,15 @@ targets:
     platform: iOS
     sources:
       - path: Lastys
+    dependencies:
+      - package: LastysCore
     info:
       path: Lastys/Info.plist
       properties:
+        CFBundleDevelopmentRegion: km
+        CFBundleLocalizations:
+          - km
+          - en
         CFBundleDisplayName: Lastys
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
@@ -36,6 +47,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_STYLE: Automatic
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
 
 schemes:
   Lastys:

@@ -1,0 +1,15 @@
+{
+  "name": "A new Lastys ID has no active Relationship",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id",
+      "with": { "nickname": "Alice" }
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": { "status": "none" }
+    }
+  ]
+}

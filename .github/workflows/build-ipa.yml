@@ -14,6 +14,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Unit tests (state model + shared scenarios)
+        run: swift test --package-path LastysCore
+
       - name: Install XcodeGen
         run: brew install xcodegen
 

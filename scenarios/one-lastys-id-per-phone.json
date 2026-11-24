@@ -1,0 +1,16 @@
+{
+  "name": "A phone that already holds a Lastys ID cannot create another (ADR 0001)",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id",
+      "with": { "nickname": "Alice" }
+    },
+    {
+      "phone": "alice",
+      "do": "create-lastys-id",
+      "with": { "nickname": "Alice again" },
+      "expect": { "error": "phone-already-has-lastys-id" }
+    }
+  ]
+}

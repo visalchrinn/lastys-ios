@@ -1,34 +1,11 @@
+import LastysCore
 import SwiftUI
-
-struct Moment: Identifiable {
-    let id = UUID()
-    let type: String
-    let title: String
-    let date: Date
-    let lunar: Bool
-}
-
-enum SampleData {
-    static func moments(relativeTo today: Date = Date()) -> [Moment] {
-        let cal = Calendar.current
-        let start = cal.startOfDay(for: today)
-        func day(_ offset: Int) -> Date { cal.date(byAdding: .day, value: offset, to: start) ?? start }
-        return [
-            Moment(type: "Birthday", title: "Mom's birthday", date: day(5), lunar: false),
-            Moment(type: "Custom", title: "Graduation day", date: day(-156), lunar: false),
-            Moment(type: "Custom", title: "Ancestor ceremony", date: day(27), lunar: true),
-        ]
-    }
-}
 
 struct HomeView: View {
     var showToast: (String) -> Void
     var openMe: () -> Void
 
-    var nickname: String = "Srey Pich"
-    @State private var moments: [Moment] = SampleData.moments()
-
-    private var today: Date { Calendar.current.startOfDay(for: Date()) }
+    @Environment(AppModel.self) private var model
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -58,7 +35,7 @@ struct HomeView: View {
             }
             Spacer()
             Button(action: openMe) {
-                Text(String(nickname.prefix(1)).uppercased())
+                Text(String(model.nickname.prefix(1)).uppercased())
                     .font(.jakarta(16, .heavy))
                     .foregroundStyle(Theme.roseDark)
                     .frame(width: 44, height: 44)
@@ -71,7 +48,15 @@ struct HomeView: View {
 
     // MARK: Status
 
+    @ViewBuilder
     private var statusCard: some View {
+        switch model.relationship {
+        case .none:
+            verifiedSingleCard
+        }
+    }
+
+    private var verifiedSingleCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
                 Image(systemName: "checkmark.shield")
@@ -154,14 +139,6 @@ struct HomeView: View {
 
     // MARK: Moments
 
-    private var upcoming: [Moment] {
-        moments.filter { $0.date >= today }.sorted { $0.date < $1.date }.prefix(3).map { $0 }
-    }
-
-    private var timeline: [Moment] {
-        moments.sorted { $0.date > $1.date }
-    }
-
     private var momentsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
@@ -179,14 +156,14 @@ struct HomeView: View {
             .padding(.top, 4)
 
             VStack(spacing: 10) {
-                if upcoming.isEmpty {
+                if model.upcomingMoments.isEmpty {
                     Text("No upcoming moments yet. Tap + Add.")
                         .font(.jakarta(14))
                         .foregroundStyle(Theme.muted)
                         .card()
                 } else {
-                    ForEach(upcoming) { moment in
-                        UpcomingRow(moment: moment, today: today)
+                    ForEach(model.upcomingMoments) { moment in
+                        UpcomingRow(moment: moment, daysUntil: model.daysUntil(moment))
                     }
                 }
             }
@@ -197,8 +174,8 @@ struct HomeView: View {
                 .padding(.top, 8)
 
             VStack(alignment: .leading, spacing: 14) {
-                ForEach(timeline) { moment in
-                    TimelineRow(moment: moment, isUpcoming: moment.date >= today)
+                ForEach(model.timeline) { moment in
+                    TimelineRow(moment: moment, isUpcoming: model.isUpcoming(moment))
                 }
             }
             .padding(.leading, 16)
@@ -219,7 +196,7 @@ struct HomeView: View {
 
 private struct UpcomingRow: View {
     let moment: Moment
-    let today: Date
+    let daysUntil: Int
 
     private static let month: DateFormatter = {
         let f = DateFormatter()
@@ -229,9 +206,8 @@ private struct UpcomingRow: View {
     }()
 
     private var subtitle: String {
-        let days = Calendar.current.dateComponents([.day], from: today, to: moment.date).day ?? 0
-        var s = moment.type + " · " + (days == 0 ? "Today" : "in \(days) days")
-        if moment.lunar { s += " · Khmer lunar date" }
+        var s = moment.type + " · " + (daysUntil == 0 ? "Today" : "in \(daysUntil) days")
+        if moment.repeatsOnKhmerLunarDate { s += " · Khmer lunar date" }
         return s
     }
 
@@ -275,7 +251,7 @@ private struct TimelineRow: View {
 
     private var meta: String {
         var s = moment.type
-        if moment.lunar { s += " · repeats on Khmer lunar date" }
+        if moment.repeatsOnKhmerLunarDate { s += " · repeats on Khmer lunar date" }
         if isUpcoming { s += " · upcoming" }
         return s
     }
@@ -305,5 +281,6 @@ private struct TimelineRow: View {
 
 #Preview {
     HomeView(showToast: { _ in }, openMe: {})
+        .environment(AppModel.preview)
         .background(Theme.background)
 }
