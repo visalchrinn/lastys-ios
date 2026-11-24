@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var showingMyLastysQR = false
     @State private var showingScan = false
     @State private var showingRelationship = false
+    @State private var showingVerifiedSingleCard = false
     @State private var editing: MomentEditorView.Target?
     #if DEBUG
     @Environment(\.demoTrustee) private var demoTrustee
@@ -50,6 +51,10 @@ struct HomeView: View {
             ScanView()
                 .environment(model)
                 .demoTrustee(demoTrustee)
+        }
+        .sheet(isPresented: $showingVerifiedSingleCard) {
+            VerifiedSingleCardSheet()
+                .environment(model)
         }
         .sheet(isPresented: $showingRelationship) {
             RelationshipView()
@@ -122,6 +127,13 @@ struct HomeView: View {
             Text("Cooling-off period until \(until, format: .dateTime.day().month(.abbreviated).year()). You can't send or accept a Relationship request until then.")
                 .font(.jakarta(13))
                 .foregroundStyle(Theme.muted)
+            // No active Relationship, so Verified Single: the card is offered here too.
+            if model.canShareVerifiedSingleCard {
+                Button("Share my Verified Single card") {
+                    showingVerifiedSingleCard = true
+                }
+                .buttonStyle(GhostButtonStyle())
+            }
             #if DEBUG
             if let demoTrustee, let me = model.lastysID?.personalID {
                 Button("Demo: skip the Cooling-off period") {
@@ -207,10 +219,12 @@ struct HomeView: View {
                         .foregroundStyle(Theme.muted)
                 }
             }
-            Button("Share my Verified Single card") {
-                showToast("Verified Single card is coming soon")
+            if model.canShareVerifiedSingleCard {
+                Button("Share my Verified Single card") {
+                    showingVerifiedSingleCard = true
+                }
+                .buttonStyle(GhostButtonStyle())
             }
-            .buttonStyle(GhostButtonStyle())
         }
         .card(padding: 20)
     }

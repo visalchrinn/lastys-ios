@@ -608,6 +608,10 @@ public final class AppModel {
     public private(set) var lastysIDMovedAway = false
     /// When the Recovery this (new) phone started completes.
     public private(set) var recoveryCompletesAt: Date?
+    /// The Verified Single card, once Trustee has confirmed the status for it.
+    public private(set) var verifiedSingleCard: VerifiedSingleCard?
+    /// Why the Verified Single card couldn't be made.
+    public private(set) var verifiedSingleCardProblem: VerifiedSingleCardProblem?
     /// Notices Trustee sent since the app opened, newest last, for Home to show.
     public private(set) var notices: [Notice] = []
 
@@ -1252,6 +1256,8 @@ extension AppModel {
         lastysIDMovedAway = false
         recoveryCompletesAt = nil
         notices = []
+        verifiedSingleCard = nil
+        verifiedSingleCardProblem = nil
         reminders.replaceAll(with: [])
     }
 }
@@ -1464,5 +1470,77 @@ extension AppModel {
         } catch {
             phoneMoveProblem = PhoneMoveProblem(error)
         }
+    }
+}
+
+
+// MARK: - Verified Single card
+
+/// A card someone can post to show they're Verified Single, checked with Trustee that day.
+public struct VerifiedSingleCard: Equatable, Sendable {
+    public let nickname: String
+    public let photo: Data?
+    /// When Trustee confirmed there's no active Relationship.
+    public let checkedAt: Date
+}
+
+public enum VerifiedSingleCardProblem: Equatable, Sendable {
+    /// There's no Lastys ID on this phone yet.
+    case noLastysID
+    /// Taken, at any stage: there's no Verified Single card to share.
+    case hasActiveRelationship
+    /// The status is checked with Trustee before every card.
+    case needsInternet
+    case couldNotReachLastys
+
+    init(_ error: Error) {
+        self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+    }
+}
+
+extension AppModel {
+    /// Offered only while Verified Single, as far as this phone knows. Taken at any stage, never.
+    public var canShareVerifiedSingleCard: Bool {
+        phone.lastysID != nil && !Self.isTaken(relationship)
+    }
+
+    private static func isTaken(_ relationship: RelationshipStatus) -> Bool {
+        if case .active = relationship { return true }
+        return false
+    }
+
+    /// Checks the status with Trustee right now and, only if there's no active Relationship, makes the card
+    /// with today's date. A card never vouches for a status this phone merely remembers.
+    public func prepareVerifiedSingleCard() async {
+        verifiedSingleCard = nil
+        verifiedSingleCardProblem = nil
+        guard phone.lastysID != nil else {
+            verifiedSingleCardProblem = .noLastysID
+            return
+        }
+        guard !Self.isTaken(relationship) else {
+            verifiedSingleCardProblem = .hasActiveRelationship
+            return
+        }
+        guard connectivity.isOnline else {
+            verifiedSingleCardProblem = .needsInternet
+            return
+        }
+        do {
+            let status = try await trustee.relationshipStatus()
+            phone.relationship = status
+            guard !Self.isTaken(status) else {
+                verifiedSingleCardProblem = .hasActiveRelationship
+                return
+            }
+            verifiedSingleCard = VerifiedSingleCard(nickname: nickname, photo: photo, checkedAt: now())
+        } catch {
+            verifiedSingleCardProblem = VerifiedSingleCardProblem(error)
+        }
+    }
+
+    public func dismissVerifiedSingleCard() {
+        verifiedSingleCard = nil
+        verifiedSingleCardProblem = nil
     }
 }
