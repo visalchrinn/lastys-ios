@@ -96,7 +96,7 @@ extension ShareLevel {
 }
 
 /// A crisp QR for `payload`, scaled without smoothing.
-private struct QRCodeImage: View {
+struct QRCodeImage: View {
     let payload: String
 
     var body: some View {

@@ -14,6 +14,9 @@ public struct LastysQRToken: Equatable, Sendable {
     static let version = "LT1"
     /// A Lastys QR is replaced by a new one every minute.
     public static let secondsPerCode = 60
+    /// How long after a code began a Verified Single card promises it still works. Trustee decides how long it
+    /// really accepts a code, and a card must never promise more than that, so this stays on the safe side.
+    public static let secondsCardPromisesValid = 2 * secondsPerCode
 
     public let personalID: String
     public let minute: Int64

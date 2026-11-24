@@ -26,6 +26,10 @@ A display label meaning the Lastys ID has an active Relationship. It is not a do
 **Verified Single**:
 A display label meaning the Lastys ID has no active Relationship. It is not a domain state of its own.
 
+**Verified Single card**:
+A shareable image with your nickname, photo and Verified Single status as Trustee confirmed it at the moment the card was made, plus a Lastys QR so the viewer can check it live. It is a claim as of that moment, not a lasting proof.
+_Avoid_: Certificate, badge
+
 **Quick hide**:
 Hides the status card and Shared Moments on your own phone's screen. It never changes what a Scan of you shows.
 _Avoid_: Privacy mode, hide status
@@ -48,7 +52,7 @@ The 7 days after a Relationship ends during which neither former Partner can sen
 ### Scanning
 
 **Lastys QR**:
-A short-lived code that a Lastys ID shows so someone nearby can Scan it. A new code replaces it every minute.
+A short-lived code that a Lastys ID shows, on its phone or on a Verified Single card, so someone can Scan it. A new code replaces it every minute.
 _Avoid_: Barcode, share code
 
 **Scan**:

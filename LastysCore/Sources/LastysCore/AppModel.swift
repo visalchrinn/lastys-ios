@@ -1524,6 +1524,15 @@ public struct VerifiedSingleCard: Equatable, Sendable {
     public let checkedAt: Date
 }
 
+/// The Lastys QR shown on a Verified Single card, with how long the card can promise it works.
+public struct VerifiedSingleCardQR: Equatable, Sendable {
+    public let payload: String
+    /// The last moment the card promises this code can be Scanned. Never later than Trustee accepts it.
+    public let validUntil: Date
+    /// Whole seconds until the next code replaces this one, from 60 down to 1.
+    public let secondsUntilNextCode: Int
+}
+
 public enum VerifiedSingleCardProblem: Equatable, Sendable {
     /// There's no Lastys ID on this phone yet.
     case noLastysID
@@ -1577,6 +1586,18 @@ extension AppModel {
         } catch {
             verifiedSingleCardProblem = VerifiedSingleCardProblem(error)
         }
+    }
+
+    /// The Lastys QR for the card at date, made on the phone with no network. Nil without a checked card,
+    /// and never while Taken, so a card can't carry a QR once there is nothing to vouch for.
+    public func verifiedSingleCardQR(at date: Date) -> VerifiedSingleCardQR? {
+        guard verifiedSingleCard != nil, canShareVerifiedSingleCard, let qr = myLastysQR(at: date) else { return nil }
+        let madeAt = LastysQRToken.startOfMinute(containing: date)
+        return VerifiedSingleCardQR(
+            payload: qr.payload,
+            validUntil: madeAt.addingTimeInterval(Double(LastysQRToken.secondsCardPromisesValid)),
+            secondsUntilNextCode: qr.secondsUntilNextCode
+        )
     }
 
     public func dismissVerifiedSingleCard() {
