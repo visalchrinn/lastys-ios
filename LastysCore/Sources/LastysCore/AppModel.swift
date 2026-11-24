@@ -1414,14 +1414,33 @@ extension AppModel {
         screen = .onboarding(.intro(page: 0))
     }
 
+    /// Reads a transfer code found in a photo, exactly as if the camera had read it. Takes the first code
+    /// that reads as a transfer code; if none does, the first code goes the usual way and is refused.
+    public func receivePhoneTransfer(photoCodes: [String]) async {
+        photoProblem = nil
+        guard let first = photoCodes.first else {
+            phoneMoveProblem = nil
+            photoProblem = .noQRFound
+            return
+        }
+        await receivePhoneTransfer(photoCodes.first { Self.transferParts(of: $0) != nil } ?? first)
+    }
+
+    /// The code and key inside a transfer QR, or nil if this isn't a transfer QR.
+    private static func transferParts(of scanned: String) -> (code: String, key: Data)? {
+        let parts = scanned.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 3, parts[0] == PhoneTransferQR.prefix,
+              let key = Data(base64URLEncoded: parts[2]), key.count == 32
+        else { return nil }
+        return (parts[1], key)
+    }
+
     /// Scans the old phone's transfer QR: Trustee moves the Lastys ID onto this phone's own key, and this
     /// phone opens the sealed bundle with the key from the QR.
     public func receivePhoneTransfer(_ scanned: String) async {
-        let parts = scanned.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        photoProblem = nil
         // Check the whole QR before asking Trustee, which spends the code.
-        guard parts.count == 3, parts[0] == PhoneTransferQR.prefix,
-              let keyData = Data(base64URLEncoded: parts[2]), keyData.count == 32
-        else {
+        guard let (code, keyData) = Self.transferParts(of: scanned) else {
             phoneMoveProblem = .notATransferQR
             return
         }
@@ -1431,7 +1450,7 @@ extension AppModel {
         }
         let moved: TransferredLastysID
         do {
-            moved = try await trustee.completePhoneTransfer(code: parts[1])
+            moved = try await trustee.completePhoneTransfer(code: code)
         } catch {
             phoneMoveProblem = PhoneMoveProblem(error)
             return

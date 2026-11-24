@@ -91,6 +91,122 @@ struct PhoneMoveTests {
         #expect(new.model.phoneMoveProblem == .notATransferQR)
     }
 
+    // MARK: Transfer code from a photo
+
+    @Test func aPhotoOfAValidTransferCodeMovesTheLastysIDLikeTheCamera() async throws {
+        let (old, new) = await meAndANewPhone()
+        let lastysID = old.model.lastysID
+        await old.model.offerPhoneTransfer()
+        let qr = try #require(old.model.phoneTransferQR)
+        new.model.startMovingFromAnotherPhone()
+
+        await new.model.receivePhoneTransfer(photoCodes: [qr.payload])
+
+        #expect(new.model.screen == .home)
+        #expect(new.model.lastysID == lastysID)
+        #expect(new.model.phoneMoveProblem == nil)
+        #expect(new.model.photoProblem == nil)
+    }
+
+    @Test func aPhotoWithNoQRSpendsNothingWithTrustee() async throws {
+        let (_, new) = await meAndANewPhone()
+        new.model.startMovingFromAnotherPhone()
+        let requestsBefore = new.trusteeRequests
+
+        await new.model.receivePhoneTransfer(photoCodes: [])
+
+        #expect(new.model.photoProblem == .noQRFound)
+        #expect(new.model.phoneMoveProblem == nil)
+        #expect(new.model.screen == .onboarding(.moveFromAnotherPhone))
+        #expect(new.trusteeRequests == requestsBefore)
+    }
+
+    @Test func aPhotoWithSeveralQRsUsesTheFirstTransferCode() async throws {
+        let (old, new) = await meAndANewPhone()
+        await old.model.offerPhoneTransfer()
+        let qr = try #require(old.model.phoneTransferQR)
+        new.model.startMovingFromAnotherPhone()
+
+        await new.model.receivePhoneTransfer(photoCodes: ["https://example.com/pay/123", qr.payload, "LT1.other.1.x"])
+
+        #expect(new.model.screen == .home)
+    }
+
+    @Test func aPhotoWithNoTransferCodeSaysSo() async {
+        let (_, new) = await meAndANewPhone()
+        new.model.startMovingFromAnotherPhone()
+
+        await new.model.receivePhoneTransfer(photoCodes: ["https://example.com/pay/123", "hello"])
+
+        #expect(new.model.phoneMoveProblem == .notATransferQR)
+        #expect(new.model.photoProblem == nil)
+    }
+
+    @Test func aPhotoOfAnExpiredTransferCodeIsRefused() async throws {
+        let (old, new) = await meAndANewPhone()
+        await old.model.offerPhoneTransfer()
+        let qr = try #require(old.model.phoneTransferQR)
+        old.clock.advance(days: 6.0 / 1_440)
+        new.model.startMovingFromAnotherPhone()
+
+        await new.model.receivePhoneTransfer(photoCodes: [qr.payload])
+
+        #expect(new.model.phoneMoveProblem == .transferCodeExpired)
+        #expect(new.model.lastysID == nil)
+    }
+
+    @Test func aPhotoWithTwoTransferCodesUsesTheFirstOne() async throws {
+        let (old, new) = await meAndANewPhone()
+        await old.model.offerPhoneTransfer()
+        let real = try #require(old.model.phoneTransferQR)
+        let key = Data(repeating: 7, count: 32).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+        let unknown = "LTX1.ZZZZZZZZ.\(key)"
+        new.model.startMovingFromAnotherPhone()
+
+        await new.model.receivePhoneTransfer(photoCodes: [unknown, real.payload])
+
+        #expect(new.model.screen == .onboarding(.moveFromAnotherPhone))
+        #expect(new.model.phoneMoveProblem == .transferCodeInvalid)
+    }
+
+    @Test func aPhotoOfATransferCodeThatWasAlreadyUsedIsRefused() async throws {
+        let (old, new) = await meAndANewPhone()
+        await old.model.offerPhoneTransfer()
+        let qr = try #require(old.model.phoneTransferQR)
+        new.model.startMovingFromAnotherPhone()
+        await new.model.receivePhoneTransfer(photoCodes: [qr.payload])
+        let another = TestPhone(nearby: old)
+        another.model.startMovingFromAnotherPhone()
+
+        await another.model.receivePhoneTransfer(photoCodes: [qr.payload])
+
+        #expect(another.model.phoneMoveProblem == .transferCodeInvalid)
+        #expect(another.model.lastysID == nil)
+    }
+
+    @Test func aPhotoWithNoQRClearsAnEarlierTransferError() async {
+        let (_, new) = await meAndANewPhone()
+        new.model.startMovingFromAnotherPhone()
+        await new.model.receivePhoneTransfer("https://example.com")
+        #expect(new.model.phoneMoveProblem == .notATransferQR)
+
+        await new.model.receivePhoneTransfer(photoCodes: [])
+
+        #expect(new.model.phoneMoveProblem == nil)
+        #expect(new.model.photoProblem == .noQRFound)
+    }
+    @Test func aLaterCameraReadClearsAnEarlierNoQRPhotoProblem() async {
+        let (_, new) = await meAndANewPhone()
+        new.model.startMovingFromAnotherPhone()
+        await new.model.receivePhoneTransfer(photoCodes: [])
+
+        await new.model.receivePhoneTransfer("https://example.com")
+
+        #expect(new.model.photoProblem == nil)
+    }
+
     @Test func thePartnerIsToldWhenMyLastysIDChangesPhone() async throws {
         let (old, new) = await meAndANewPhone()
         let dara = TestPhone(nearby: old)

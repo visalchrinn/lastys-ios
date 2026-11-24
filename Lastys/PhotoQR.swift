@@ -47,6 +47,19 @@ struct ChooseFromPhotosButton: View {
     }
 }
 
+/// Says why a picked photo gave nothing to read. Shows nothing when there is no problem.
+struct PhotoProblemLabel: View {
+    let problem: PhotoProblem?
+
+    var body: some View {
+        if problem == .noQRFound {
+            Label("No QR found in that photo. Try another, or use the camera.", systemImage: "qrcode.viewfinder")
+                .font(.jakarta(14, .semibold))
+                .foregroundStyle(Theme.roseDeep)
+        }
+    }
+}
+
 private extension CGImagePropertyOrientation {
     /// Vision wants the EXIF orientation, so a rotated photo still reads.
     init(_ orientation: UIImage.Orientation) {

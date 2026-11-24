@@ -452,6 +452,15 @@ private struct MoveFromAnotherPhoneStep: View {
             .id(attempt)
             .frame(height: 320)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            ChooseFromPhotosButton { codes in
+                guard !scanned else { return }
+                scanned = true
+                Task {
+                    await model.receivePhoneTransfer(photoCodes: codes)
+                    scanned = false
+                }
+            }
+            PhotoProblemLabel(problem: model.photoProblem)
             PhoneMoveProblemText(problem: model.phoneMoveProblem)
         } footer: {
             Button("Back") { model.backToIntro() }
