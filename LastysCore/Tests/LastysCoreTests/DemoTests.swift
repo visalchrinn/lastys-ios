@@ -54,5 +54,37 @@ struct DemoTests {
 
         #expect(LastysQRToken(parsing: first)?.personalID == LastysQRToken(parsing: second)?.personalID)
     }
+
+    @Test func demoSokhaCannotReceiveARelationshipRequest() async throws {
+        let me = await me()
+
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .sokha, at: Date()))
+
+        #expect(me.model.scanResult?.requestBlock == .theyAreTaken)
+    }
+
+    @Test func demoDaraAcceptsMyRelationshipRequest() async throws {
+        let me = await me()
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara, at: Date()))
+        await me.model.sendRelationshipRequest()
+
+        try await me.trustee.demoRespondToRelationshipRequest(id: try #require(me.model.outgoingRequest?.id), accept: true)
+        await me.model.refreshOutgoingRequest()
+
+        #expect(me.model.outgoingRequest?.status == .accepted)
+        #expect(me.model.relationship != .none)
+    }
+
+    @Test func demoVannaDeclinesMyRelationshipRequest() async throws {
+        let me = await me()
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .vanna, at: Date()))
+        await me.model.sendRelationshipRequest()
+
+        try await me.trustee.demoRespondToRelationshipRequest(id: try #require(me.model.outgoingRequest?.id), accept: false)
+        await me.model.refreshOutgoingRequest()
+
+        #expect(me.model.outgoingRequest?.status == .declined)
+        #expect(me.model.relationship == .none)
+    }
 }
 #endif

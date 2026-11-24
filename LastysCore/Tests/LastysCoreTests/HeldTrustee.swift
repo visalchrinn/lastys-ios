@@ -24,6 +24,9 @@ final class HeldTrustee: TrusteeClient, @unchecked Sendable {
     func createLastysID() async throws -> NewLastysID { try await wrapped.createLastysID() }
     func updateProfile(nickname: String, photo: Data?) async throws { try await wrapped.updateProfile(nickname: nickname, photo: photo) }
     func relationshipStatus() async throws -> RelationshipStatus { try await wrapped.relationshipStatus() }
+    func sendRelationshipRequest(scanID: String) async throws -> RelationshipRequest { try await wrapped.sendRelationshipRequest(scanID: scanID) }
+    func relationshipRequest(id: String) async throws -> RelationshipRequest { try await wrapped.relationshipRequest(id: id) }
+    func respondToRelationshipRequest(id: String, accept: Bool) async throws { try await wrapped.respondToRelationshipRequest(id: id, accept: accept) }
 
     func scan(_ payload: String) async throws -> ScanResult {
         await withCheckedContinuation { continuation in

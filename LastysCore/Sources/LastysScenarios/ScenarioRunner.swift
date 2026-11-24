@@ -47,6 +47,10 @@ private final class Run: @unchecked Sendable {
     private lazy var trustee = FakeTrustee(now: { [unowned self] in self.lock.withLock { self.now } })
     private var keys: [String: SoftwarePhoneKey] = [:]
     private var personalIDs: [String: String] = [:]
+    /// Each phone's latest Scan, and which phone it scanned.
+    private var lastScan: [String: (scanID: String, of: String?)] = [:]
+    /// Relationship requests sent, by sender phone then receiver phone.
+    private var requestIDs: [String: [String: String]] = [:]
 
     private func key(of phone: String) -> SoftwarePhoneKey {
         if let key = keys[phone] { return key }
@@ -67,9 +71,22 @@ private final class Run: @unchecked Sendable {
             try await client.updateProfile(nickname: step.arguments["nickname"] ?? "", photo: nil)
             return [:]
         case "get-relationship-status":
-            return ["status": try await client.relationshipStatus().code]
+            return try await client.relationshipStatus().fields
         case "scan":
-            return try await client.scan(scannedPayload(step.arguments)).fields
+            let result = try await client.scan(scannedPayload(step.arguments))
+            lastScan[step.phone] = (result.scanID, step.arguments["qrOf"])
+            return result.fields
+        case "send-relationship-request":
+            let scan = step.arguments["scanOf"].map { lastScan[$0] } ?? lastScan[step.phone]
+            let request = try await client.sendRelationshipRequest(scanID: scan?.scanID ?? "no-scan")
+            if let receiver = scan?.of { requestIDs[step.phone, default: [:]][receiver] = request.id }
+            return request.fields
+        case "get-relationship-request-status":
+            return try await client.relationshipRequest(id: try requestID(from: step.phone, to: step.arguments["to"])).fields
+        case "accept-relationship-request", "decline-relationship-request":
+            let id = try requestID(from: step.arguments["from"], to: step.phone)
+            try await client.respondToRelationshipRequest(id: id, accept: step.action == "accept-relationship-request")
+            return [:]
         case "wait":
             let minutes = Double(step.arguments["minutes"] ?? "0") ?? 0
             let days = Double(step.arguments["days"] ?? "0") ?? 0
@@ -78,6 +95,13 @@ private final class Run: @unchecked Sendable {
         default:
             return nil
         }
+    }
+
+    private func requestID(from sender: String?, to receiver: String?) throws -> String {
+        guard let sender, let receiver, let id = requestIDs[sender]?[receiver] else {
+            throw ScenarioError(message: "no Relationship request from \(sender ?? "?") to \(receiver ?? "?") in this scenario")
+        }
+        return id
     }
 
     /// What the scanner's camera reads: a raw `payload`, or the Lastys QR of phone `qrOf`,
@@ -103,6 +127,7 @@ extension ScanResult {
             "idAgeDays": String(idAgeDays),
             "phoneTransfers": String(phoneTransferCount),
             "history": relationshipHistory.map { String($0.count) } ?? "hidden",
+            "requestBlocked": requestBlock?.code ?? "none",
         ]
     }
 }
@@ -116,14 +141,41 @@ extension TrusteeError {
         case .notALastysQR: return "not-a-lastys-qr"
         case .expiredQR: return "expired-qr"
         case .forgedQR: return "forged-qr"
+        case .scanRequired: return "scan-required"
+        case .scanTooOld: return "scan-too-old"
+        case .youAreTaken: return "you-are-taken"
+        case .youAreCoolingOff: return "you-are-cooling-off"
+        case .theyAreTaken: return "they-are-taken"
+        case .theyAreCoolingOff: return "they-are-cooling-off"
+        case .thatIsYou: return "that-is-you"
+        case .requestNotFound: return "request-not-found"
+        case .requestNotPending: return "request-not-pending"
         }
     }
 }
 
 extension RelationshipStatus {
+    var fields: [String: String] {
+        switch self {
+        case .none: return ["status": "none"]
+        case .active(let partnerNickname, _): return ["status": "active", "partner": partnerNickname]
+        }
+    }
+}
+
+extension RelationshipRequest {
+    var fields: [String: String] {
+        ["status": status.rawValue, "to": toNickname]
+    }
+}
+
+extension RelationshipRequestBlock {
     var code: String {
         switch self {
-        case .none: return "none"
+        case .youAreTaken: return "you-are-taken"
+        case .youAreCoolingOff: return "you-are-cooling-off"
+        case .theyAreTaken: return "they-are-taken"
+        case .thatIsYou: return "that-is-you"
         }
     }
 }

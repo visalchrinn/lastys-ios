@@ -28,8 +28,23 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
     }
 
     func scan(_ payload: String) async throws -> ScanResult {
-        record("scan((payload))")
+        record("scan(\(payload))")
         return try await wrapped.scan(payload)
+    }
+
+    func sendRelationshipRequest(scanID: String) async throws -> RelationshipRequest {
+        record("sendRelationshipRequest(scanID: \(scanID))")
+        return try await wrapped.sendRelationshipRequest(scanID: scanID)
+    }
+
+    func relationshipRequest(id: String) async throws -> RelationshipRequest {
+        record("relationshipRequest(id: \(id))")
+        return try await wrapped.relationshipRequest(id: id)
+    }
+
+    func respondToRelationshipRequest(id: String, accept: Bool) async throws {
+        record("respondToRelationshipRequest(id: \(id), accept: \(accept))")
+        try await wrapped.respondToRelationshipRequest(id: id, accept: accept)
     }
 
     func relationshipStatus() async throws -> RelationshipStatus {

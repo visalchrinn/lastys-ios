@@ -13,6 +13,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var hasFinishedOnboarding = false
     /// What a Scan of this Lastys ID shows. Trustee applies it; the phone keeps a copy to show the person.
     public var shareLevel: ShareLevel = .statusOnly
+    /// The last Relationship status Trustee gave.
+    public var relationship: RelationshipStatus = .none
 
     public init() {}
 
@@ -29,6 +31,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
         birthDate = try c.decodeIfPresent(Date.self, forKey: .birthDate)
         hasFinishedOnboarding = try c.decodeIfPresent(Bool.self, forKey: .hasFinishedOnboarding) ?? defaults.hasFinishedOnboarding
         shareLevel = try c.decodeIfPresent(ShareLevel.self, forKey: .shareLevel) ?? defaults.shareLevel
+        // Only a cache of what Trustee said: if this build can't read it, start from nothing rather than lose the phone.
+        relationship = ((try? c.decodeIfPresent(RelationshipStatus.self, forKey: .relationship)) ?? nil) ?? defaults.relationship
     }
 }
 

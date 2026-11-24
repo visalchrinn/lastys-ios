@@ -1,0 +1,20 @@
+{
+  "name": "A Lastys ID never ends up in two Relationships, even when both sides accept different requests",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "carol", "do": "update-profile", "with": { "nickname": "Carol" } },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "bob" } },
+    { "phone": "alice", "do": "send-relationship-request" },
+    { "phone": "carol", "do": "scan", "with": { "qrOf": "alice" } },
+    { "phone": "carol", "do": "send-relationship-request" },
+    { "phone": "bob", "do": "accept-relationship-request", "with": { "from": "alice" } },
+    { "phone": "alice", "do": "accept-relationship-request", "with": { "from": "carol" }, "expect": { "error": "you-are-taken" } },
+    { "phone": "carol", "do": "get-relationship-request-status", "with": { "to": "alice" }, "expect": { "status": "expired" } },
+    { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "active", "partner": "Bob" } },
+    { "phone": "carol", "do": "get-relationship-status", "expect": { "status": "none" } }
+  ]
+}

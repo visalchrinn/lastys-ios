@@ -3,7 +3,7 @@ import LastysCore
 import SwiftUI
 import UIKit
 
-/// "Scan a QR": the camera, then the Scan result live from Trustee.
+/// "Scan a QR": the camera, then the Scan result live from Trustee, then any Relationship request.
 struct ScanView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -12,16 +12,20 @@ struct ScanView: View {
         model.isScanning || model.scanResult != nil || model.scanProblem != nil
     }
 
+    private var title: LocalizedStringKey {
+        if model.outgoingRequest != nil { return "Relationship request" }
+        return showsOutcome ? "Scan result" : "Scan a Lastys QR"
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text(showsOutcome ? "Scan result" : "Scan a Lastys QR")
+                Text(title)
                     .font(.jakarta(22, .heavy))
                     .tracking(-0.4)
                 Spacer()
                 Button {
-                    model.clearScan()
-                    dismiss()
+                    close()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 16, weight: .bold))
@@ -34,7 +38,9 @@ struct ScanView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 8)
 
-            if showsOutcome {
+            if let request = model.outgoingRequest {
+                RelationshipRequestStatusView(request: request, done: close)
+            } else if showsOutcome {
                 ScanOutcomeView()
             } else {
                 ScannerStep()
@@ -42,6 +48,12 @@ struct ScanView: View {
         }
         .foregroundStyle(Theme.ink)
         .background(Theme.background.ignoresSafeArea())
+    }
+
+    private func close() {
+        model.dismissOutgoingRequest()
+        model.clearScan()
+        dismiss()
     }
 }
 
@@ -192,6 +204,7 @@ private struct ScanOutcomeView: View {
                         .frame(maxWidth: .infinity, minHeight: 200)
                 } else if let result = model.scanResult {
                     ScanResultCard(result: result)
+                    RelationshipRequestButton(result: result)
                 } else if let problem = model.scanProblem {
                     ScanProblemCard(problem: problem)
                 }

@@ -1,0 +1,20 @@
+{
+  "name": "An accepted Relationship request makes both Lastys IDs Taken, and Scans of either Partner show it",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "carol", "do": "update-profile", "with": { "nickname": "Carol" } },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "bob" }, "expect": { "status": "single", "requestBlocked": "none" } },
+    { "phone": "alice", "do": "send-relationship-request", "expect": { "status": "pending", "to": "Bob" } },
+    { "phone": "alice", "do": "get-relationship-request-status", "with": { "to": "bob" }, "expect": { "status": "pending" } },
+    { "phone": "bob", "do": "accept-relationship-request", "with": { "from": "alice" } },
+    { "phone": "alice", "do": "get-relationship-request-status", "with": { "to": "bob" }, "expect": { "status": "accepted" } },
+    { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "active", "partner": "Bob" } },
+    { "phone": "bob", "do": "get-relationship-status", "expect": { "status": "active", "partner": "Alice" } },
+    { "phone": "carol", "do": "scan", "with": { "qrOf": "alice" }, "expect": { "status": "taken", "requestBlocked": "they-are-taken" } },
+    { "phone": "carol", "do": "scan", "with": { "qrOf": "bob" }, "expect": { "status": "taken", "requestBlocked": "they-are-taken" } }
+  ]
+}

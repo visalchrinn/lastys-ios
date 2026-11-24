@@ -23,7 +23,8 @@ public final class AppModel {
     public static let introPageCount = 3
 
     public private(set) var screen: Screen
-    public private(set) var relationship: RelationshipStatus = .none
+    /// The last Relationship status Trustee gave, kept on the phone so Home never guesses.
+    public var relationship: RelationshipStatus { phone.relationship }
     public private(set) var moments: [Moment]
 
     /// What this phone keeps between launches. Every change is saved straight away.
@@ -136,6 +137,7 @@ public final class AppModel {
     /// Forgets the last Scan, and discards the answer of any Scan still running.
     public func clearScan() {
         scanNumber += 1
+        requestProblem = nil
         scanResult = nil
         scanProblem = nil
         isScanning = false
@@ -144,11 +146,75 @@ public final class AppModel {
     /// What a Scan of my Lastys QR shows.
     public var shareLevel: ShareLevel { phone.shareLevel }
 
+    // MARK: Relationship request
+
+    /// The Relationship request this phone last sent, as Trustee last reported it.
+    public private(set) var outgoingRequest: RelationshipRequest?
+    /// Why the last attempt to send or check a Relationship request didn't work.
+    public private(set) var requestProblem: RelationshipRequestProblem?
+    /// True while Trustee is taking a Relationship request.
+    public private(set) var isSendingRequest = false
+
+    /// Only straight after a live Scan that Trustee says allows it, and not while a request is waiting.
+    public var canSendRelationshipRequest: Bool {
+        guard let scanResult, scanResult.requestBlock == nil, !isSendingRequest else { return false }
+        return outgoingRequest?.status != .pending
+    }
+
+    /// Offers a Relationship to the person just Scanned.
+    public func sendRelationshipRequest() async {
+        guard canSendRelationshipRequest, let scanID = scanResult?.scanID else { return }
+        guard connectivity.isOnline else {
+            requestProblem = .needsInternet
+            return
+        }
+        isSendingRequest = true
+        defer { isSendingRequest = false }
+        do {
+            outgoingRequest = try await trustee.sendRelationshipRequest(scanID: scanID)
+            requestProblem = nil
+        } catch {
+            requestProblem = RelationshipRequestProblem(error)
+        }
+    }
+
+    /// Asks Trustee where the sent request stands; on acceptance, Home switches to Taken.
+    public func refreshOutgoingRequest() async {
+        guard let id = outgoingRequest?.id, connectivity.isOnline else { return }
+        do {
+            let request = try await trustee.relationshipRequest(id: id)
+            outgoingRequest = request
+            if request.status == .accepted {
+                phone.relationship = try await trustee.relationshipStatus()
+            }
+        } catch {
+            requestProblem = RelationshipRequestProblem(error)
+        }
+    }
+
+    /// Leaves the request's outcome. A request still waiting is kept and followed until it is answered,
+    /// so Home switches to Taken even after the Scan screen is closed.
+    public func dismissOutgoingRequest() {
+        requestProblem = nil
+        guard outgoingRequest?.status != .pending else { return }
+        outgoingRequest = nil
+    }
+
+    /// How often to ask Trustee about a request still waiting. Phase A has no push.
+    public static let pendingRequestCheckInterval: Duration = .seconds(3)
+
+    /// Which day of the Relationship `date` falls on: day 1 is the day it started.
+    public func dayTogether(on date: Date) -> Int? {
+        guard case .active(_, let since) = relationship else { return nil }
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: since), to: calendar.startOfDay(for: date)).day ?? 0
+        return days + 1
+    }
+
     /// Loads this Lastys ID's current status from Trustee.
     public func start() async {
         guard phone.lastysID != nil else { return }
         do {
-            relationship = try await trustee.relationshipStatus()
+            phone.relationship = try await trustee.relationshipStatus()
         } catch {
             // Errors surface in later slices; for now the last known state stays on screen.
         }
@@ -310,7 +376,25 @@ public enum ScanProblem: Equatable, Sendable {
         case .notALastysQR: self = .notALastysQR
         case .expiredQR: self = .expiredQR
         case .forgedQR: self = .forgedQR
-        case .noLastysID, .phoneAlreadyHasLastysID: self = .noLastysID
+        case .noLastysID: self = .noLastysID
+        default: self = .couldNotReachLastys // not something a Scan returns
+        }
+    }
+}
+
+public enum RelationshipRequestProblem: Equatable, Sendable {
+    /// Sending or checking a request needs Trustee, so it needs internet.
+    case needsInternet
+    /// Something changed since the Scan (it got too old, or one of you became Taken): Scan them again.
+    case scanAgain
+    case couldNotReachLastys
+
+    init(_ error: Error) {
+        switch error as? TrusteeError {
+        case .scanTooOld, .scanRequired, .youAreTaken, .youAreCoolingOff, .theyAreTaken, .theyAreCoolingOff, .thatIsYou:
+            self = .scanAgain
+        default:
+            self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
         }
     }
 }

@@ -19,6 +19,9 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 16) {
                 header
                 statusCard
+                if let request = model.outgoingRequest, request.status == .pending {
+                    waitingCard(for: request)
+                }
                 quickActions
                 safetyTips
                 momentsSection
@@ -70,7 +73,44 @@ struct HomeView: View {
         switch model.relationship {
         case .none:
             verifiedSingleCard
+        case .active(let partnerNickname, let since):
+            takenCard(partnerNickname: partnerNickname, since: since)
         }
+    }
+
+    private func waitingCard(for request: RelationshipRequest) -> some View {
+        HStack(spacing: 12) {
+            ProgressView()
+            Text("Waiting for \(request.toNickname) to answer your Relationship request")
+                .font(.jakarta(14, .semibold))
+            Spacer(minLength: 0)
+        }
+        .card()
+    }
+
+    private func takenCard(partnerNickname: String, since: Date) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "heart.fill")
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(Theme.rose)
+                .frame(width: 44, height: 44)
+                .background(Circle().fill(Theme.roseTint))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: model.nickname)
+                    .font(.jakarta(13, .semibold))
+                    .foregroundStyle(Theme.muted)
+                Text("Taken")
+                    .font(.jakarta(18, .heavy))
+                Text("With \(partnerNickname)")
+                    .font(.jakarta(15, .semibold))
+                Text("Day \(model.dayTogether(on: Date()) ?? 1) together since \(since, format: .dateTime.day().month(.abbreviated).year())")
+                    .font(.jakarta(13))
+                    .foregroundStyle(Theme.muted)
+            }
+            Spacer(minLength: 0)
+        }
+        .card(padding: 20)
     }
 
     private var verifiedSingleCard: some View {

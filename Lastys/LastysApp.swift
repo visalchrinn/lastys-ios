@@ -63,6 +63,13 @@ struct AppRootView: View {
         }
         .environment(\.locale, Locale(identifier: model.language.rawValue))
         .task(id: model.screen == .home) { await model.start() }
+        // Phase A has no push: while a Relationship request waits, keep asking, wherever the person is in the app.
+        .task(id: model.outgoingRequest?.status) {
+            while model.outgoingRequest?.status == .pending, !Task.isCancelled {
+                try? await Task.sleep(for: AppModel.pendingRequestCheckInterval)
+                await model.refreshOutgoingRequest()
+            }
+        }
     }
 }
 

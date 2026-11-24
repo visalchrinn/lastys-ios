@@ -1,0 +1,16 @@
+{
+  "name": "Nobody can send a Relationship request to a Taken Lastys ID",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "carol", "do": "update-profile", "with": { "nickname": "Carol" } },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "bob" } },
+    { "phone": "alice", "do": "send-relationship-request" },
+    { "phone": "bob", "do": "accept-relationship-request", "with": { "from": "alice" } },
+    { "phone": "carol", "do": "scan", "with": { "qrOf": "alice" }, "expect": { "requestBlocked": "they-are-taken" } },
+    { "phone": "carol", "do": "send-relationship-request", "expect": { "error": "they-are-taken" } }
+  ]
+}

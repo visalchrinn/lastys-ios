@@ -13,6 +13,13 @@ public protocol TrusteeClient: Sendable {
     func relationshipStatus() async throws -> RelationshipStatus
     /// Resolves a scanned Lastys QR into what that Lastys ID shows right now.
     func scan(_ payload: String) async throws -> ScanResult
+    /// Offers a Relationship to the person this phone just Scanned. There is no way to name anyone else:
+    /// no lookup by Personal ID, so nobody can be targeted remotely.
+    func sendRelationshipRequest(scanID: String) async throws -> RelationshipRequest
+    /// Where a Relationship request this phone sent stands now.
+    func relationshipRequest(id: String) async throws -> RelationshipRequest
+    /// The receiver accepts or declines a Relationship request. Accepting starts the Relationship.
+    func respondToRelationshipRequest(id: String, accept: Bool) async throws
 }
 
 /// What the person is given when their Lastys ID is created.
@@ -37,4 +44,22 @@ public enum TrusteeError: Error, Equatable, Sendable {
     case expiredQR
     /// The Lastys QR wasn't signed by that Lastys ID's own phone.
     case forgedQR
+    /// A Relationship request must follow a Scan this phone made.
+    case scanRequired
+    /// The Scan was too long ago; Scan them again.
+    case scanTooOld
+    /// This Lastys ID already has an active Relationship.
+    case youAreTaken
+    /// This Lastys ID is in a Cooling-off period.
+    case youAreCoolingOff
+    /// The other Lastys ID already has an active Relationship.
+    case theyAreTaken
+    /// The other Lastys ID is in a Cooling-off period.
+    case theyAreCoolingOff
+    /// A Relationship needs two different Lastys IDs.
+    case thatIsYou
+    /// No such Relationship request for this phone.
+    case requestNotFound
+    /// The Relationship request was already answered or has expired.
+    case requestNotPending
 }

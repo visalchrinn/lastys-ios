@@ -11,8 +11,47 @@ public struct LastysID: Equatable, Hashable, Codable, Sendable {
 
 /// Whether a Lastys ID has an active Relationship.
 /// "Verified Single" and "Taken" are display labels derived from this, not states of their own.
-public enum RelationshipStatus: Equatable, Sendable {
+public enum RelationshipStatus: Codable, Equatable, Sendable {
     case none
+    /// In a Relationship with the Partner of this nickname, since this moment.
+    case active(partnerNickname: String, since: Date)
+}
+
+/// A Relationship request this phone sent, as the sender sees it.
+public struct RelationshipRequest: Equatable, Sendable {
+    public enum Status: String, Sendable {
+        /// Waiting for the receiver.
+        case pending
+        /// The receiver accepted: the Relationship has started.
+        case accepted
+        /// The receiver declined. Nothing else changes: no Cooling-off period starts.
+        case declined
+        /// No longer possible, because one of the two started a Relationship with someone else.
+        case expired
+    }
+
+    public let id: String
+    /// The receiver's nickname, as their Scan showed it.
+    public let toNickname: String
+    public let status: Status
+
+    public init(id: String, toNickname: String, status: Status) {
+        self.id = id
+        self.toNickname = toNickname
+        self.status = status
+    }
+}
+
+/// Why a Scan can't lead to a Relationship request.
+public enum RelationshipRequestBlock: Equatable, Sendable {
+    /// The scanner already has an active Relationship.
+    case youAreTaken
+    /// The scanner's Relationship ended recently; requests are possible again from this moment.
+    case youAreCoolingOff(until: Date)
+    /// The scanned person already has an active Relationship.
+    case theyAreTaken
+    /// The scanner scanned their own Lastys QR.
+    case thatIsYou
 }
 
 /// A dated event that one Lastys ID owns, such as a birthday or first date.
@@ -72,6 +111,8 @@ public struct ScanResult: Equatable, Sendable {
     /// A Lastys ID younger than this many days gets a warning: it may be someone's second ID.
     public static let veryNewWithinDays = 14
 
+    /// Names this Scan, so a Relationship request can refer to it. Only the scanner may use it.
+    public let scanID: String
     public let nickname: String
     public let photo: Data?
     public let status: Status
@@ -79,21 +120,27 @@ public struct ScanResult: Equatable, Sendable {
     public let phoneTransferCount: Int
     /// Nil when the person shares Status only: the history is hidden by its owner.
     public let relationshipHistory: [PastRelationship]?
+    /// Why the scanner can't send this person a Relationship request, or nil when they can.
+    public let requestBlock: RelationshipRequestBlock?
 
     public init(
+        scanID: String,
         nickname: String,
         photo: Data?,
         status: Status,
         idAgeDays: Int,
         phoneTransferCount: Int,
-        relationshipHistory: [PastRelationship]?
+        relationshipHistory: [PastRelationship]?,
+        requestBlock: RelationshipRequestBlock?
     ) {
+        self.scanID = scanID
         self.nickname = nickname
         self.photo = photo
         self.status = status
         self.idAgeDays = idAgeDays
         self.phoneTransferCount = phoneTransferCount
         self.relationshipHistory = relationshipHistory
+        self.requestBlock = requestBlock
     }
 
     public var isVeryNew: Bool { idAgeDays < Self.veryNewWithinDays }

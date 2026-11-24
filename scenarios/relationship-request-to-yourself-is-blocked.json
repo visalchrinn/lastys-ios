@@ -1,0 +1,13 @@
+{
+  "name": "Scanning your own Lastys QR cannot lead to a Relationship request",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "carol", "do": "update-profile", "with": { "nickname": "Carol" } },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "alice" }, "expect": { "requestBlocked": "that-is-you" } },
+    { "phone": "alice", "do": "send-relationship-request", "expect": { "error": "that-is-you" } }
+  ]
+}

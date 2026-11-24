@@ -1,0 +1,16 @@
+{
+  "name": "A Relationship request can only follow this phone's own Scan from the last 10 minutes",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "carol", "do": "update-profile", "with": { "nickname": "Carol" } },
+    { "phone": "alice", "do": "send-relationship-request", "expect": { "error": "scan-required" } },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "bob" } },
+    { "phone": "carol", "do": "send-relationship-request", "with": { "scanOf": "alice" }, "expect": { "error": "scan-required" } },
+    { "phone": "alice", "do": "wait", "with": { "minutes": "11" } },
+    { "phone": "alice", "do": "send-relationship-request", "expect": { "error": "scan-too-old" } }
+  ]
+}

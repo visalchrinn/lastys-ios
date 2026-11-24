@@ -59,4 +59,37 @@ struct UpgradeTests {
 
         #expect(result.idAgeDays == 10)
     }
+
+    @Test func trusteeSavedByTheScanBuildStillLoadsItsPeople() async throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("trustee-\(UUID().uuidString).json")
+        let key = SoftwarePhoneKey()
+        // Saved by the build from ticket #5: people have no Relationship fields yet.
+        try Data("""
+        {"lastysIDByPhone":{"\(key.trusteeID)":{"personalID":"LT-8K2F-91QA"}},
+         "people":{"LT-8K2F-91QA":{"lastysID":{"personalID":"LT-8K2F-91QA"},"createdAt":0,"nickname":"Srey Pich",
+                   "shareLevel":"status-only","pastRelationships":[],"phoneTransferCount":0}}}
+        """.utf8).write(to: file)
+
+        let trustee = FakeTrustee(savingTo: file)
+
+        #expect(try await trustee.client(forPhone: key.trusteeID).relationshipStatus() == .none)
+        let scanner = trustee.client(forPhone: "scanner")
+        _ = try await scanner.createLastysID()
+        let result = try await scanner.scan(LastysQRToken(personalID: "LT-8K2F-91QA", at: Date(), signedBy: key).text)
+        #expect(result.nickname == "Srey Pich")
+    }
+
+    @Test func aCachedRelationshipThisBuildCannotReadNeverCostsTheLastysID() throws {
+        let phone = TestPhone()
+        try Data(#"""
+        {"lastysID":{"personalID":"LT-8K2F-91QA"},"recoveryCode":"7QX2-M4KD-9PLA-3HTV","hasSavedRecoveryCode":true,
+         "nickname":"Srey Pich","hasFinishedOnboarding":true,"relationship":{"somethingNewer":{"x":1}}}
+        """#.utf8).write(to: phone.phoneFile)
+
+        phone.relaunch()
+
+        #expect(phone.model.screen == .home)
+        #expect(phone.model.lastysID == LastysID(personalID: "LT-8K2F-91QA"))
+        #expect(phone.model.relationship == .none)
+    }
 }

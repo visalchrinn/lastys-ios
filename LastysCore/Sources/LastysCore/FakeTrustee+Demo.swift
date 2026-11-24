@@ -37,6 +37,14 @@ extension FakeTrustee {
         return try LastysQRToken(personalID: person.personalID, at: date, signedBy: person.key).text
     }
 
+    /// Demo: the sample person a Relationship request went to accepts or declines it, as their phone would.
+    public func demoRespondToRelationshipRequest(id: String, accept: Bool) throws {
+        guard let receiver = state.requests[id]?.to,
+              let demo = DemoPerson.allCases.first(where: { $0.personalID == receiver })
+        else { throw TrusteeError.requestNotFound }
+        try respondToRelationshipRequest(phone: demo.key.trusteeID, id: id, accept: accept)
+    }
+
     private func addIfMissing(_ demo: DemoPerson) {
         guard state.people[demo.personalID] == nil else { return }
         let id = LastysID(personalID: demo.personalID)
@@ -54,8 +62,16 @@ extension FakeTrustee {
         case .vanna:
             break
         case .sokha:
+            // Sokha's Partner, Bopha, has no phone in the demo: nobody can Scan or act as her.
+            let bophaID = LastysID(personalID: "LT-BPHA-1234")
+            let since = daysAgo(150)
+            var bopha = Person(lastysID: bophaID, createdAt: daysAgo(300), nickname: "Bopha")
+            bopha.partner = demo.personalID
+            bopha.relationshipSince = since
+            state.people[bophaID.personalID] = bopha
             person.createdAt = daysAgo(200)
-            person.partner = "LT-BPHA-1234"
+            person.partner = bophaID.personalID
+            person.relationshipSince = since
         }
         state.lastysIDByPhone[demo.key.trusteeID] = id
         state.people[demo.personalID] = person

@@ -1,0 +1,22 @@
+{
+  "name": "A declined Relationship request starts no Cooling-off period for either side",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "carol", "do": "update-profile", "with": { "nickname": "Carol" } },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "bob" } },
+    { "phone": "alice", "do": "send-relationship-request" },
+    { "phone": "bob", "do": "decline-relationship-request", "with": { "from": "alice" } },
+    { "phone": "alice", "do": "get-relationship-request-status", "with": { "to": "bob" }, "expect": { "status": "declined" } },
+    { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "none" } },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "carol" }, "expect": { "requestBlocked": "none" } },
+    { "phone": "alice", "do": "send-relationship-request" },
+    { "phone": "carol", "do": "accept-relationship-request", "with": { "from": "alice" } },
+    { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "active", "partner": "Carol" } },
+    { "phone": "bob", "do": "scan", "with": { "qrOf": "carol" }, "expect": { "status": "taken" } },
+    { "phone": "carol", "do": "scan", "with": { "qrOf": "bob" }, "expect": { "status": "single", "requestBlocked": "you-are-taken" } }
+  ]
+}
