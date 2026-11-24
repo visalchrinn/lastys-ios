@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(AppModel.self) private var model
     @State private var showingMyLastysQR = false
     @State private var showingScan = false
+    @State private var showingRelationship = false
     #if DEBUG
     @Environment(\.demoTrustee) private var demoTrustee
     #else
@@ -41,6 +42,12 @@ struct HomeView: View {
                 .environment(model)
                 .demoTrustee(demoTrustee)
         }
+        .sheet(isPresented: $showingRelationship) {
+            RelationshipView()
+                .environment(model)
+                .demoTrustee(demoTrustee)
+                .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: Header
@@ -73,9 +80,36 @@ struct HomeView: View {
         switch model.relationship {
         case .none:
             verifiedSingleCard
-        case .active(let partnerNickname, let since):
-            takenCard(partnerNickname: partnerNickname, since: since)
+        case .active(let partnerNickname, let since, let stage):
+            takenCard(partnerNickname: partnerNickname, since: since, stage: stage)
+        case .coolingOff(let until):
+            coolingOffCard(until: until)
         }
+    }
+
+    private func coolingOffCard(until: Date) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(verbatim: model.nickname)
+                .font(.jakarta(13, .semibold))
+                .foregroundStyle(Theme.muted)
+            Text("Relationship ended")
+                .font(.jakarta(18, .heavy))
+            Text("Cooling-off period until \(until, format: .dateTime.day().month(.abbreviated).year()). You can't send or accept a Relationship request until then.")
+                .font(.jakarta(13))
+                .foregroundStyle(Theme.muted)
+            #if DEBUG
+            if let demoTrustee, let me = model.lastysID?.personalID {
+                Button("Demo: skip the Cooling-off period") {
+                    Task {
+                        try? await demoTrustee.demoSkipCoolingOff(of: me)
+                        await model.start()
+                    }
+                }
+                .buttonStyle(GhostButtonStyle())
+            }
+            #endif
+        }
+        .card(padding: 20)
     }
 
     private func waitingCard(for request: RelationshipRequest) -> some View {
@@ -88,7 +122,22 @@ struct HomeView: View {
         .card()
     }
 
-    private func takenCard(partnerNickname: String, since: Date) -> some View {
+    private func takenCard(partnerNickname: String, since: Date, stage: RelationshipStage) -> some View {
+        Button {
+            showingRelationship = true
+        } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                takenSummary(partnerNickname: partnerNickname, since: since)
+                if stage != .together {
+                    RelationshipStageCard(status: model.relationship)
+                }
+            }
+        }
+        .buttonStyle(PressableStyle())
+        .accessibilityHint(Text("Shows your Relationship"))
+    }
+
+    private func takenSummary(partnerNickname: String, since: Date) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "heart.fill")
                 .font(.system(size: 20, weight: .semibold))

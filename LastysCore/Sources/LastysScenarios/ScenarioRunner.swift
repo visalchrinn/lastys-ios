@@ -61,6 +61,7 @@ private final class Run: @unchecked Sendable {
 
     /// The response fields for a step, or nil when the action is unknown.
     func perform(_ step: Scenario.Step) async throws -> [String: String]? {
+        if step.action == "team-decides" { return try await teamDecides(step) }
         let client = trustee.client(forPhone: key(of: step.phone).trusteeID)
         switch step.action {
         case "create-lastys-id":
@@ -87,6 +88,21 @@ private final class Run: @unchecked Sendable {
             let id = try requestID(from: step.arguments["from"], to: step.phone)
             try await client.respondToRelationshipRequest(id: id, accept: step.action == "accept-relationship-request")
             return [:]
+        case "send-end-request":
+            try await client.sendEndRequest()
+            return [:]
+        case "withdraw-end-request":
+            try await client.withdrawEndRequest()
+            return [:]
+        case "agree-to-end-request", "decline-end-request":
+            try await client.respondToEndRequest(agree: step.action == "agree-to-end-request")
+            return [:]
+        case "escalate-to-team-review":
+            try await client.escalateToTeamReview()
+            return [:]
+        case "report-safety-concern":
+            try await client.reportSafetyConcern()
+            return [:]
         case "wait":
             let minutes = Double(step.arguments["minutes"] ?? "0") ?? 0
             let days = Double(step.arguments["days"] ?? "0") ?? 0
@@ -95,6 +111,15 @@ private final class Run: @unchecked Sendable {
         default:
             return nil
         }
+    }
+
+    /// The Lastys team, not a phone: the staff console's decision after a Team review. Its `phone` gets no key.
+    private func teamDecides(_ step: Scenario.Step) async throws -> [String: String] {
+        guard let about = step.arguments["about"], let personalID = personalIDs[about] else {
+            throw ScenarioError(message: "team-decides needs `about`, a phone that has created a Lastys ID")
+        }
+        try await trustee.teamDecides(aboutRelationshipOf: personalID, endIt: step.arguments["end"] == "true")
+        return [:]
     }
 
     private func requestID(from sender: String?, to receiver: String?) throws -> String {
@@ -150,6 +175,9 @@ extension TrusteeError {
         case .thatIsYou: return "that-is-you"
         case .requestNotFound: return "request-not-found"
         case .requestNotPending: return "request-not-pending"
+        case .noRelationship: return "no-relationship"
+        case .notAllowedNow: return "not-allowed-now"
+        case .cannotEscalateYet: return "cannot-escalate-yet"
         }
     }
 }
@@ -157,9 +185,33 @@ extension TrusteeError {
 extension RelationshipStatus {
     var fields: [String: String] {
         switch self {
-        case .none: return ["status": "none"]
-        case .active(let partnerNickname, _): return ["status": "active", "partner": partnerNickname]
+        case .none:
+            return ["status": "none"]
+        case .coolingOff(let until):
+            return ["status": "cooling-off", "until": Self.day(until)]
+        case .active(let partnerNickname, _, let stage):
+            var fields = ["status": "active", "partner": partnerNickname]
+            switch stage {
+            case .together:
+                fields["stage"] = "together"
+            case .ending(let request):
+                fields["stage"] = "ending"
+                fields["endRequestFrom"] = request.sentByMe ? "me" : "partner"
+                fields["declined"] = String(request.declined)
+            case .inTeamReview(let review):
+                fields["stage"] = "team-review"
+                fields["reviewReason"] = review.reason.rawValue
+            }
+            return fields
         }
+    }
+
+    /// A UTC calendar day, `yyyy-MM-dd`.
+    private static func day(_ date: Date) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let parts = calendar.dateComponents([.year, .month, .day], from: date)
+        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
     }
 }
 

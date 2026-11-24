@@ -1,0 +1,86 @@
+{
+  "name": "The requester can withdraw an End request, and the Relationship carries on",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "bob",
+      "do": "withdraw-end-request",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "withdraw-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "stage": "together"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "agree-to-end-request",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    }
+  ]
+}

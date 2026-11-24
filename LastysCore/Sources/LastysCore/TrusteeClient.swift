@@ -20,6 +20,16 @@ public protocol TrusteeClient: Sendable {
     func relationshipRequest(id: String) async throws -> RelationshipRequest
     /// The receiver accepts or declines a Relationship request. Accepting starts the Relationship.
     func respondToRelationshipRequest(id: String, accept: Bool) async throws
+    /// Asks the Partner to agree to end the Relationship. Both stay Taken while they have 7 days to answer.
+    func sendEndRequest() async throws
+    /// The requester takes their End request back; the Relationship carries on.
+    func withdrawEndRequest() async throws
+    /// The other Partner agrees (the Relationship ends) or declines.
+    func respondToEndRequest(agree: Bool) async throws
+    /// After a decline, or 7 days with no answer, the requester asks the Lastys team to decide.
+    func escalateToTeamReview() async throws
+    /// Either Partner, at any stage: the Lastys team reviews the Relationship within 24 hours.
+    func reportSafetyConcern() async throws
 }
 
 /// What the person is given when their Lastys ID is created.
@@ -62,4 +72,10 @@ public enum TrusteeError: Error, Equatable, Sendable {
     case requestNotFound
     /// The Relationship request was already answered or has expired.
     case requestNotPending
+    /// This Lastys ID has no active Relationship.
+    case noRelationship
+    /// The Relationship's current stage doesn't allow this, or this Partner can't do it.
+    case notAllowedNow
+    /// A Team review needs a declined End request, or 7 days without an answer.
+    case cannotEscalateYet
 }

@@ -86,5 +86,72 @@ struct DemoTests {
         #expect(me.model.outgoingRequest?.status == .declined)
         #expect(me.model.relationship == .none)
     }
+
+    /// Me, in a Relationship with demo Dara.
+    private func meWithDara() async throws -> TestPhone {
+        let me = await me()
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara, at: Date()))
+        await me.model.sendRelationshipRequest()
+        try await me.trustee.demoRespondToRelationshipRequest(id: try #require(me.model.outgoingRequest?.id), accept: true)
+        await me.model.refreshOutgoingRequest()
+        return me
+    }
+
+    @Test func demoPartnerAgreesToMyEndRequestAndICanSkipTheCoolingOffPeriod() async throws {
+        let me = try await meWithDara()
+        let myID = try #require(me.model.lastysID?.personalID)
+        await me.model.perform(.sendEndRequest)
+
+        try await me.trustee.demoPartnerRespondsToEndRequest(of: myID, agree: true)
+        await me.model.start()
+        guard case .coolingOff = me.model.relationship else {
+            Issue.record("expected the Cooling-off period, got \(me.model.relationship)")
+            return
+        }
+
+        try await me.trustee.demoSkipCoolingOff(of: myID)
+        await me.model.start()
+        #expect(me.model.relationship == .none)
+    }
+
+    @Test func demoNoAnswerAfter7DaysLetsMeAskForATeamReviewAndTheTeamEndsIt() async throws {
+        let me = try await meWithDara()
+        let myID = try #require(me.model.lastysID?.personalID)
+        await me.model.perform(.sendEndRequest)
+
+        try await me.trustee.demoNoAnswerFor7Days(toEndRequestOf: myID)
+        await me.model.start()
+        #expect(me.model.endingActions.contains(.escalateToTeamReview))
+
+        await me.model.perform(.escalateToTeamReview)
+        try await me.trustee.teamDecides(aboutRelationshipOf: myID, endIt: true)
+        await me.model.start()
+        guard case .coolingOff = me.model.relationship else {
+            Issue.record("expected the Cooling-off period, got \(me.model.relationship)")
+            return
+        }
+    }
+
+    @Test func demoPartnerSendsAnEndRequestSoICanAgreeOrDecline() async throws {
+        let me = try await meWithDara()
+
+        try await me.trustee.demoPartnerSendsEndRequest(of: try #require(me.model.lastysID?.personalID))
+        await me.model.start()
+
+        #expect(me.model.endingActions == [.agreeToEndRequest, .declineEndRequest, .reportSafetyConcern])
+    }
+
+    @Test func demoPartnerReportsASafetyConcern() async throws {
+        let me = try await meWithDara()
+
+        try await me.trustee.demoPartnerReportsSafetyConcern(of: try #require(me.model.lastysID?.personalID))
+        await me.model.start()
+
+        guard case .active(_, _, .inTeamReview(let review)) = me.model.relationship else {
+            Issue.record("expected a Team review, got \(me.model.relationship)")
+            return
+        }
+        #expect(review.reason == .safetyConcern)
+    }
 }
 #endif

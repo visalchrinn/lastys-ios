@@ -1,0 +1,119 @@
+{
+  "name": "When the other Partner agrees to an End request, the Relationship ends and both former Partners enter a 7-day Cooling-off period",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "stage": "ending",
+        "endRequestFrom": "me",
+        "declined": "false"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "stage": "ending",
+        "endRequestFrom": "partner"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      },
+      "expect": {
+        "status": "taken"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "agree-to-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "cooling-off",
+        "until": "2026-12-06"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "cooling-off",
+        "until": "2026-12-06"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      },
+      "expect": {
+        "status": "single"
+      }
+    }
+  ]
+}

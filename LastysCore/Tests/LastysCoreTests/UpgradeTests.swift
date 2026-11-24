@@ -92,4 +92,20 @@ struct UpgradeTests {
         #expect(phone.model.lastysID == LastysID(personalID: "LT-8K2F-91QA"))
         #expect(phone.model.relationship == .none)
     }
+
+    @Test func aRelationshipCachedByTheRequestBuildStillShowsTaken() throws {
+        let phone = TestPhone()
+        // Saved by the build from ticket #6: an active Relationship had no stage yet.
+        try Data(#"""
+        {"lastysID":{"personalID":"LT-8K2F-91QA"},"recoveryCode":"7QX2-M4KD-9PLA-3HTV","hasSavedRecoveryCode":true,
+         "nickname":"Srey Pich","hasFinishedOnboarding":true,
+         "relationship":{"active":{"partnerNickname":"Dara","since":815000000}}}
+        """#.utf8).write(to: phone.phoneFile)
+
+        phone.relaunch()
+
+        #expect(phone.model.relationship == .active(
+            partnerNickname: "Dara", since: Date(timeIntervalSinceReferenceDate: 815_000_000), stage: .together
+        ))
+    }
 }

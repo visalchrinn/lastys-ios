@@ -47,6 +47,31 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         try await wrapped.respondToRelationshipRequest(id: id, accept: accept)
     }
 
+    func sendEndRequest() async throws {
+        record("sendEndRequest()")
+        try await wrapped.sendEndRequest()
+    }
+
+    func withdrawEndRequest() async throws {
+        record("withdrawEndRequest()")
+        try await wrapped.withdrawEndRequest()
+    }
+
+    func respondToEndRequest(agree: Bool) async throws {
+        record(agree ? "respondToEndRequest(agree: true)" : "respondToEndRequest(agree: false)")
+        try await wrapped.respondToEndRequest(agree: agree)
+    }
+
+    func escalateToTeamReview() async throws {
+        record("escalateToTeamReview()")
+        try await wrapped.escalateToTeamReview()
+    }
+
+    func reportSafetyConcern() async throws {
+        record("reportSafetyConcern()")
+        try await wrapped.reportSafetyConcern()
+    }
+
     func relationshipStatus() async throws -> RelationshipStatus {
         record("relationshipStatus()")
         return try await wrapped.relationshipStatus()

@@ -1,0 +1,114 @@
+{
+  "name": "A Relationship never ends one-sidedly: the requester can't agree to their own End request, and the team decides only during a Team review",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "send-end-request",
+      "expect": {
+        "error": "no-relationship"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "report-safety-concern",
+      "expect": {
+        "error": "no-relationship"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "agree-to-end-request",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "decline-end-request",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "lastys-team",
+      "do": "team-decides",
+      "with": {
+        "about": "alice",
+        "end": "true"
+      },
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "stage": "ending"
+      }
+    }
+  ]
+}

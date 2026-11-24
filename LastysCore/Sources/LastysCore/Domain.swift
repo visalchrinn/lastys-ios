@@ -9,12 +9,59 @@ public struct LastysID: Equatable, Hashable, Codable, Sendable {
     }
 }
 
-/// Whether a Lastys ID has an active Relationship.
+/// Whether a Lastys ID has an active Relationship, as its owner sees it.
 /// "Verified Single" and "Taken" are display labels derived from this, not states of their own.
 public enum RelationshipStatus: Codable, Equatable, Sendable {
     case none
-    /// In a Relationship with the Partner of this nickname, since this moment.
-    case active(partnerNickname: String, since: Date)
+    /// In a Relationship with the Partner of this nickname since this moment. Taken at every stage.
+    case active(partnerNickname: String, since: Date, stage: RelationshipStage)
+    /// A Relationship ended recently: no Relationship request can be sent or accepted until then.
+    case coolingOff(until: Date)
+}
+
+/// Where an active Relationship stands. It never ends one-sidedly (ADR 0002).
+public enum RelationshipStage: Codable, Equatable, Sendable {
+    case together
+    /// An End request is waiting for the other Partner.
+    case ending(EndRequest)
+    /// The Lastys team is deciding whether the Relationship ends.
+    case inTeamReview(TeamReview)
+}
+
+public struct EndRequest: Codable, Equatable, Sendable {
+    /// The other Partner has this many days to agree or decline.
+    public static let daysToAnswer = 7
+
+    public let sentByMe: Bool
+    public let sentAt: Date
+    /// The other Partner declined; the requester may now ask for a Team review.
+    public let declined: Bool
+
+    public init(sentByMe: Bool, sentAt: Date, declined: Bool) {
+        self.sentByMe = sentByMe
+        self.sentAt = sentAt
+        self.declined = declined
+    }
+
+    /// When the 7 days to answer run out.
+    public var answerBy: Date { sentAt.addingTimeInterval(Double(Self.daysToAnswer) * 86_400) }
+}
+
+public struct TeamReview: Codable, Equatable, Sendable {
+    public enum Reason: String, Codable, Sendable {
+        /// An End request was declined, or left unanswered for 7 days. Decided within 3 working days.
+        case endRequest = "end-request"
+        /// A Partner reported a safety concern. Handled within 24 hours.
+        case safetyConcern = "safety-concern"
+    }
+
+    public let reason: Reason
+    public let since: Date
+
+    public init(reason: Reason, since: Date) {
+        self.reason = reason
+        self.since = since
+    }
 }
 
 /// A Relationship request this phone sent, as the sender sees it.
@@ -144,4 +191,45 @@ public struct ScanResult: Equatable, Sendable {
     }
 
     public var isVeryNew: Bool { idAgeDays < Self.veryNewWithinDays }
+}
+
+extension RelationshipStatus {
+    private enum CaseKey: String, CodingKey { case none, active, coolingOff }
+    private enum ActiveKey: String, CodingKey { case partnerNickname, since, stage }
+    private enum CoolingOffKey: String, CodingKey { case until }
+
+    /// The same shape Swift would generate, except that an active Relationship saved before stages
+    /// existed (ticket #6) reads as together, so an upgraded phone still shows Taken.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CaseKey.self)
+        if c.contains(.active) {
+            let active = try c.nestedContainer(keyedBy: ActiveKey.self, forKey: .active)
+            self = .active(
+                partnerNickname: try active.decode(String.self, forKey: .partnerNickname),
+                since: try active.decode(Date.self, forKey: .since),
+                stage: try active.decodeIfPresent(RelationshipStage.self, forKey: .stage) ?? .together
+            )
+        } else if c.contains(.coolingOff) {
+            let coolingOff = try c.nestedContainer(keyedBy: CoolingOffKey.self, forKey: .coolingOff)
+            self = .coolingOff(until: try coolingOff.decode(Date.self, forKey: .until))
+        } else {
+            self = .none
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CaseKey.self)
+        switch self {
+        case .none:
+            _ = c.nestedContainer(keyedBy: ActiveKey.self, forKey: .none)
+        case .active(let partnerNickname, let since, let stage):
+            var active = c.nestedContainer(keyedBy: ActiveKey.self, forKey: .active)
+            try active.encode(partnerNickname, forKey: .partnerNickname)
+            try active.encode(since, forKey: .since)
+            try active.encode(stage, forKey: .stage)
+        case .coolingOff(let until):
+            var coolingOff = c.nestedContainer(keyedBy: CoolingOffKey.self, forKey: .coolingOff)
+            try coolingOff.encode(until, forKey: .until)
+        }
+    }
 }

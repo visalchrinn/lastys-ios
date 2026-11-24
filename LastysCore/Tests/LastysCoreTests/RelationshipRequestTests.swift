@@ -39,7 +39,7 @@ struct RelationshipRequestTests {
         await me.model.refreshOutgoingRequest()
 
         #expect(me.model.outgoingRequest?.status == .accepted)
-        guard case .active(let partner, let since) = me.model.relationship else {
+        guard case .active(let partner, let since, _) = me.model.relationship else {
             Issue.record("expected an active Relationship, got \(me.model.relationship)")
             return
         }
@@ -56,7 +56,7 @@ struct RelationshipRequestTests {
 
         me.relaunch()
 
-        guard case .active(let partner, _) = me.model.relationship else {
+        guard case .active(let partner, _, _) = me.model.relationship else {
             Issue.record("expected the last known Relationship, got \(me.model.relationship)")
             return
         }

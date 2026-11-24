@@ -45,6 +45,45 @@ extension FakeTrustee {
         try respondToRelationshipRequest(phone: demo.key.trusteeID, id: id, accept: accept)
     }
 
+    /// Demo: the Partner of `personalID` agrees to or declines their End request, as the Partner's phone would.
+    public func demoPartnerRespondsToEndRequest(of personalID: String, agree: Bool) throws {
+        try respondToEndRequest(phone: try phoneOfPartner(of: personalID), agree: agree)
+    }
+
+    /// Demo: the Partner of `personalID` asks to end the Relationship, as the Partner's phone would.
+    public func demoPartnerSendsEndRequest(of personalID: String) throws {
+        try sendEndRequest(phone: try phoneOfPartner(of: personalID))
+    }
+
+    /// Demo: the Partner of `personalID` reports a safety concern, as the Partner's phone would.
+    public func demoPartnerReportsSafetyConcern(of personalID: String) throws {
+        try reportSafetyConcern(phone: try phoneOfPartner(of: personalID))
+    }
+
+    /// Demo: the 7 days to answer `personalID`'s End request run out with no answer.
+    public func demoNoAnswerFor7Days(toEndRequestOf personalID: String) throws {
+        guard let partner = state.people[personalID]?.partner,
+              let sentAt = state.endings[Self.relationshipKey(personalID, partner)]?.endRequestSentAt
+        else { throw TrusteeError.notAllowedNow }
+        state.endings[Self.relationshipKey(personalID, partner)]?.endRequestSentAt =
+            sentAt.addingTimeInterval(-Double(EndRequest.daysToAnswer) * 86_400)
+        save()
+    }
+
+    /// Demo: `personalID`'s Cooling-off period is over now.
+    public func demoSkipCoolingOff(of personalID: String) throws {
+        guard state.people[personalID]?.coolingOffUntil != nil else { throw TrusteeError.notAllowedNow }
+        state.people[personalID]?.coolingOffUntil = nil
+        save()
+    }
+
+    private func phoneOfPartner(of personalID: String) throws -> String {
+        guard let partner = state.people[personalID]?.partner,
+              let phone = state.lastysIDByPhone.first(where: { $0.value.personalID == partner })?.key
+        else { throw TrusteeError.noRelationship }
+        return phone
+    }
+
     private func addIfMissing(_ demo: DemoPerson) {
         guard state.people[demo.personalID] == nil else { return }
         let id = LastysID(personalID: demo.personalID)

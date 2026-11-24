@@ -66,6 +66,8 @@ public actor FakeTrustee {
         var people: [String: Person] = [:]
         var scans: [String: ScanRecord] = [:]
         var requests: [String: RequestRecord] = [:]
+        /// How each ending is going, by `FakeTrustee.relationshipKey`. No record means together.
+        var endings: [String: EndingRecord] = [:]
 
         init() {}
 
@@ -80,6 +82,7 @@ public actor FakeTrustee {
             people = try c.decodeIfPresent([String: Person].self, forKey: .people) ?? [:]
             scans = try c.decodeIfPresent([String: ScanRecord].self, forKey: .scans) ?? [:]
             requests = try c.decodeIfPresent([String: RequestRecord].self, forKey: .requests) ?? [:]
+            endings = try c.decodeIfPresent([String: EndingRecord].self, forKey: .endings) ?? [:]
             let earlierProfiles = try c.decodeIfPresent([String: EarlierProfile].self, forKey: .profileByLastysID) ?? [:]
             for id in lastysIDByPhone.values where people[id.personalID] == nil {
                 let profile = earlierProfiles[id.personalID]
@@ -95,10 +98,11 @@ public actor FakeTrustee {
             try c.encode(people, forKey: .people)
             try c.encode(scans, forKey: .scans)
             try c.encode(requests, forKey: .requests)
+            try c.encode(endings, forKey: .endings)
         }
 
         private enum CodingKeys: String, CodingKey {
-            case lastysIDByPhone, people, scans, requests
+            case lastysIDByPhone, people, scans, requests, endings
             case profileByLastysID // written by the build from ticket #3
         }
 
@@ -156,9 +160,10 @@ public actor FakeTrustee {
     func relationshipStatus(phone: String) throws -> RelationshipStatus {
         let me = try person(of: phone)
         guard let partnerID = me.partner, let partner = state.people[partnerID], let since = me.relationshipSince else {
+            if let until = me.coolingOffUntil, until > now() { return .coolingOff(until: until) }
             return .none
         }
-        return .active(partnerNickname: partner.nickname, since: since)
+        return .active(partnerNickname: partner.nickname, since: since, stage: stage(of: me))
     }
 
     // MARK: Scan
@@ -263,6 +268,26 @@ public actor FakeTrustee {
 
         func respondToRelationshipRequest(id: String, accept: Bool) async throws {
             try await trustee.respondToRelationshipRequest(phone: phone, id: id, accept: accept)
+        }
+
+        func sendEndRequest() async throws {
+            try await trustee.sendEndRequest(phone: phone)
+        }
+
+        func withdrawEndRequest() async throws {
+            try await trustee.withdrawEndRequest(phone: phone)
+        }
+
+        func respondToEndRequest(agree: Bool) async throws {
+            try await trustee.respondToEndRequest(phone: phone, agree: agree)
+        }
+
+        func escalateToTeamReview() async throws {
+            try await trustee.escalateToTeamReview(phone: phone)
+        }
+
+        func reportSafetyConcern() async throws {
+            try await trustee.reportSafetyConcern(phone: phone)
         }
     }
 }

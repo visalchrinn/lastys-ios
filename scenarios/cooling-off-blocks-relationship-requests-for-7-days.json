@@ -1,0 +1,135 @@
+{
+  "name": "During the 7-day Cooling-off period a former Partner can neither send nor accept a Relationship request",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "bob",
+      "do": "agree-to-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "carol"
+      },
+      "expect": {
+        "requestBlocked": "you-are-cooling-off"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request",
+      "expect": {
+        "error": "you-are-cooling-off"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      },
+      "expect": {
+        "status": "single",
+        "requestBlocked": "none"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "carol"
+      },
+      "expect": {
+        "error": "you-are-cooling-off"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "wait",
+      "with": {
+        "days": "7"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "none"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "carol"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "partner": "Carol"
+      }
+    }
+  ]
+}

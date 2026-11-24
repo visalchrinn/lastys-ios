@@ -10,6 +10,8 @@ final class TestPhone {
     let folder: URL
     let key = SoftwarePhoneKey()
     let trustee: FakeTrustee
+    /// One clock for this phone, its Trustee and every phone nearby.
+    let clock: TestClock
     private let connectivity = SwitchableConnectivity()
     private(set) var model: AppModel
     private var recorder: RecordingTrustee
@@ -27,15 +29,17 @@ final class TestPhone {
     init(nearby other: TestPhone? = nil) {
         folder = FileManager.default.temporaryDirectory.appendingPathComponent("lastys-tests-\(UUID().uuidString)")
         try! FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        trustee = other?.trustee ?? FakeTrustee(savingTo: folder.appendingPathComponent("trustee.json"))
-        let launched = Self.launch(folder: folder, key: key, trustee: trustee, connectivity: connectivity)
+        let clock = other?.clock ?? TestClock()
+        self.clock = clock
+        trustee = other?.trustee ?? FakeTrustee(savingTo: folder.appendingPathComponent("trustee.json"), now: { clock.now })
+        let launched = Self.launch(folder: folder, key: key, trustee: trustee, connectivity: connectivity, clock: clock)
         model = launched.0
         recorder = launched.1
     }
 
     /// Quits the app and opens it again with whatever this phone saved.
     func relaunch() {
-        let launched = Self.launch(folder: folder, key: key, trustee: trustee, connectivity: connectivity)
+        let launched = Self.launch(folder: folder, key: key, trustee: trustee, connectivity: connectivity, clock: clock)
         model = launched.0
         recorder = launched.1
     }
@@ -65,14 +69,15 @@ final class TestPhone {
     }
 
     private static func launch(
-        folder: URL, key: PhoneKey, trustee: FakeTrustee, connectivity: Connectivity
+        folder: URL, key: PhoneKey, trustee: FakeTrustee, connectivity: Connectivity, clock: TestClock
     ) -> (AppModel, RecordingTrustee) {
         let recorder = RecordingTrustee(trustee.client(forPhone: key.trusteeID))
         let model = AppModel(
             phoneKey: key,
             trustee: recorder,
             store: FilePhoneStore(url: folder.appendingPathComponent("phone.json")),
-            connectivity: connectivity
+            connectivity: connectivity,
+            now: { clock.now }
         )
         return (model, recorder)
     }
@@ -85,5 +90,17 @@ final class SwitchableConnectivity: Connectivity, @unchecked Sendable {
     var isOnline: Bool {
         get { lock.withLock { online } }
         set { lock.withLock { online = newValue } }
+    }
+}
+
+/// A clock tests move by hand. Starts at the real time, so Lastys QR codes made with `Date()` still scan.
+final class TestClock: @unchecked Sendable {
+    private let lock = NSLock()
+    private var current = Date()
+
+    var now: Date { lock.withLock { current } }
+
+    func advance(days: Double) {
+        lock.withLock { current += days * 86_400 }
     }
 }

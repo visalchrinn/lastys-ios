@@ -1,0 +1,115 @@
+{
+  "name": "Either Partner can report a safety concern at any stage, which goes straight to Team review",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "report-safety-concern"
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "stage": "team-review",
+        "reviewReason": "safety-concern"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "lastys-team",
+      "do": "team-decides",
+      "with": {
+        "about": "bob",
+        "end": "false"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "report-safety-concern"
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "stage": "team-review",
+        "reviewReason": "safety-concern"
+      }
+    },
+    {
+      "phone": "lastys-team",
+      "do": "team-decides",
+      "with": {
+        "about": "alice",
+        "end": "true"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "cooling-off"
+      }
+    }
+  ]
+}

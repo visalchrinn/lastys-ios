@@ -7,7 +7,7 @@ A first launch runs **onboarding**: a skippable intro, the language (Khmer by de
 Then the **Home** screen:
 
 - Header with the Lastys wordmark, today's date and the profile button
-- Status card: Verified Single with the share button, or Taken with the Partner and "Day N together since …"
+- Status card: Verified Single with the share button; Taken with the Partner, "Day N together since …" and where an ending stands; or "Relationship ended" with the Cooling-off period. Tapping it when Taken opens the Relationship: send or withdraw an End request, agree or decline one, ask for a Team review after a decline or 7 days without an answer, or report a safety concern. Debug builds simulate the Partner answering, no answer for 7 days, the team deciding, and skipping the Cooling-off period.
 - "Show my QR" opens My Lastys QR: a token signed by the phone's key with the Lastys ID and the current minute (format in `LastysCore/Sources/LastysCore/LastysQR.swift`), a new code every minute with a countdown, made offline, and what scanners will see
 - "Scan a QR" opens the camera scanner (with torch) and shows the Scan result live from Trustee: photo or initial, nickname, Verified Single or Taken, ID age (with a warning for a very new ID), Phone transfers and Relationship history (or "Hidden by owner"). Without internet a Scan fails rather than show anything stale. From a Scan result a single person can send a Relationship request (disabled with its reason when either side is Taken, or the scanner is in a Cooling-off period) and sees "Waiting for …" until the receiver answers. Debug builds add a picker of sample people (Dara, Vanna, Sokha). Debug builds also let the sample person accept or decline.
 - Dating safety tips

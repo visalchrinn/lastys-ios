@@ -1,0 +1,140 @@
+{
+  "name": "After the other Partner declines, the requester can ask for a Team review, and the team can end the Relationship",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "escalate-to-team-review",
+      "expect": {
+        "error": "cannot-escalate-yet"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "decline-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "stage": "ending",
+        "declined": "true"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "agree-to-end-request",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "escalate-to-team-review",
+      "expect": {
+        "error": "not-allowed-now"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "escalate-to-team-review"
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "stage": "team-review",
+        "reviewReason": "end-request"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      },
+      "expect": {
+        "status": "taken"
+      }
+    },
+    {
+      "phone": "lastys-team",
+      "do": "team-decides",
+      "with": {
+        "about": "alice",
+        "end": "true"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "cooling-off",
+        "until": "2026-12-06"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "cooling-off",
+        "until": "2026-12-06"
+      }
+    }
+  ]
+}

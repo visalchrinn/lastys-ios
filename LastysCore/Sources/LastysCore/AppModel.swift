@@ -24,7 +24,10 @@ public final class AppModel {
 
     public private(set) var screen: Screen
     /// The last Relationship status Trustee gave, kept on the phone so Home never guesses.
-    public var relationship: RelationshipStatus { phone.relationship }
+    public var relationship: RelationshipStatus {
+        if case .coolingOff(let until) = phone.relationship, now() >= until { return .none }
+        return phone.relationship
+    }
     public private(set) var moments: [Moment]
 
     /// What this phone keeps between launches. Every change is saved straight away.
@@ -203,11 +206,75 @@ public final class AppModel {
     /// How often to ask Trustee about a request still waiting. Phase A has no push.
     public static let pendingRequestCheckInterval: Duration = .seconds(3)
 
+    /// The Partner's nickname while in a Relationship, otherwise empty.
+    public var partnerNickname: String {
+        guard case .active(let partner, _, _) = relationship else { return "" }
+        return partner
+    }
+
     /// Which day of the Relationship `date` falls on: day 1 is the day it started.
     public func dayTogether(on date: Date) -> Int? {
-        guard case .active(_, let since) = relationship else { return nil }
+        guard case .active(_, let since, _) = relationship else { return nil }
         let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: since), to: calendar.startOfDay(for: date)).day ?? 0
         return days + 1
+    }
+
+    // MARK: Ending a Relationship
+
+    /// Why the last ending action didn't go through.
+    public private(set) var endingProblem: EndingProblem?
+    /// True while Trustee is taking an ending action.
+    public private(set) var isPerformingEndingAction = false
+
+    /// What this Partner can do about ending the Relationship right now, in the order to offer them.
+    /// Nothing here ends a Relationship one-sidedly (ADR 0002).
+    public var endingActions: [EndingAction] {
+        guard case .active(_, _, let stage) = relationship else { return [] }
+        switch stage {
+        case .together:
+            return [.sendEndRequest, .reportSafetyConcern]
+        case .ending(let request) where request.sentByMe:
+            let canEscalate = request.declined || now() >= request.answerBy
+            return [.withdrawEndRequest] + (canEscalate ? [.escalateToTeamReview] : []) + [.reportSafetyConcern]
+        case .ending(let request):
+            return (request.declined ? [] : [.agreeToEndRequest, .declineEndRequest]) + [.reportSafetyConcern]
+        case .inTeamReview(let review):
+            return review.reason == .safetyConcern ? [] : [.reportSafetyConcern]
+        }
+    }
+
+    /// Forgets the last ending problem, e.g. when the Relationship screen opens again.
+    public func clearEndingProblem() {
+        endingProblem = nil
+    }
+
+    /// Takes one of `endingActions` to Trustee, then shows where the Relationship stands.
+    public func perform(_ action: EndingAction) async {
+        guard endingActions.contains(action), !isPerformingEndingAction else { return }
+        guard connectivity.isOnline else {
+            endingProblem = .needsInternet
+            return
+        }
+        isPerformingEndingAction = true
+        defer { isPerformingEndingAction = false }
+        do {
+            switch action {
+            case .sendEndRequest: try await trustee.sendEndRequest()
+            case .withdrawEndRequest: try await trustee.withdrawEndRequest()
+            case .agreeToEndRequest: try await trustee.respondToEndRequest(agree: true)
+            case .declineEndRequest: try await trustee.respondToEndRequest(agree: false)
+            case .escalateToTeamReview: try await trustee.escalateToTeamReview()
+            case .reportSafetyConcern: try await trustee.reportSafetyConcern()
+            }
+            endingProblem = nil
+        } catch let error as TrusteeError where [.notAllowedNow, .noRelationship, .cannotEscalateYet].contains(error) {
+            endingProblem = .changedMeanwhile
+        } catch {
+            endingProblem = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+        }
+        if let status = try? await trustee.relationshipStatus() {
+            phone.relationship = status
+        }
     }
 
     /// Loads this Lastys ID's current status from Trustee.
@@ -397,4 +464,21 @@ public enum RelationshipRequestProblem: Equatable, Sendable {
             self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
         }
     }
+}
+
+/// One step a Partner can take towards ending a Relationship, or away from it.
+public enum EndingAction: Hashable, Sendable {
+    case sendEndRequest
+    case withdrawEndRequest
+    case agreeToEndRequest
+    case declineEndRequest
+    case escalateToTeamReview
+    case reportSafetyConcern
+}
+
+public enum EndingProblem: Equatable, Sendable {
+    case needsInternet
+    /// The Partner or the Lastys team acted first; the screen now shows where things stand.
+    case changedMeanwhile
+    case couldNotReachLastys
 }
