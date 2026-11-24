@@ -17,6 +17,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var relationship: RelationshipStatus = .none
     /// Quick hide: the status card and Shared Moments stay off this phone's screen. Never sent to Trustee.
     public var isQuickHideOn = false
+    /// Personal Moments live only here, never on Trustee.
+    public var moments: [Moment] = []
 
     public init() {}
 
@@ -36,6 +38,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
         // Only a cache of what Trustee said: if this build can't read it, start from nothing rather than lose the phone.
         relationship = ((try? c.decodeIfPresent(RelationshipStatus.self, forKey: .relationship)) ?? nil) ?? defaults.relationship
         isQuickHideOn = try c.decodeIfPresent(Bool.self, forKey: .isQuickHideOn) ?? defaults.isQuickHideOn
+        // A Moment this build can't read is skipped on its own; the rest, and the phone, load.
+        moments = ((try? c.decodeIfPresent([Skippable<Moment>].self, forKey: .moments)) ?? nil)?.compactMap(\.value) ?? defaults.moments
     }
 }
 
@@ -104,5 +108,14 @@ extension Data {
         #else
         try write(to: url, options: .atomic)
         #endif
+    }
+}
+
+/// Decodes a value if it can, or nothing, so one bad element doesn't fail a whole list.
+struct Skippable<Value: Decodable>: Decodable {
+    let value: Value?
+
+    init(from decoder: Decoder) throws {
+        value = try? Value(from: decoder)
     }
 }

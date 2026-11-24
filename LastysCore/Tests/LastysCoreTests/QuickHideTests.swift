@@ -9,8 +9,8 @@ struct QuickHideTests {
         let dara = TestPhone()
         await dara.onboard(as: "Dara")
         let me = TestPhone(nearby: dara, moments: [
-            Moment(type: "Birthday", title: "Mom's birthday", date: Date().addingTimeInterval(5 * 86_400)),
-            Moment(type: "Anniversary", title: "Our first date", date: Date().addingTimeInterval(9 * 86_400), isShared: true),
+            Moment(type: .birthday, title: "Mom's birthday", date: Date().addingTimeInterval(5 * 86_400)),
+            Moment(type: .anniversary, title: "Our first date", date: Date().addingTimeInterval(9 * 86_400), isShared: true),
         ])
         await me.onboard()
         try await me.becomePartners(with: dara)
@@ -29,12 +29,12 @@ struct QuickHideTests {
     @Test func quickHideHidesTheStatusCardAndSharedMomentsButNotPersonalOnes() async throws {
         let (_, me) = try await partners()
         #expect(me.model.showsStatusCard)
-        #expect(me.model.upcomingMoments.map(\.title) == ["Mom's birthday", "Our first date"])
+        #expect(me.model.upcomingMoments.map(\.moment.title) == ["Mom's birthday", "Our first date"])
 
         me.model.setQuickHide(true)
 
         #expect(!me.model.showsStatusCard)
-        #expect(me.model.upcomingMoments.map(\.title) == ["Mom's birthday"])
+        #expect(me.model.upcomingMoments.map(\.moment.title) == ["Mom's birthday"])
         #expect(me.model.timeline.map(\.title) == ["Mom's birthday"])
     }
 

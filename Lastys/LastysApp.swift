@@ -42,8 +42,9 @@ enum Launch {
             trustee: trustee.client(forPhone: phoneKey.trusteeID),
             store: FilePhoneStore(url: folder.appending(path: "phone.json")),
             connectivity: NetworkConnectivity(),
-            moments: SampleData.moments()
+            reminders: NotificationReminderScheduler()
         )
+        MomentMediaFiles.removeUnused(keeping: model.mediaFileNamesInUse)
         return .ready(model, trustee)
     }
 }
@@ -51,6 +52,7 @@ enum Launch {
 /// Onboarding until the person has a Lastys ID and a profile, then the tabs.
 struct AppRootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -63,6 +65,10 @@ struct AppRootView: View {
         }
         .environment(\.locale, Locale(identifier: model.language.rawValue))
         .task(id: model.screen == .home) { await model.start() }
+        // Coming back to the app refreshes the status and books the next reminders.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await model.start() } }
+        }
         // Phase A has no push: while a Relationship request waits, keep asking, wherever the person is in the app.
         .task(id: model.outgoingRequest?.status) {
             while model.outgoingRequest?.status == .pending, !Task.isCancelled {

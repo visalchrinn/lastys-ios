@@ -9,6 +9,7 @@ struct HomeView: View {
     @State private var showingMyLastysQR = false
     @State private var showingScan = false
     @State private var showingRelationship = false
+    @State private var editing: MomentEditorView.Target?
     #if DEBUG
     @Environment(\.demoTrustee) private var demoTrustee
     #else
@@ -273,7 +274,7 @@ struct HomeView: View {
                     .tracking(-0.2)
                 Spacer()
                 Button("+ Add") {
-                    showToast("Adding moments is coming soon")
+                    editing = .new
                 }
                 .font(.jakarta(14, .semibold))
                 .foregroundStyle(Theme.roseDark)
@@ -288,27 +289,43 @@ struct HomeView: View {
                         .foregroundStyle(Theme.muted)
                         .card()
                 } else {
-                    ForEach(model.upcomingMoments) { moment in
-                        UpcomingRow(moment: moment, daysUntil: model.daysUntil(moment))
+                    ForEach(model.upcomingMoments) { upcoming in
+                        Button {
+                            editing = .existing(upcoming.moment)
+                        } label: {
+                            UpcomingRow(upcoming: upcoming)
+                        }
+                        .buttonStyle(PressableStyle())
                     }
                 }
             }
 
-            Text("My timeline")
-                .font(.jakarta(17, .bold))
-                .tracking(-0.2)
-                .padding(.top, 8)
+            if !model.timeline.isEmpty {
+                Text("My timeline")
+                    .font(.jakarta(17, .bold))
+                    .tracking(-0.2)
+                    .padding(.top, 8)
 
-            VStack(alignment: .leading, spacing: 14) {
-                ForEach(model.timeline) { moment in
-                    TimelineRow(moment: moment, isUpcoming: model.isUpcoming(moment))
+                VStack(alignment: .leading, spacing: 14) {
+                    ForEach(model.timeline) { moment in
+                        Button {
+                            editing = .existing(moment)
+                        } label: {
+                            TimelineRow(moment: moment, isUpcoming: model.isUpcoming(moment))
+                        }
+                        .buttonStyle(PressableStyle())
+                    }
                 }
+                .padding(.leading, 16)
+                .overlay(alignment: .leading) {
+                    Rectangle().fill(Theme.roseLine).frame(width: 2)
+                }
+                .padding(.leading, 6)
             }
-            .padding(.leading, 16)
-            .overlay(alignment: .leading) {
-                Rectangle().fill(Theme.roseLine).frame(width: 2)
-            }
-            .padding(.leading, 6)
+        }
+        .sheet(item: $editing) { target in
+            MomentEditorView(editing: target)
+                .environment(model)
         }
     }
 
@@ -321,29 +338,25 @@ struct HomeView: View {
 }
 
 private struct UpcomingRow: View {
-    let moment: Moment
-    let daysUntil: Int
+    let upcoming: UpcomingMoment
 
-    private static let month: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "MMM"
-        return f
-    }()
+    private var moment: Moment { upcoming.moment }
 
-    private var subtitle: String {
-        var s = moment.type + " · " + (daysUntil == 0 ? "Today" : "in \(daysUntil) days")
-        if moment.repeatsOnKhmerLunarDate { s += " · Khmer lunar date" }
-        return s
+    private var subtitle: Text {
+        var text = Text(moment.type.title) + Text(verbatim: " · ")
+            + (upcoming.daysUntil == 0 ? Text("Today") : Text("in \(upcoming.daysUntil) days"))
+        if moment.repeatsOnKhmerLunarDate { text = text + Text(verbatim: " · ") + Text("Khmer lunar date (sample)") }
+        return text
     }
 
     var body: some View {
         HStack(spacing: 12) {
             VStack(spacing: 0) {
-                Text("\(Calendar.current.component(.day, from: moment.date))")
+                Text(upcoming.date, format: .dateTime.day())
                     .font(.jakarta(18, .heavy))
                     .foregroundStyle(Theme.roseDeep)
-                Text(Self.month.string(from: moment.date).uppercased())
+                Text(upcoming.date, format: .dateTime.month(.abbreviated))
+                    .textCase(.uppercase)
                     .font(.jakarta(11, .bold))
                     .foregroundStyle(Theme.roseDark)
             }
@@ -351,13 +364,14 @@ private struct UpcomingRow: View {
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.roseTint))
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(moment.title).font(.jakarta(15, .bold))
-                Text(subtitle)
+                Text(verbatim: moment.title).font(.jakarta(15, .bold))
+                subtitle
                     .font(.jakarta(13))
                     .foregroundStyle(Theme.muted)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
+            MomentMediaBadge(media: moment.media)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -375,20 +389,23 @@ private struct TimelineRow: View {
     let moment: Moment
     let isUpcoming: Bool
 
-    private var meta: String {
-        var s = moment.type
-        if moment.repeatsOnKhmerLunarDate { s += " · repeats on Khmer lunar date" }
-        if isUpcoming { s += " · upcoming" }
-        return s
+    private var meta: Text {
+        var text = Text(moment.type.title)
+        if moment.repeatsOnKhmerLunarDate { text = text + Text(verbatim: " · ") + Text("repeats on Khmer lunar date (sample)") }
+        if isUpcoming { text = text + Text(verbatim: " · ") + Text("upcoming") }
+        return text
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(HomeView.headerDate.string(from: moment.date))
+            Text(moment.date, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated).year())
                 .font(.jakarta(12, .semibold))
                 .foregroundStyle(Theme.muted)
-            Text(moment.title).font(.jakarta(15, .bold))
-            Text(meta)
+            HStack(spacing: 6) {
+                Text(verbatim: moment.title).font(.jakarta(15, .bold))
+                MomentMediaBadge(media: moment.media)
+            }
+            meta
                 .font(.jakarta(13))
                 .foregroundStyle(Theme.muted)
         }
@@ -401,7 +418,22 @@ private struct TimelineRow: View {
                 .frame(width: 14, height: 14)
                 .offset(x: -23, y: 2)
         }
+        .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// A small mark when a Moment carries a photo or video.
+private struct MomentMediaBadge: View {
+    let media: MomentMedia?
+
+    var body: some View {
+        if let media {
+            Image(systemName: media.kind == .video ? "video.fill" : "photo.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.muted)
+                .accessibilityLabel(Text(media.kind == .video ? LocalizedStringKey("Has a video") : LocalizedStringKey("Has a photo")))
+        }
     }
 }
 

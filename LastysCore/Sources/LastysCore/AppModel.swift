@@ -28,7 +28,8 @@ public final class AppModel {
         if case .coolingOff(let until) = phone.relationship, now() >= until { return .none }
         return phone.relationship
     }
-    public private(set) var moments: [Moment]
+    /// Every Moment on this phone.
+    public var moments: [Moment] { phone.moments }
 
     /// What this phone keeps between launches. Every change is saved straight away.
     private var phone: PhoneState {
@@ -39,6 +40,7 @@ public final class AppModel {
     @ObservationIgnored private let trustee: TrusteeClient
     @ObservationIgnored private let store: PhoneStore
     @ObservationIgnored private let connectivity: Connectivity
+    @ObservationIgnored private let reminders: ReminderScheduler
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let now: () -> Date
 
@@ -47,7 +49,7 @@ public final class AppModel {
         trustee: TrusteeClient,
         store: PhoneStore,
         connectivity: Connectivity,
-        moments: [Moment] = [],
+        reminders: ReminderScheduler,
         calendar: Calendar = .current,
         now: @escaping () -> Date = Date.init
     ) {
@@ -55,7 +57,7 @@ public final class AppModel {
         self.trustee = trustee
         self.store = store
         self.connectivity = connectivity
-        self.moments = moments
+        self.reminders = reminders
         self.calendar = calendar
         self.now = now
         let phone = store.load() ?? PhoneState()
@@ -279,6 +281,7 @@ public final class AppModel {
 
     /// Loads this Lastys ID's current status from Trustee.
     public func start() async {
+        scheduleReminders()
         guard phone.lastysID != nil else { return }
         do {
             phone.relationship = try await trustee.relationshipStatus()
@@ -422,23 +425,118 @@ public final class AppModel {
         isQuickHideOn ? moments.filter { !$0.isShared } : moments
     }
 
-    /// The next three Moments from today, soonest first.
-    public var upcomingMoments: [Moment] {
-        Array(visibleMoments.filter(isUpcoming).sorted { $0.date < $1.date }.prefix(3))
+    /// Each Moment's next occurrence from today, nearest first, at most three.
+    public var upcomingMoments: [UpcomingMoment] {
+        Array(visibleMoments.map(upcoming).sorted { $0.date < $1.date }.prefix(3))
     }
 
-    /// Every Moment, newest first.
+    /// Every Moment on its own date, newest first.
     public var timeline: [Moment] {
         visibleMoments.sorted { $0.date > $1.date }
     }
 
+    /// Whether the Moment's own date is still ahead, for the timeline.
     public func isUpcoming(_ moment: Moment) -> Bool {
         moment.date >= today
     }
 
-    /// Whole days from today until the Moment; 0 means today.
-    public func daysUntil(_ moment: Moment) -> Int {
-        calendar.dateComponents([.day], from: today, to: calendar.startOfDay(for: moment.date)).day ?? 0
+    public func canSave(_ draft: MomentDraft) -> Bool {
+        !draft.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Adds a personal Moment. It stays on this phone and is never sent to Trustee.
+    @discardableResult
+    public func addMoment(_ draft: MomentDraft) -> Moment? {
+        guard canSave(draft) else { return nil }
+        let moment = Moment(
+            type: draft.type, title: Self.trimmed(draft.title), date: draft.date,
+            repeatsOnKhmerLunarDate: draft.repeatsOnKhmerLunarDate, media: draft.media
+        )
+        phone.moments.append(moment)
+        scheduleReminders()
+        return moment
+    }
+
+    public func updateMoment(id: UUID, to draft: MomentDraft) {
+        guard canSave(draft), let index = phone.moments.firstIndex(where: { $0.id == id }) else { return }
+        var moment = phone.moments[index]
+        moment.type = draft.type
+        moment.title = Self.trimmed(draft.title)
+        moment.date = draft.date
+        moment.repeatsOnKhmerLunarDate = draft.repeatsOnKhmerLunarDate
+        moment.media = draft.media
+        phone.moments[index] = moment
+        scheduleReminders()
+    }
+
+    public func deleteMoment(id: UUID) {
+        phone.moments.removeAll { $0.id == id }
+        scheduleReminders()
+    }
+
+    /// The media files Moments still use, so the phone can remove the rest.
+    public var mediaFileNamesInUse: Set<String> {
+        Set(phone.moments.compactMap(\.media?.fileName))
+    }
+
+    // MARK: Reminders
+
+    private func upcoming(_ moment: Moment) -> UpcomingMoment {
+        let date = nextOccurrence(of: moment, onOrAfter: today)
+        let days = calendar.dateComponents([.day], from: today, to: date).day ?? 0
+        return UpcomingMoment(moment: moment, date: date, daysUntil: days)
+    }
+
+    private func nextOccurrence(of moment: Moment, onOrAfter day: Date) -> Date {
+        if moment.repeatsOnKhmerLunarDate {
+            return SampleKhmerLunarCalendar.nextOccurrence(of: moment.date, onOrAfter: day, calendar: calendar)
+        }
+        let original = calendar.startOfDay(for: moment.date)
+        if original >= day { return original }
+        let parts = calendar.dateComponents([.month, .day], from: original)
+        return calendar.nextDate(after: day.addingTimeInterval(-1), matching: parts, matchingPolicy: .nextTime) ?? original
+    }
+
+    /// How many occurrences of each Moment have reminders booked ahead: this one and the next, so the
+    /// next year is covered even once today's reminder has passed, and if the app isn't opened for a year.
+    static let occurrencesBooked = 2
+
+    /// Hands iOS every reminder still to come: 7 days before, the day before and on the day of each
+    /// Moment's next occurrences. Called on every change, at launch and when the app comes back.
+    func scheduleReminders() {
+        let current = now()
+        let due = phone.moments.flatMap { moment -> [Reminder] in
+            occurrences(of: moment, count: Self.occurrencesBooked).flatMap { occurrence in
+                dueReminders(for: moment, on: occurrence, after: current)
+            }
+        }
+        reminders.replaceAll(with: due.sorted { $0.fires < $1.fires })
+    }
+
+    private func occurrences(of moment: Moment, count: Int) -> [Date] {
+        var dates: [Date] = []
+        var from = today
+        while dates.count < count {
+            let next = nextOccurrence(of: moment, onOrAfter: from)
+            dates.append(next)
+            from = calendar.date(byAdding: .day, value: 1, to: next) ?? next.addingTimeInterval(86_400)
+        }
+        return dates
+    }
+
+    /// The reminders for one occurrence that haven't fired yet.
+    private func dueReminders(for moment: Moment, on occurrence: Date, after current: Date) -> [Reminder] {
+        Reminder.daysBefore.compactMap { days in
+            guard let day = calendar.date(byAdding: .day, value: -days, to: occurrence),
+                  let fires = calendar.date(bySettingHour: Reminder.hour, minute: 0, second: 0, of: day),
+                  fires > current
+            else { return nil }
+            return Reminder(momentID: moment.id, title: moment.title, fires: fires, when: Reminder.When(daysBefore: days))
+        }
+    }
+
+    private static func trimmed(_ title: String) -> String {
+        title.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 

@@ -101,27 +101,88 @@ public enum RelationshipRequestBlock: Equatable, Sendable {
     case thatIsYou
 }
 
-/// A dated event that one Lastys ID owns, such as a birthday or first date.
-public struct Moment: Identifiable, Equatable, Sendable {
+/// A dated event that one Lastys ID owns, such as a birthday or first date. It comes back every year,
+/// on the same date or, if chosen, on the same Khmer lunar date.
+public struct Moment: Identifiable, Codable, Equatable, Sendable {
     public let id: UUID
-    public var type: String
+    public var type: MomentType
     public var title: String
     public var date: Date
     public var repeatsOnKhmerLunarDate: Bool
-    /// Shared into the Relationship, so the Partner sees it too. Quick hide hides these.
+    /// An optional photo or video, kept as a file on this phone.
+    public var media: MomentMedia?
+    /// Shared into the Relationship, so the Partner sees it too (#10). Quick hide hides these.
     public var isShared: Bool
 
     public init(
-        id: UUID = UUID(), type: String, title: String, date: Date,
-        repeatsOnKhmerLunarDate: Bool = false, isShared: Bool = false
+        id: UUID = UUID(), type: MomentType, title: String, date: Date,
+        repeatsOnKhmerLunarDate: Bool = false, media: MomentMedia? = nil, isShared: Bool = false
     ) {
         self.id = id
         self.type = type
         self.title = title
         self.date = date
         self.repeatsOnKhmerLunarDate = repeatsOnKhmerLunarDate
+        self.media = media
         self.isShared = isShared
     }
+}
+
+public enum MomentType: String, Codable, CaseIterable, Sendable {
+    case firstMeet = "first-meet"
+    case firstDate = "first-date"
+    case anniversary
+    case birthday
+    case custom
+
+    /// A type this build doesn't know reads as Custom, so a newer save still loads.
+    public init(from decoder: Decoder) throws {
+        self = MomentType(rawValue: try decoder.singleValueContainer().decode(String.self)) ?? .custom
+    }
+}
+
+/// A photo or video attached to a Moment. The phone keeps the file; the Moment keeps only its name.
+public struct MomentMedia: Codable, Equatable, Hashable, Sendable {
+    public enum Kind: String, Codable, Sendable {
+        case photo
+        case video
+    }
+
+    public let kind: Kind
+    public let fileName: String
+
+    public init(kind: Kind, fileName: String) {
+        self.kind = kind
+        self.fileName = fileName
+    }
+}
+
+/// What the person fills in to add or change a Moment.
+public struct MomentDraft: Equatable, Sendable {
+    public var type: MomentType
+    public var title: String
+    public var date: Date
+    public var repeatsOnKhmerLunarDate: Bool
+    public var media: MomentMedia?
+
+    public init(type: MomentType, title: String, date: Date, repeatsOnKhmerLunarDate: Bool, media: MomentMedia? = nil) {
+        self.type = type
+        self.title = title
+        self.date = date
+        self.repeatsOnKhmerLunarDate = repeatsOnKhmerLunarDate
+        self.media = media
+    }
+}
+
+/// A Moment's next occurrence from today.
+public struct UpcomingMoment: Identifiable, Equatable, Sendable {
+    public let moment: Moment
+    /// The start of the day it next falls on.
+    public let date: Date
+    /// 0 means today.
+    public let daysUntil: Int
+
+    public var id: UUID { moment.id }
 }
 
 /// What a Scan of your Lastys QR shows.

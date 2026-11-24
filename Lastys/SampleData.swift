@@ -1,16 +1,16 @@
 import Foundation
 import LastysCore
 
-/// Phase A sample Moments shown on Home until "+ Add" arrives.
+/// Sample content for SwiftUI previews only.
 enum SampleData {
     static func moments(relativeTo today: Date = Date()) -> [Moment] {
         let cal = Calendar.current
         let start = cal.startOfDay(for: today)
         func day(_ offset: Int) -> Date { cal.date(byAdding: .day, value: offset, to: start) ?? start }
         return [
-            Moment(type: "Birthday", title: "Mom's birthday", date: day(5)),
-            Moment(type: "Custom", title: "Graduation day", date: day(-156)),
-            Moment(type: "Custom", title: "Ancestor ceremony", date: day(27), repeatsOnKhmerLunarDate: true),
+            Moment(type: .birthday, title: "Mom's birthday", date: day(5)),
+            Moment(type: .custom, title: "Graduation day", date: day(-156)),
+            Moment(type: .custom, title: "Ancestor ceremony", date: day(27), repeatsOnKhmerLunarDate: true),
         ]
     }
 }
@@ -25,13 +25,14 @@ extension AppModel {
             phone.hasSavedRecoveryCode = true
             phone.nickname = "Srey Pich"
             phone.hasFinishedOnboarding = true
+            phone.moments = SampleData.moments()
         }
         return AppModel(
             phoneKey: SoftwarePhoneKey(),
             trustee: FakeTrustee().client(forPhone: "preview"),
             store: InMemoryPhoneStore(phone),
             connectivity: PreviewConnectivity(),
-            moments: SampleData.moments()
+            reminders: PreviewReminderScheduler()
         )
     }
 }

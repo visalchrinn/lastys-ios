@@ -90,7 +90,8 @@ struct ScanTests {
         let held = HeldTrustee(me.trustee.client(forPhone: me.key.trusteeID))
         let model = AppModel(
             phoneKey: me.key, trustee: held,
-            store: FilePhoneStore(url: me.phoneFile), connectivity: SwitchableConnectivity()
+            store: FilePhoneStore(url: me.phoneFile), connectivity: SwitchableConnectivity(),
+            reminders: RecordingReminderScheduler()
         )
         let qr = try #require(dara.model.myLastysQR(at: Date()))
 
