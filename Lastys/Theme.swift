@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 extension Color {
     init(hex: UInt32) {
@@ -34,9 +35,45 @@ enum Theme {
 }
 
 extension Font {
-    /// Plus Jakarta Sans (bundled variable font), falls back to the system font.
+    /// The app's text font: Plus Jakarta Sans for Latin, with Nokora taking over for Khmer, so a line that
+    /// mixes both reads in each script's own face. Both are bundled variable fonts; the system font is the
+    /// last fallback. (The name is historical: it covers Khmer too.)
     static func jakarta(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
-        .custom("Plus Jakarta Sans", size: size).weight(weight)
+        Font(AppFont.make(size: size, weight: weight))
+    }
+}
+
+private enum AppFont {
+    static func make(size: CGFloat, weight: Font.Weight) -> UIFont {
+        let uiWeight = weight.uiWeight
+        let nokora = UIFontDescriptor(fontAttributes: [
+            .family: "Nokora",
+            .traits: [UIFontDescriptor.TraitKey.weight: uiWeight],
+        ])
+        let latin = UIFontDescriptor(fontAttributes: [
+            .family: "Plus Jakarta Sans",
+            .traits: [UIFontDescriptor.TraitKey.weight: uiWeight],
+            .cascadeList: [nokora],
+        ])
+        let font = UIFont(descriptor: latin, size: size)
+        // Keep Dynamic Type scaling, as `Font.custom` did.
+        return UIFontMetrics(forTextStyle: .body).scaledFont(for: font)
+    }
+}
+
+private extension Font.Weight {
+    var uiWeight: UIFont.Weight {
+        switch self {
+        case .ultraLight: return .ultraLight
+        case .thin: return .thin
+        case .light: return .light
+        case .medium: return .medium
+        case .semibold: return .semibold
+        case .bold: return .bold
+        case .heavy: return .heavy
+        case .black: return .black
+        default: return .regular
+        }
     }
 }
 

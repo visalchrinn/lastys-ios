@@ -32,6 +32,7 @@ targets:
           UIColorName: LaunchBackground
         UIAppFonts:
           - PlusJakartaSans.ttf
+          - Nokora.ttf
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Light
