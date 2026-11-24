@@ -31,3 +31,10 @@ public struct Moment: Identifiable, Equatable, Sendable {
         self.repeatsOnKhmerLunarDate = repeatsOnKhmerLunarDate
     }
 }
+
+/// What a Scan of your Lastys QR shows.
+public enum ShareLevel: String, Codable, Sendable {
+    /// The default.
+    case statusOnly = "status-only"
+    case statusAndHistory = "status-and-history"
+}

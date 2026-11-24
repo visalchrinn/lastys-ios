@@ -11,8 +11,25 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var photo: Data?
     public var birthDate: Date?
     public var hasFinishedOnboarding = false
+    /// What a Scan of this Lastys ID shows. Trustee applies it; the phone keeps a copy to show the person.
+    public var shareLevel: ShareLevel = .statusOnly
 
     public init() {}
+
+    /// Missing fields keep their defaults, so a phone saved by an earlier version still loads.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = PhoneState()
+        language = try c.decodeIfPresent(Language.self, forKey: .language) ?? defaults.language
+        lastysID = try c.decodeIfPresent(LastysID.self, forKey: .lastysID)
+        recoveryCode = try c.decodeIfPresent(String.self, forKey: .recoveryCode)
+        hasSavedRecoveryCode = try c.decodeIfPresent(Bool.self, forKey: .hasSavedRecoveryCode) ?? defaults.hasSavedRecoveryCode
+        nickname = try c.decodeIfPresent(String.self, forKey: .nickname)
+        photo = try c.decodeIfPresent(Data.self, forKey: .photo)
+        birthDate = try c.decodeIfPresent(Date.self, forKey: .birthDate)
+        hasFinishedOnboarding = try c.decodeIfPresent(Bool.self, forKey: .hasFinishedOnboarding) ?? defaults.hasFinishedOnboarding
+        shareLevel = try c.decodeIfPresent(ShareLevel.self, forKey: .shareLevel) ?? defaults.shareLevel
+    }
 }
 
 /// The app's language. Khmer is the default; English is available.

@@ -31,18 +31,21 @@ public final class AppModel {
         didSet { store.save(phone) }
     }
 
+    @ObservationIgnored private let phoneKey: PhoneKey
     @ObservationIgnored private let trustee: TrusteeClient
     @ObservationIgnored private let store: PhoneStore
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let now: () -> Date
 
     public init(
+        phoneKey: PhoneKey,
         trustee: TrusteeClient,
         store: PhoneStore,
         moments: [Moment] = [],
         calendar: Calendar = .current,
         now: @escaping () -> Date = Date.init
     ) {
+        self.phoneKey = phoneKey
         self.trustee = trustee
         self.store = store
         self.moments = moments
@@ -68,6 +71,26 @@ public final class AppModel {
     public var photo: Data? { phone.photo }
     /// Kept on this phone only, for reminders and the Lucky Day Planner. Never shown on a Scan.
     public var birthDate: Date? { phone.birthDate }
+
+    // MARK: Lastys QR
+
+    /// The token for the current minute. ECDSA signatures differ every time, so it is made once per
+    /// minute; otherwise the QR would change on every redraw.
+    @ObservationIgnored private var currentQRToken: LastysQRToken?
+
+    /// My Lastys QR at `date`, made on the phone with no network. Nil until there is a Lastys ID,
+    /// or if the phone's key can't sign. Makes a new token only when the minute changes.
+    public func myLastysQR(at date: Date) -> MyLastysQR? {
+        guard let personalID = phone.lastysID?.personalID else { return nil }
+        if currentQRToken?.minute != LastysQRToken.minute(containing: date) || currentQRToken?.personalID != personalID {
+            currentQRToken = try? LastysQRToken(personalID: personalID, at: date, signedBy: phoneKey)
+        }
+        guard let token = currentQRToken else { return nil }
+        return MyLastysQR(payload: token.text, secondsUntilNextCode: LastysQRToken.secondsUntilNextCode(after: date))
+    }
+
+    /// What a Scan of my Lastys QR shows.
+    public var shareLevel: ShareLevel { phone.shareLevel }
 
     /// Loads this Lastys ID's current status from Trustee.
     public func start() async {

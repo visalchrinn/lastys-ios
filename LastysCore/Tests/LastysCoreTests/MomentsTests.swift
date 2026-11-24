@@ -16,6 +16,7 @@ struct MomentsTests {
 
     private func model(moments: [Moment], now: Date) -> AppModel {
         AppModel(
+            phoneKey: SoftwarePhoneKey(),
             trustee: FakeTrustee().client(forPhone: "phone-a"),
             store: InMemoryPhoneStore(),
             moments: moments,

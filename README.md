@@ -8,7 +8,8 @@ Then the **Home** screen:
 
 - Header with the Lastys wordmark, today's date and the profile button
 - "Verified Single" status card with the share button
-- "Show my QR" and "Scan a QR" quick actions
+- "Show my QR" opens My Lastys QR: a token signed by the phone's key with the Lastys ID and the current minute (format in `LastysCore/Sources/LastysCore/LastysQR.swift`), a new code every minute with a countdown, made offline, and what scanners will see
+- "Scan a QR" quick action
 - Dating safety tips
 - Upcoming moments and the personal timeline
 - Bottom navigation (Home, Calendar, Me). Calendar and Me are placeholders for now.

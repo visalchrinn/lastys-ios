@@ -1,25 +1,24 @@
 import CryptoKit
 import Foundation
+import LastysCore
 import Security
 
-/// This phone's key, the only credential Lastys has (ADR 0003).
+/// Loads this phone's key, creating it on first launch (ADR 0003).
 ///
 /// The private key is created in the Secure Enclave and can never leave it. The Keychain keeps only
 /// the Secure Enclave's opaque handle to it, on this device only, so a backup can't carry it anywhere.
 /// Debug builds on a simulator, which has no Secure Enclave, fall back to a software key.
-enum PhoneKey {
+enum PhoneKeyStore {
     enum Problem: Error {
         case noSecureEnclave
         case keychain(OSStatus)
     }
 
-    /// Loads this phone's key, creating it on first launch, and returns how Trustee identifies it:
-    /// the public key, base64-encoded.
-    static func loadOrCreate() throws -> String {
+    static func loadOrCreate() throws -> PhoneKey {
         let stored = try readFromKeychain()
         let keyData = try stored ?? makeKey()
         if stored == nil { try saveToKeychain(keyData) }
-        return try publicKey(from: keyData).compressedRepresentation.base64EncodedString()
+        return try key(from: keyData)
     }
 
     private static func makeKey() throws -> Data {
@@ -31,18 +30,18 @@ enum PhoneKey {
             return try SecureEnclave.P256.Signing.PrivateKey(accessControl: access).dataRepresentation
         }
         #if DEBUG
-        return P256.Signing.PrivateKey().rawRepresentation
+        return SoftwarePhoneKey().rawRepresentation
         #else
         throw Problem.noSecureEnclave
         #endif
     }
 
-    private static func publicKey(from keyData: Data) throws -> P256.Signing.PublicKey {
+    private static func key(from keyData: Data) throws -> PhoneKey {
         if SecureEnclave.isAvailable {
-            return try SecureEnclave.P256.Signing.PrivateKey(dataRepresentation: keyData).publicKey
+            return SecureEnclavePhoneKey(privateKey: try SecureEnclave.P256.Signing.PrivateKey(dataRepresentation: keyData))
         }
         #if DEBUG
-        return try P256.Signing.PrivateKey(rawRepresentation: keyData).publicKey
+        return try SoftwarePhoneKey(rawRepresentation: keyData)
         #else
         throw Problem.noSecureEnclave
         #endif
@@ -73,5 +72,16 @@ enum PhoneKey {
         attributes[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let status = SecItemAdd(attributes as CFDictionary, nil)
         guard status == errSecSuccess else { throw Problem.keychain(status) }
+    }
+}
+
+/// The phone's key inside the Secure Enclave. Signing happens in the enclave.
+private struct SecureEnclavePhoneKey: PhoneKey, @unchecked Sendable {
+    let privateKey: SecureEnclave.P256.Signing.PrivateKey
+
+    var publicKey: P256.Signing.PublicKey { privateKey.publicKey }
+
+    func signature(for data: Data) throws -> P256.Signing.ECDSASignature {
+        try privateKey.signature(for: data)
     }
 }

@@ -4,33 +4,14 @@ import Testing
 
 @MainActor
 struct OnboardingCompletionTests {
-    private static let birthDate = Date(timeIntervalSince1970: 851_558_400) // 26 Dec 1996
-
-    /// Takes a fresh phone through the intro, language and consent to the Recovery code.
-    private func createLastysID(on phone: TestPhone) async {
-        phone.model.skipIntro()
-        phone.model.confirmLanguage()
-        phone.model.isOver18 = true
-        phone.model.acceptsTerms = true
-        await phone.model.continueFromConsent()
-    }
-
     private func fillInProfile(on phone: TestPhone, nickname: String = "Srey Pich") {
         phone.model.profileNickname = nickname
-        phone.model.profileBirthDate = Self.birthDate
-    }
-
-    private func onboard(_ phone: TestPhone) async {
-        await createLastysID(on: phone)
-        phone.model.hasSavedRecoveryCode = true
-        phone.model.continueFromRecoveryCode()
-        fillInProfile(on: phone)
-        await phone.model.finishProfile()
+        phone.model.profileBirthDate = TestPhone.birthDate
     }
 
     @Test func cannotContinueWithoutConfirmingTheRecoveryCodeIsSaved() async {
         let phone = TestPhone()
-        await createLastysID(on: phone)
+        await phone.createLastysID()
 
         phone.model.continueFromRecoveryCode()
 
@@ -40,7 +21,7 @@ struct OnboardingCompletionTests {
 
     @Test func confirmingTheRecoveryCodeIsSavedGoesToTheProfile() async {
         let phone = TestPhone()
-        await createLastysID(on: phone)
+        await phone.createLastysID()
 
         phone.model.hasSavedRecoveryCode = true
         phone.model.continueFromRecoveryCode()
@@ -51,7 +32,7 @@ struct OnboardingCompletionTests {
     @Test(arguments: ["", "   "])
     func cannotFinishTheProfileWithoutANickname(nickname: String) async {
         let phone = TestPhone()
-        await createLastysID(on: phone)
+        await phone.createLastysID()
         phone.model.hasSavedRecoveryCode = true
         phone.model.continueFromRecoveryCode()
         fillInProfile(on: phone, nickname: nickname)
@@ -64,7 +45,7 @@ struct OnboardingCompletionTests {
 
     @Test func cannotFinishTheProfileWithoutABirthDate() async {
         let phone = TestPhone()
-        await createLastysID(on: phone)
+        await phone.createLastysID()
         phone.model.hasSavedRecoveryCode = true
         phone.model.continueFromRecoveryCode()
         phone.model.profileNickname = "Srey Pich"
@@ -78,40 +59,31 @@ struct OnboardingCompletionTests {
     @Test func finishingOnboardingLandsOnHomeAsVerifiedSingleWithTheNickname() async {
         let phone = TestPhone()
 
-        await onboard(phone)
+        await phone.onboard()
 
         #expect(phone.model.screen == .home)
         #expect(phone.model.nickname == "Srey Pich")
         #expect(phone.model.relationship == .none)
-        #expect(phone.model.birthDate == Self.birthDate)
+        #expect(phone.model.birthDate == TestPhone.birthDate)
     }
 
     @Test func theBirthDateNeverGoesThroughTrustee() async {
-        let recorder = RecordingTrustee(FakeTrustee().client(forPhone: "phone-a"))
-        let model = AppModel(trustee: recorder, store: InMemoryPhoneStore())
-        model.skipIntro()
-        model.confirmLanguage()
-        model.isOver18 = true
-        model.acceptsTerms = true
-        await model.continueFromConsent()
-        model.hasSavedRecoveryCode = true
-        model.continueFromRecoveryCode()
-        model.profileNickname = "Srey Pich"
-        model.profileBirthDate = Self.birthDate
-        await model.finishProfile()
-        await model.start()
+        let phone = TestPhone()
 
-        #expect(model.screen == .home)
-        #expect(recorder.requests.contains("updateProfile(nickname: Srey Pich, photo: nil)"))
-        let birthDateForms = ["\(Self.birthDate)", "1996", "851558400"]
-        for request in recorder.requests {
+        await phone.onboard()
+        await phone.model.start()
+
+        #expect(phone.model.screen == .home)
+        #expect(phone.trusteeRequests.contains("updateProfile(nickname: Srey Pich, photo: nil)"))
+        let birthDateForms = ["\(TestPhone.birthDate)", "1996", "851558400"]
+        for request in phone.trusteeRequests {
             #expect(!birthDateForms.contains { request.contains($0) }, "\(request)")
         }
     }
 
     @Test func aRelaunchAfterOnboardingGoesStraightToHome() async {
         let phone = TestPhone()
-        await onboard(phone)
+        await phone.onboard()
         let lastysID = phone.model.lastysID
 
         phone.relaunch()
@@ -125,7 +97,7 @@ struct OnboardingCompletionTests {
 
     @Test func aRelaunchBeforeSavingTheRecoveryCodeShowsTheSameRecoveryCodeAgain() async {
         let phone = TestPhone()
-        await createLastysID(on: phone)
+        await phone.createLastysID()
         let lastysID = phone.model.lastysID
         let recoveryCode = phone.model.recoveryCode
 
@@ -138,7 +110,7 @@ struct OnboardingCompletionTests {
 
     @Test func aRelaunchBeforeFinishingTheProfileReturnsToTheProfile() async {
         let phone = TestPhone()
-        await createLastysID(on: phone)
+        await phone.createLastysID()
         phone.model.hasSavedRecoveryCode = true
         phone.model.continueFromRecoveryCode()
 
@@ -151,7 +123,7 @@ struct OnboardingCompletionTests {
         let phone = TestPhone()
         try await phone.trusteeAlreadyHoldsALastysIDForThisPhone()
 
-        await createLastysID(on: phone)
+        await phone.createLastysID()
 
         #expect(phone.model.screen == .onboarding(.consent))
         #expect(phone.model.onboardingProblem == .phoneAlreadyHasLastysID)

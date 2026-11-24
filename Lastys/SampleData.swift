@@ -27,6 +27,7 @@ extension AppModel {
             phone.hasFinishedOnboarding = true
         }
         return AppModel(
+            phoneKey: SoftwarePhoneKey(),
             trustee: FakeTrustee().client(forPhone: "preview"),
             store: InMemoryPhoneStore(phone),
             moments: SampleData.moments()

@@ -27,9 +27,9 @@ enum Launch {
     case failed(String)
 
     @MainActor static func start() -> Launch {
-        let phoneKey: String
+        let phoneKey: PhoneKey
         do {
-            phoneKey = try PhoneKey.loadOrCreate()
+            phoneKey = try PhoneKeyStore.loadOrCreate()
         } catch {
             return .failed("This iPhone couldn't create its Lastys key (\(error)).")
         }
@@ -37,7 +37,8 @@ enum Launch {
         // Phase A: Trustee runs on the phone. Phase B swaps in the HTTP client.
         let trustee = FakeTrustee(savingTo: folder.appending(path: "trustee.json"))
         let model = AppModel(
-            trustee: trustee.client(forPhone: phoneKey),
+            phoneKey: phoneKey,
+            trustee: trustee.client(forPhone: phoneKey.trusteeID),
             store: FilePhoneStore(url: folder.appending(path: "phone.json")),
             moments: SampleData.moments()
         )

@@ -6,6 +6,7 @@ struct HomeView: View {
     var openMe: () -> Void
 
     @Environment(AppModel.self) private var model
+    @State private var showingMyLastysQR = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -21,6 +22,11 @@ struct HomeView: View {
             .padding(.bottom, 24)
         }
         .foregroundStyle(Theme.ink)
+        .sheet(isPresented: $showingMyLastysQR) {
+            MyLastysQRView()
+                .environment(model)
+                .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: Header
@@ -89,7 +95,7 @@ struct HomeView: View {
     private var quickActions: some View {
         HStack(spacing: 12) {
             actionTile(icon: "qrcode", title: "Show my QR", dark: false) {
-                showToast("Your QR code opens here")
+                showingMyLastysQR = true
             }
             actionTile(icon: "qrcode.viewfinder", title: "Scan a QR", dark: true) {
                 showToast("The camera scanner opens here")
