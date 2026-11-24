@@ -1,0 +1,55 @@
+{
+  "name": "Only Partners can share Moments with each other",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "set-my-shared-moments",
+      "with": {
+        "titles": "Graduation"
+      },
+      "expect": {
+        "error": "no-relationship"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "get-partner-shared-moments",
+      "expect": {
+        "error": "no-relationship"
+      }
+    }
+  ]
+}

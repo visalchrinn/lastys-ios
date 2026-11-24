@@ -19,6 +19,14 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var isQuickHideOn = false
     /// Personal Moments live only here, never on Trustee.
     public var moments: [Moment] = []
+    /// What the Partner shares, as Trustee last gave it.
+    public var partnerMoments: [SharedMoment] = []
+    /// After an ending: this person's copy of what the former Partner shared, until they keep or delete it.
+    public var formerPartnerMoments: [SharedMoment] = []
+    /// Whether Trustee holds Moments this phone shared, so un-sharing the last one still reaches it.
+    public var hasSharedMoments = false
+    /// My own Moments that were shared when my Relationship ended, waiting for my keep or delete decision.
+    public var formerlySharedMomentIDs: [UUID] = []
 
     public init() {}
 
@@ -40,6 +48,10 @@ public struct PhoneState: Codable, Equatable, Sendable {
         isQuickHideOn = try c.decodeIfPresent(Bool.self, forKey: .isQuickHideOn) ?? defaults.isQuickHideOn
         // A Moment this build can't read is skipped on its own; the rest, and the phone, load.
         moments = ((try? c.decodeIfPresent([Skippable<Moment>].self, forKey: .moments)) ?? nil)?.compactMap(\.value) ?? defaults.moments
+        partnerMoments = ((try? c.decodeIfPresent([Skippable<SharedMoment>].self, forKey: .partnerMoments)) ?? nil)?.compactMap(\.value) ?? []
+        formerPartnerMoments = ((try? c.decodeIfPresent([Skippable<SharedMoment>].self, forKey: .formerPartnerMoments)) ?? nil)?.compactMap(\.value) ?? []
+        hasSharedMoments = try c.decodeIfPresent(Bool.self, forKey: .hasSharedMoments) ?? false
+        formerlySharedMomentIDs = ((try? c.decodeIfPresent([UUID].self, forKey: .formerlySharedMomentIDs)) ?? nil) ?? []
     }
 }
 

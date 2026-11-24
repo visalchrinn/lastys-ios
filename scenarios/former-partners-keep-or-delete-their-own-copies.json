@@ -1,0 +1,138 @@
+{
+  "name": "When a Relationship ends, each former Partner gets their own copy of what the other shared, and deleting one copy never touches the other",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "set-my-shared-moments",
+      "with": {
+        "titles": "Our first date"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "set-my-shared-moments",
+      "with": {
+        "titles": "Bob's birthday|Trip to Kep"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-former-shared-moments",
+      "expect": {
+        "count": "0"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "bob",
+      "do": "agree-to-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "get-partner-shared-moments",
+      "expect": {
+        "error": "no-relationship"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-former-shared-moments",
+      "expect": {
+        "count": "2",
+        "titles": "Bob's birthday|Trip to Kep"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-former-shared-moments",
+      "expect": {
+        "count": "1",
+        "titles": "Our first date"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "discard-former-shared-moments"
+    },
+    {
+      "phone": "alice",
+      "do": "get-former-shared-moments",
+      "expect": {
+        "count": "0"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-former-shared-moments",
+      "expect": {
+        "count": "1",
+        "titles": "Our first date"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "discard-former-shared-moments"
+    },
+    {
+      "phone": "bob",
+      "do": "get-former-shared-moments",
+      "expect": {
+        "count": "0"
+      }
+    }
+  ]
+}

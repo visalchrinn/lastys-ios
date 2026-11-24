@@ -113,6 +113,7 @@ extension FakeTrustee {
     /// and both enter the Cooling-off period.
     private func end(_ a: String, _ b: String) {
         let ended = now()
+        splitSharedMoments(a, b)
         let coolingOffUntil = ended.addingTimeInterval(Double(Self.coolingOffDays) * 86_400)
         for (me, partner) in [(a, b), (b, a)] {
             guard var person = state.people[me], person.partner == partner else { continue }

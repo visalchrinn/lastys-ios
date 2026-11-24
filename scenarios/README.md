@@ -51,6 +51,10 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 | `scan`                    | see below  | `status` (`single` or `taken`), `nickname`, `idAgeDays`, `phoneTransfers`, `history` (`hidden`, or the number of past Relationships), `requestBlocked` (`none`, `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `that-is-you`); errors `no-lastys-id`, `not-a-lastys-qr`, `expired-qr`, `forged-qr` |
 | `wait`                    | `minutes`, `days` | nothing. Moves the clock; it is not a request to Trustee. |
 | `turn-on-quick-hide`, `turn-off-quick-hide` | | nothing. Phone-only, like `wait`: Quick hide never reaches Trustee, so a runner sends nothing. The steps record in the scenario that Scans have nothing to honour; the Swift model tests prove the phone never sends Quick hide anywhere. |
+| `set-my-shared-moments` | `titles` (joined with `\|`) | nothing. Replaces what this Partner shares into the Relationship; each title stands for a whole Shared Moment, which the runner completes with a new ID, type Custom and the scenario's start date. Errors `no-lastys-id`, `no-relationship` |
+| `get-partner-shared-moments` | | `count`, `titles` (sorted, joined with `\|`). Error `no-relationship` |
+| `get-former-shared-moments` | | `count`, `titles`: this person's own copy of what their former Partner shared, after the Relationship ended. Error `no-lastys-id` |
+| `discard-former-shared-moments` | | nothing. This person kept (on the phone) or deleted their copy; the former Partner's copy is untouched. Error `no-lastys-id` |
 | `send-relationship-request` | optional `scanOf` | `status` (`pending`), `to` (the receiver's nickname). Uses the sending phone's latest `scan`, or another phone's with `scanOf` (which Trustee must refuse). Errors `scan-required`, `scan-too-old`, `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `that-is-you` |
 | `get-relationship-request-status` | `to` (receiver phone) | `status`: `pending`, `accepted`, `declined` or `expired`, and `to` |
 | `accept-relationship-request` | `from` (sender phone) | nothing. Errors `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `they-are-cooling-off`, `request-not-pending`, `request-not-found` |
@@ -95,6 +99,6 @@ A Lastys QR is accepted from 2 minutes before the current minute up to 1 minute 
 
 When a Relationship starts, every other pending request to or from either Partner becomes `expired`. Accepting checks both Lastys IDs before the request's own status, so a Lastys ID that became Taken gets `you-are-taken`.
 
-When a Relationship ends, both former Partners get a 7-day Cooling-off period, and each keeps it in their Relationship history as start and end months.
+When a Relationship ends, both former Partners get a 7-day Cooling-off period, and each keeps it in their Relationship history as start and end months. Each also gets their own copy of what the other shared, and stops sharing their own.
 
 Name scenarios in glossary language and add actions here as the slices introduce them.

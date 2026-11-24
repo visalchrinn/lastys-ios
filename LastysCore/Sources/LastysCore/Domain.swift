@@ -300,3 +300,26 @@ extension RelationshipStatus {
         }
     }
 }
+
+/// A Moment as it is shared into a Relationship through Trustee: never its photo or video,
+/// which stay on the owner's phone.
+public struct SharedMoment: Codable, Equatable, Sendable {
+    public let id: UUID
+    public let type: MomentType
+    public let title: String
+    public let date: Date
+    public let repeatsOnKhmerLunarDate: Bool
+
+    public init(id: UUID, type: MomentType, title: String, date: Date, repeatsOnKhmerLunarDate: Bool) {
+        self.id = id
+        self.type = type
+        self.title = title
+        self.date = date
+        self.repeatsOnKhmerLunarDate = repeatsOnKhmerLunarDate
+    }
+
+    public init(_ moment: Moment) {
+        self.init(id: moment.id, type: moment.type, title: moment.title, date: moment.date,
+                  repeatsOnKhmerLunarDate: moment.repeatsOnKhmerLunarDate)
+    }
+}

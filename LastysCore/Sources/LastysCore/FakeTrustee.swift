@@ -68,6 +68,10 @@ public actor FakeTrustee {
         var requests: [String: RequestRecord] = [:]
         /// How each ending is going, by `FakeTrustee.relationshipKey`. No record means together.
         var endings: [String: EndingRecord] = [:]
+        /// What each Lastys ID shares into its active Relationship, by Personal ID.
+        var sharedMoments: [String: [SharedMoment]] = [:]
+        /// Each former Partner's own copy of what the other shared, until they keep or delete it.
+        var formerSharedMoments: [String: [SharedMoment]] = [:]
 
         init() {}
 
@@ -83,6 +87,8 @@ public actor FakeTrustee {
             scans = try c.decodeIfPresent([String: ScanRecord].self, forKey: .scans) ?? [:]
             requests = try c.decodeIfPresent([String: RequestRecord].self, forKey: .requests) ?? [:]
             endings = try c.decodeIfPresent([String: EndingRecord].self, forKey: .endings) ?? [:]
+            sharedMoments = try c.decodeIfPresent([String: [SharedMoment]].self, forKey: .sharedMoments) ?? [:]
+            formerSharedMoments = try c.decodeIfPresent([String: [SharedMoment]].self, forKey: .formerSharedMoments) ?? [:]
             let earlierProfiles = try c.decodeIfPresent([String: EarlierProfile].self, forKey: .profileByLastysID) ?? [:]
             for id in lastysIDByPhone.values where people[id.personalID] == nil {
                 let profile = earlierProfiles[id.personalID]
@@ -99,10 +105,12 @@ public actor FakeTrustee {
             try c.encode(scans, forKey: .scans)
             try c.encode(requests, forKey: .requests)
             try c.encode(endings, forKey: .endings)
+            try c.encode(sharedMoments, forKey: .sharedMoments)
+            try c.encode(formerSharedMoments, forKey: .formerSharedMoments)
         }
 
         private enum CodingKeys: String, CodingKey {
-            case lastysIDByPhone, people, scans, requests, endings
+            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments
             case profileByLastysID // written by the build from ticket #3
         }
 
@@ -288,6 +296,22 @@ public actor FakeTrustee {
 
         func reportSafetyConcern() async throws {
             try await trustee.reportSafetyConcern(phone: phone)
+        }
+
+        func setMySharedMoments(_ moments: [SharedMoment]) async throws {
+            try await trustee.setMySharedMoments(phone: phone, moments: moments)
+        }
+
+        func partnerSharedMoments() async throws -> [SharedMoment] {
+            try await trustee.partnerSharedMoments(phone: phone)
+        }
+
+        func formerSharedMoments() async throws -> [SharedMoment] {
+            try await trustee.formerSharedMoments(phone: phone)
+        }
+
+        func discardFormerSharedMoments() async throws {
+            try await trustee.discardFormerSharedMoments(phone: phone)
         }
     }
 }

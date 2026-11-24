@@ -30,6 +30,14 @@ public protocol TrusteeClient: Sendable {
     func escalateToTeamReview() async throws
     /// Either Partner, at any stage: the Lastys team reviews the Relationship within 24 hours.
     func reportSafetyConcern() async throws
+    /// Replaces the Moments this Partner shares into the Relationship. Only Shared Moments are ever sent.
+    func setMySharedMoments(_ moments: [SharedMoment]) async throws
+    /// What the Partner shares into the Relationship.
+    func partnerSharedMoments() async throws -> [SharedMoment]
+    /// After a Relationship ends: this person's own copy of what the former Partner shared, until they decide.
+    func formerSharedMoments() async throws -> [SharedMoment]
+    /// This person has kept (on the phone) or deleted their copy; the former Partner's copy is untouched.
+    func discardFormerSharedMoments() async throws
 }
 
 /// What the person is given when their Lastys ID is created.

@@ -1,0 +1,108 @@
+{
+  "name": "A Shared Moment reaches the Partner, and only what the owner currently shares",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "set-my-shared-moments",
+      "with": {
+        "titles": "Our first date"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-partner-shared-moments",
+      "expect": {
+        "count": "1",
+        "titles": "Our first date"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-partner-shared-moments",
+      "expect": {
+        "count": "0"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "set-my-shared-moments",
+      "with": {
+        "titles": "Our first date|Anniversary dinner"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-partner-shared-moments",
+      "expect": {
+        "count": "2",
+        "titles": "Anniversary dinner|Our first date"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "set-my-shared-moments",
+      "with": {
+        "titles": "Anniversary dinner"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-partner-shared-moments",
+      "expect": {
+        "count": "1",
+        "titles": "Anniversary dinner"
+      }
+    }
+  ]
+}

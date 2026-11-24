@@ -103,6 +103,17 @@ private final class Run: @unchecked Sendable {
         case "report-safety-concern":
             try await client.reportSafetyConcern()
             return [:]
+        case "set-my-shared-moments":
+            let titles = (step.arguments["titles"] ?? "").split(separator: "|").map(String.init)
+            try await client.setMySharedMoments(titles.map(sharedMoment(titled:)))
+            return [:]
+        case "get-partner-shared-moments":
+            return Self.fields(of: try await client.partnerSharedMoments())
+        case "get-former-shared-moments":
+            return Self.fields(of: try await client.formerSharedMoments())
+        case "discard-former-shared-moments":
+            try await client.discardFormerSharedMoments()
+            return [:]
         case "turn-on-quick-hide", "turn-off-quick-hide":
             // Quick hide lives on the phone only: it never reaches Trustee, so it can never change a Scan.
             return [:]
@@ -114,6 +125,16 @@ private final class Run: @unchecked Sendable {
         default:
             return nil
         }
+    }
+
+    /// A Shared Moment the scenario names only by title; its other fields don't matter to the rules.
+    private func sharedMoment(titled title: String) -> SharedMoment {
+        SharedMoment(id: UUID(), type: .custom, title: title, date: ScenarioRunner.start, repeatsOnKhmerLunarDate: false)
+    }
+
+    /// `count`, and `titles` sorted and joined with `|`.
+    private static func fields(of moments: [SharedMoment]) -> [String: String] {
+        ["count": String(moments.count), "titles": moments.map(\.title).sorted().joined(separator: "|")]
     }
 
     /// The Lastys team, not a phone: the staff console's decision after a Team review. Its `phone` gets no key.

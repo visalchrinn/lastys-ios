@@ -277,6 +277,7 @@ public final class AppModel {
         if let status = try? await trustee.relationshipStatus() {
             phone.relationship = status
         }
+        await syncSharedMoments()
     }
 
     /// Loads this Lastys ID's current status from Trustee.
@@ -288,6 +289,153 @@ public final class AppModel {
         } catch {
             // Errors surface in later slices; for now the last known state stays on screen.
         }
+        await syncSharedMoments()
+    }
+
+    // MARK: Shared Moments
+
+    /// After a Relationship ends: everything that was shared in it, mine and my former Partner's,
+    /// waiting for me to keep, export or delete my own copy.
+    public var formerSharedMoments: [Moment] {
+        let mine = phone.moments.filter { phone.formerlySharedMomentIDs.contains($0.id) }
+        return mine + phone.formerPartnerMoments.map { Self.moment(from: $0) }
+    }
+
+    /// Whether Home offers the keep, export or delete decision. Quick hide keeps it off the screen.
+    public var showsFormerSharedMoments: Bool {
+        !formerSharedMoments.isEmpty && !isQuickHideOn
+    }
+
+    /// Why the last sharing step didn't go through.
+    public private(set) var sharingProblem: SharingProblem?
+
+    /// Whether this Moment is mine to change. My Partner's Shared Moments are theirs.
+    public func isMine(_ moment: Moment) -> Bool {
+        phone.moments.contains { $0.id == moment.id }
+    }
+
+    /// One of my own Moments, not yet shared, while I'm in a Relationship.
+    public func canShare(_ moment: Moment) -> Bool {
+        guard case .active = relationship else { return false }
+        return phone.moments.contains { $0.id == moment.id && !$0.isShared }
+    }
+
+    public func canStopSharing(_ moment: Moment) -> Bool {
+        phone.moments.contains { $0.id == moment.id && $0.isShared }
+    }
+
+    /// Shares one of my Moments into the Relationship, so my Partner sees it too.
+    public func share(_ id: UUID) async {
+        guard let moment = phone.moments.first(where: { $0.id == id }), canShare(moment) else { return }
+        await setShared(id, true)
+    }
+
+    public func stopSharing(_ id: UUID) async {
+        guard let moment = phone.moments.first(where: { $0.id == id }), canStopSharing(moment) else { return }
+        await setShared(id, false)
+    }
+
+    private func setShared(_ id: UUID, _ shared: Bool) async {
+        guard connectivity.isOnline else {
+            sharingProblem = .needsInternet
+            return
+        }
+        guard let index = phone.moments.firstIndex(where: { $0.id == id }) else { return }
+        phone.moments[index].isShared = shared
+        await syncSharedMoments()
+    }
+
+    /// The sync in flight, if any. Syncs run one after another, so an older set never lands last.
+    @ObservationIgnored private var syncInFlight: Task<Void, Never>?
+
+    /// Brings Shared Moments in line with Trustee: while in a Relationship, sends mine and fetches my
+    /// Partner's; after it ends, my own stop being shared and everything shared waits for my decision.
+    /// Only Moments marked shared ever leave the phone.
+    public func syncSharedMoments() async {
+        let previous = syncInFlight
+        let sync = Task { [weak self] in
+            await previous?.value
+            await self?.syncSharedMomentsNow()
+        }
+        syncInFlight = sync
+        await sync.value
+    }
+
+    private func syncSharedMomentsNow() async {
+        guard phone.lastysID != nil, connectivity.isOnline else { return }
+        do {
+            if case .active = relationship {
+                let mine = phone.moments.filter(\.isShared)
+                if !mine.isEmpty || phone.hasSharedMoments {
+                    try await trustee.setMySharedMoments(mine.map(SharedMoment.init))
+                    phone.hasSharedMoments = !mine.isEmpty
+                }
+                phone.partnerMoments = try await trustee.partnerSharedMoments()
+            } else if phone.moments.contains(where: \.isShared) || phone.hasSharedMoments || !phone.partnerMoments.isEmpty {
+                var ended = phone
+                ended.formerlySharedMomentIDs += ended.moments.filter(\.isShared).map(\.id)
+                for index in ended.moments.indices { ended.moments[index].isShared = false }
+                ended.partnerMoments = []
+                ended.hasSharedMoments = false
+                phone = ended
+            }
+            // Copies from a Relationship that ended stay mine to decide about, even in a new one.
+            phone.formerPartnerMoments = try await trustee.formerSharedMoments()
+            sharingProblem = nil
+        } catch {
+            sharingProblem = SharingProblem(error)
+        }
+        scheduleReminders()
+    }
+
+    /// Keeps everything that was shared: my own Moments stay, and my copy of my former Partner's
+    /// becomes personal Moments on this phone.
+    public func keepFormerSharedMoments() async {
+        let received = phone.formerPartnerMoments.map { shared -> Moment in
+            var personal = Self.moment(from: shared)
+            personal.isShared = false
+            return personal
+        }
+        guard await discardReceivedCopies() else { return }
+        var kept = phone
+        kept.moments += received.filter { copy in !kept.moments.contains { $0.id == copy.id } }
+        kept.formerlySharedMomentIDs = []
+        phone = kept
+        scheduleReminders()
+    }
+
+    /// Deletes my copy of everything that was shared, my own Moments included.
+    /// My former Partner's own copy is untouched.
+    public func deleteFormerSharedMoments() async {
+        guard await discardReceivedCopies() else { return }
+        var deleted = phone
+        deleted.moments.removeAll { deleted.formerlySharedMomentIDs.contains($0.id) }
+        deleted.formerlySharedMomentIDs = []
+        phone = deleted
+        scheduleReminders()
+    }
+
+    /// Tells Trustee I've dealt with my copy of what my former Partner shared, if there is any.
+    private func discardReceivedCopies() async -> Bool {
+        guard !phone.formerPartnerMoments.isEmpty else { return true }
+        guard connectivity.isOnline else {
+            sharingProblem = .needsInternet
+            return false
+        }
+        do {
+            try await trustee.discardFormerSharedMoments()
+            phone.formerPartnerMoments = []
+            sharingProblem = nil
+            return true
+        } catch {
+            sharingProblem = SharingProblem(error)
+            return false
+        }
+    }
+
+    /// Everything that was shared in my ended Relationship as an .ics file to save or share.
+    public func formerSharedMomentsCalendar() -> String {
+        MomentCalendarFile.make(formerSharedMoments, calendar: calendar, now: now())
     }
 
     // MARK: Onboarding
@@ -413,6 +561,7 @@ public final class AppModel {
     public func setQuickHide(_ on: Bool) {
         guard canUseQuickHide else { return }
         phone.isQuickHideOn = on
+        scheduleReminders()
     }
 
     // MARK: Moments
@@ -422,7 +571,17 @@ public final class AppModel {
 
     /// The Moments this screen may show: Quick hide leaves out Shared Moments.
     private var visibleMoments: [Moment] {
-        isQuickHideOn ? moments.filter { !$0.isShared } : moments
+        isQuickHideOn ? allMoments.filter { !$0.isShared } : allMoments
+    }
+
+    /// My own Moments and what my Partner shares with me.
+    private var allMoments: [Moment] {
+        phone.moments + phone.partnerMoments.map { Self.moment(from: $0) }
+    }
+
+    private static func moment(from shared: SharedMoment) -> Moment {
+        Moment(id: shared.id, type: shared.type, title: shared.title, date: shared.date,
+               repeatsOnKhmerLunarDate: shared.repeatsOnKhmerLunarDate, isShared: true)
     }
 
     /// Each Moment's next occurrence from today, nearest first, at most three.
@@ -467,11 +626,14 @@ public final class AppModel {
         moment.media = draft.media
         phone.moments[index] = moment
         scheduleReminders()
+        if moment.isShared { Task { await syncSharedMoments() } }
     }
 
     public func deleteMoment(id: UUID) {
+        let wasShared = phone.moments.first { $0.id == id }?.isShared ?? false
         phone.moments.removeAll { $0.id == id }
         scheduleReminders()
+        if wasShared { Task { await syncSharedMoments() } }
     }
 
     /// The media files Moments still use, so the phone can remove the rest.
@@ -505,7 +667,8 @@ public final class AppModel {
     /// Moment's next occurrences. Called on every change, at launch and when the app comes back.
     func scheduleReminders() {
         let current = now()
-        let due = phone.moments.flatMap { moment -> [Reminder] in
+        // Quick hide keeps Shared Moments off the lock screen as well as off Home.
+        let due = visibleMoments.flatMap { moment -> [Reminder] in
             occurrences(of: moment, count: Self.occurrencesBooked).flatMap { occurrence in
                 dueReminders(for: moment, on: occurrence, after: current)
             }
@@ -601,4 +764,14 @@ public enum EndingProblem: Equatable, Sendable {
     /// The Partner or the Lastys team acted first; the screen now shows where things stand.
     case changedMeanwhile
     case couldNotReachLastys
+}
+
+public enum SharingProblem: Equatable, Sendable {
+    /// Sharing goes through Trustee, so it needs internet.
+    case needsInternet
+    case couldNotReachLastys
+
+    init(_ error: Error) {
+        self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+    }
 }

@@ -44,9 +44,68 @@ struct MomentEditorView: View {
         return nil
     }
 
+    /// A Moment my Partner shared: shown, but theirs to change.
+    private var isPartners: Bool {
+        existing.map { !model.isMine($0) } ?? false
+    }
+
     var body: some View {
         NavigationStack {
             Form {
+                if let existing, isPartners {
+                    Section {
+                        LabeledContent("Type") { Text(existing.type.title) }
+                        LabeledContent("Title") { Text(verbatim: existing.title) }
+                        LabeledContent("Date") { Text(existing.date, format: .dateTime.day().month().year()) }
+                        if existing.repeatsOnKhmerLunarDate {
+                            Text("Repeats every year on its Khmer lunar date (sample)")
+                        }
+                    } footer: {
+                        Text("Shared by \(model.partnerNickname). Only they can change it.")
+                    }
+                } else {
+                    editableSections
+                }
+            }
+            .navigationTitle(existing == nil ? LocalizedStringKey("New Moment") : LocalizedStringKey("Moment"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(isPartners ? LocalizedStringKey("Done") : LocalizedStringKey("Cancel")) { dismiss() }
+                }
+                if !isPartners {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Save") {
+                            if let existing {
+                                model.updateMoment(id: existing.id, to: draft)
+                            } else {
+                                model.addMoment(draft)
+                            }
+                            dismiss()
+                        }
+                        .disabled(!model.canSave(draft) || isLoadingMedia)
+                    }
+                }
+            }
+            .confirmationDialog("Delete this Moment?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+                Button("Delete", role: .destructive) {
+                    if let existing { model.deleteMoment(id: existing.id) }
+                    dismiss()
+                }
+            }
+            .onChange(of: mediaItem) { _, item in
+                guard let item else { return }
+                isLoadingMedia = true
+                Task {
+                    draft.media = (try? await MomentMediaFiles.save(item)) ?? draft.media
+                    isLoadingMedia = false
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var editableSections: some View {
                 Section {
                     Picker("Type", selection: $draft.type) {
                         ForEach(MomentType.allCases, id: \.self) { type in
@@ -79,45 +138,26 @@ struct MomentEditorView: View {
                     Text("Reminders come 7 days before, the day before and on the day, every year. Personal Moments never leave this phone.")
                 }
 
-                if existing != nil {
+                if let existing, !isPartners {
+                    Section {
+                        if model.canShare(existing) {
+                            Button("Share with \(model.partnerNickname)") {
+                                Task { await model.share(existing.id); dismiss() }
+                            }
+                        } else if model.canStopSharing(existing) {
+                            Button("Stop sharing") {
+                                Task { await model.stopSharing(existing.id); dismiss() }
+                            }
+                        }
+                    } footer: {
+                        if model.canShare(existing) || model.canStopSharing(existing) {
+                            Text("A Shared Moment's title, type and date reach your Partner through Lastys. Its photo or video stays on this phone.")
+                        }
+                    }
                     Section {
                         Button("Delete this Moment", role: .destructive) { confirmingDelete = true }
                     }
                 }
-            }
-            .navigationTitle(existing == nil ? LocalizedStringKey("New Moment") : LocalizedStringKey("Moment"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        if let existing {
-                            model.updateMoment(id: existing.id, to: draft)
-                        } else {
-                            model.addMoment(draft)
-                        }
-                        dismiss()
-                    }
-                    .disabled(!model.canSave(draft) || isLoadingMedia)
-                }
-            }
-            .confirmationDialog("Delete this Moment?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
-                    if let existing { model.deleteMoment(id: existing.id) }
-                    dismiss()
-                }
-            }
-            .onChange(of: mediaItem) { _, item in
-                guard let item else { return }
-                isLoadingMedia = true
-                Task {
-                    draft.media = (try? await MomentMediaFiles.save(item)) ?? draft.media
-                    isLoadingMedia = false
-                }
-            }
-        }
     }
 }
 

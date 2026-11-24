@@ -29,6 +29,10 @@ final class HeldTrustee: TrusteeClient, @unchecked Sendable {
     func respondToEndRequest(agree: Bool) async throws { try await wrapped.respondToEndRequest(agree: agree) }
     func escalateToTeamReview() async throws { try await wrapped.escalateToTeamReview() }
     func reportSafetyConcern() async throws { try await wrapped.reportSafetyConcern() }
+    func setMySharedMoments(_ moments: [SharedMoment]) async throws { try await wrapped.setMySharedMoments(moments) }
+    func partnerSharedMoments() async throws -> [SharedMoment] { try await wrapped.partnerSharedMoments() }
+    func formerSharedMoments() async throws -> [SharedMoment] { try await wrapped.formerSharedMoments() }
+    func discardFormerSharedMoments() async throws { try await wrapped.discardFormerSharedMoments() }
     func sendRelationshipRequest(scanID: String) async throws -> RelationshipRequest { try await wrapped.sendRelationshipRequest(scanID: scanID) }
     func relationshipRequest(id: String) async throws -> RelationshipRequest { try await wrapped.relationshipRequest(id: id) }
     func respondToRelationshipRequest(id: String, accept: Bool) async throws { try await wrapped.respondToRelationshipRequest(id: id, accept: accept) }

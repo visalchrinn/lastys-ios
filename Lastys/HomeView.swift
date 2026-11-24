@@ -28,6 +28,9 @@ struct HomeView: View {
                 }
                 quickActions
                 safetyTips
+                if model.showsFormerSharedMoments {
+                    FormerSharedMomentsCard()
+                }
                 momentsSection
             }
             .padding(.horizontal, 20)
@@ -282,6 +285,12 @@ struct HomeView: View {
             }
             .padding(.top, 4)
 
+            if let problem = model.sharingProblem {
+                Text(problem.message)
+                    .font(.jakarta(13, .medium))
+                    .foregroundStyle(Theme.roseDeep)
+            }
+
             VStack(spacing: 10) {
                 if model.upcomingMoments.isEmpty {
                     Text("No upcoming moments yet. Tap + Add.")
@@ -371,6 +380,7 @@ private struct UpcomingRow: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
+            SharedBadge(isShared: moment.isShared)
             MomentMediaBadge(media: moment.media)
         }
         .padding(.horizontal, 14)
@@ -403,6 +413,7 @@ private struct TimelineRow: View {
                 .foregroundStyle(Theme.muted)
             HStack(spacing: 6) {
                 Text(verbatim: moment.title).font(.jakarta(15, .bold))
+                SharedBadge(isShared: moment.isShared)
                 MomentMediaBadge(media: moment.media)
             }
             meta
@@ -420,6 +431,20 @@ private struct TimelineRow: View {
         }
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// A small mark on a Moment shared into the Relationship.
+private struct SharedBadge: View {
+    let isShared: Bool
+
+    var body: some View {
+        if isShared {
+            Image(systemName: "person.2.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Theme.rose)
+                .accessibilityLabel(Text("Shared Moment"))
+        }
     }
 }
 

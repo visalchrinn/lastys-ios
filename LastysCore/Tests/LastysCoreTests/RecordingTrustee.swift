@@ -72,6 +72,26 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         try await wrapped.reportSafetyConcern()
     }
 
+    func setMySharedMoments(_ moments: [SharedMoment]) async throws {
+        record("setMySharedMoments(" + moments.map(\.title).joined(separator: ", ") + ")")
+        try await wrapped.setMySharedMoments(moments)
+    }
+
+    func partnerSharedMoments() async throws -> [SharedMoment] {
+        record("partnerSharedMoments()")
+        return try await wrapped.partnerSharedMoments()
+    }
+
+    func formerSharedMoments() async throws -> [SharedMoment] {
+        record("formerSharedMoments()")
+        return try await wrapped.formerSharedMoments()
+    }
+
+    func discardFormerSharedMoments() async throws {
+        record("discardFormerSharedMoments()")
+        try await wrapped.discardFormerSharedMoments()
+    }
+
     func relationshipStatus() async throws -> RelationshipStatus {
         record("relationshipStatus()")
         return try await wrapped.relationshipStatus()
