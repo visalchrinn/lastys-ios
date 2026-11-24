@@ -17,7 +17,7 @@ struct MomentsTests {
     private func model(moments: [Moment], now: Date) -> AppModel {
         AppModel(
             trustee: FakeTrustee().client(forPhone: "phone-a"),
-            nickname: "Srey Pich",
+            store: InMemoryPhoneStore(),
             moments: moments,
             calendar: Self.calendar,
             now: { now }

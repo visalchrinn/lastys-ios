@@ -1,10 +1,8 @@
 import Foundation
 import LastysCore
 
-/// Phase A sample content shown on Home until onboarding and Moments arrive.
+/// Phase A sample Moments shown on Home until "+ Add" arrives.
 enum SampleData {
-    static let nickname = "Srey Pich"
-
     static func moments(relativeTo today: Date = Date()) -> [Moment] {
         let cal = Calendar.current
         let start = cal.startOfDay(for: today)
@@ -18,13 +16,20 @@ enum SampleData {
 }
 
 extension AppModel {
-    /// The sample person and Moments, talking to the given Trustee.
-    @MainActor static func sample(trustee: TrusteeClient) -> AppModel {
-        AppModel(trustee: trustee, nickname: SampleData.nickname, moments: SampleData.moments())
-    }
-
-    /// A model for SwiftUI previews, backed by its own fake Trustee.
-    @MainActor static var preview: AppModel {
-        sample(trustee: FakeTrustee().client(forPhone: "preview"))
+    /// A model for SwiftUI previews: either a phone that finished onboarding, or a new one.
+    @MainActor static func preview(onboarded: Bool = true) -> AppModel {
+        var phone = PhoneState()
+        if onboarded {
+            phone.lastysID = LastysID(personalID: "LT-8K2F-91QA")
+            phone.recoveryCode = "7QX2-M4KD-9PLA-3HTV"
+            phone.hasSavedRecoveryCode = true
+            phone.nickname = "Srey Pich"
+            phone.hasFinishedOnboarding = true
+        }
+        return AppModel(
+            trustee: FakeTrustee().client(forPhone: "preview"),
+            store: InMemoryPhoneStore(phone),
+            moments: SampleData.moments()
+        )
     }
 }

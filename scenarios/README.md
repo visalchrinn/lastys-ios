@@ -15,7 +15,7 @@ One scenario per `.json` file:
 {
   "name": "A new Lastys ID has no active Relationship",
   "steps": [
-    { "phone": "alice", "do": "create-lastys-id", "with": { "nickname": "Alice" } },
+    { "phone": "alice", "do": "create-lastys-id" },
     { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "none" } }
   ]
 }
@@ -38,7 +38,8 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 
 | Action                    | `with`     | Response |
 |---------------------------|------------|----------|
-| `create-lastys-id`        | `nickname` | `personalID`; error `phone-already-has-lastys-id` |
+| `create-lastys-id`        |            | `personalID`, `recoveryCode`; error `phone-already-has-lastys-id` |
+| `update-profile`          | `nickname` | nothing; error `no-lastys-id` |
 | `get-relationship-status` |            | `status`: `none` |
 
 ## Error codes

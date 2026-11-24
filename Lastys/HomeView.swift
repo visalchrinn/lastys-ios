@@ -66,6 +66,9 @@ struct HomeView: View {
                     .background(Circle().fill(Theme.greenTint))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: model.nickname)
+                        .font(.jakarta(13, .semibold))
+                        .foregroundStyle(Theme.muted)
                     Text("Verified Single")
                         .font(.jakarta(18, .heavy))
                     Text("Not linked to anyone")
@@ -281,6 +284,6 @@ private struct TimelineRow: View {
 
 #Preview {
     HomeView(showToast: { _ in }, openMe: {})
-        .environment(AppModel.preview)
+        .environment(AppModel.preview())
         .background(Theme.background)
 }

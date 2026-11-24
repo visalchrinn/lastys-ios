@@ -36,8 +36,11 @@ public struct ScenarioRunner {
     private func perform(_ step: Scenario.Step, on client: TrusteeClient) async throws -> [String: String]? {
         switch step.action {
         case "create-lastys-id":
-            let id = try await client.createLastysID(nickname: step.arguments["nickname"] ?? "")
-            return ["personalID": id.personalID]
+            let created = try await client.createLastysID()
+            return ["personalID": created.lastysID.personalID, "recoveryCode": created.recoveryCode]
+        case "update-profile":
+            try await client.updateProfile(nickname: step.arguments["nickname"] ?? "", photo: nil)
+            return [:]
         case "get-relationship-status":
             return ["status": try await client.relationshipStatus().code]
         default:

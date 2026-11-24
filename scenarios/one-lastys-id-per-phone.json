@@ -3,13 +3,11 @@
   "steps": [
     {
       "phone": "alice",
-      "do": "create-lastys-id",
-      "with": { "nickname": "Alice" }
+      "do": "create-lastys-id"
     },
     {
       "phone": "alice",
       "do": "create-lastys-id",
-      "with": { "nickname": "Alice again" },
       "expect": { "error": "phone-already-has-lastys-id" }
     }
   ]

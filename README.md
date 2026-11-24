@@ -1,6 +1,10 @@
 # Lastys (iOS)
 
-SwiftUI implementation of the **Lastys** iPhone prototype. This first build contains the **Home** screen:
+SwiftUI implementation of the **Lastys** iPhone prototype.
+
+A first launch runs **onboarding**: a skippable intro, the language (Khmer by default), the 18+ and Terms confirmation, creating the Lastys ID with its Recovery code, then a nickname, an optional photo and a birth date that stays on the phone. Relaunching skips it. The phone's key is created in the Secure Enclave; Debug builds on a simulator fall back to a software key.
+
+Then the **Home** screen:
 
 - Header with the Lastys wordmark, today's date and the profile button
 - "Verified Single" status card with the share button
@@ -15,7 +19,7 @@ Font: [Plus Jakarta Sans](https://fonts.google.com/specimen/Plus+Jakarta+Sans) (
 
 - `Lastys/`: the SwiftUI app. Screens render from `AppModel` and decide nothing themselves.
 - `LastysCore/`: a Swift package holding the domain.
-  - `LastysCore`: `AppModel` (all domain-visible state and the person's intents), `TrusteeClient` (the app's only boundary to Trustee) and `FakeTrustee` (Phase A's on-phone Trustee). The "Demo: …" hooks are compiled only in Debug.
+  - `LastysCore`: `AppModel` (all domain-visible state and the person's intents, including onboarding), `PhoneStore` (what the phone keeps between launches), `TrusteeClient` (the app's only boundary to Trustee) and `FakeTrustee` (Phase A's on-phone Trustee). The "Demo: …" hooks are compiled only in Debug.
   - `LastysScenarios`: the Swift runner for the shared scenarios. Only the tests link it.
 - `scenarios/`: shared domain scenarios as data. See `scenarios/README.md`.
 - `Lastys/Localizable.xcstrings`: String Catalog. Khmer is the development language, with English available. Khmer values are placeholders until the translations arrive.

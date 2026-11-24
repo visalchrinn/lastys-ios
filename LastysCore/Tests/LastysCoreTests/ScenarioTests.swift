@@ -36,7 +36,7 @@ struct ScenarioTests {
         {
           "name": "Expects the wrong status",
           "steps": [
-            { "phone": "alice", "do": "create-lastys-id", "with": { "nickname": "Alice" } },
+            { "phone": "alice", "do": "create-lastys-id" },
             { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "active" } }
           ]
         }

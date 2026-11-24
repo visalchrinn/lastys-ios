@@ -1,7 +1,7 @@
 import Foundation
 
 /// A person's single identity on Lastys, shown as a Personal ID such as `LT-8K2F-91QA`.
-public struct LastysID: Equatable, Hashable, Sendable {
+public struct LastysID: Equatable, Hashable, Codable, Sendable {
     public let personalID: String
 
     public init(personalID: String) {

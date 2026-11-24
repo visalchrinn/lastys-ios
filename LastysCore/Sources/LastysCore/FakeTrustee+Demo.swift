@@ -8,7 +8,8 @@ extension FakeTrustee {
     /// Returns that person's client so the demo can act as them.
     public func demoAddPerson(nickname: String) async throws -> TrusteeClient {
         let person = client(forPhone: "demo-\(UUID().uuidString)")
-        _ = try await person.createLastysID(nickname: nickname)
+        _ = try await person.createLastysID()
+        try await person.updateProfile(nickname: nickname, photo: nil)
         return person
     }
 }

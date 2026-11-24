@@ -3,17 +3,78 @@ import SwiftUI
 
 @main
 struct LastysApp: App {
-    /// Phase A: Trustee runs on the phone. Phase B swaps in the HTTP client.
-    private static let trustee = FakeTrustee()
-
-    @State private var model = AppModel.sample(trustee: LastysApp.trustee.client(forPhone: "this-phone"))
+    @State private var launch = Launch.start()
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environment(model)
-                .task { await model.start() }
-                .preferredColorScheme(.light)
+            Group {
+                switch launch {
+                case .ready(let model):
+                    AppRootView()
+                        .environment(model)
+                case .failed(let message):
+                    LaunchProblemView(message: message)
+                }
+            }
+            .preferredColorScheme(.light)
         }
+    }
+}
+
+/// Builds the app's state model from what this phone has saved.
+enum Launch {
+    case ready(AppModel)
+    case failed(String)
+
+    @MainActor static func start() -> Launch {
+        let phoneKey: String
+        do {
+            phoneKey = try PhoneKey.loadOrCreate()
+        } catch {
+            return .failed("This iPhone couldn't create its Lastys key (\(error)).")
+        }
+        let folder = URL.applicationSupportDirectory.appending(path: "Lastys", directoryHint: .isDirectory)
+        // Phase A: Trustee runs on the phone. Phase B swaps in the HTTP client.
+        let trustee = FakeTrustee(savingTo: folder.appending(path: "trustee.json"))
+        let model = AppModel(
+            trustee: trustee.client(forPhone: phoneKey),
+            store: FilePhoneStore(url: folder.appending(path: "phone.json")),
+            moments: SampleData.moments()
+        )
+        return .ready(model)
+    }
+}
+
+/// Onboarding until the person has a Lastys ID and a profile, then the tabs.
+struct AppRootView: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        Group {
+            switch model.screen {
+            case .onboarding(let step):
+                OnboardingView(step: step)
+            case .home:
+                RootView()
+            }
+        }
+        .environment(\.locale, Locale(identifier: model.language.rawValue))
+        .task(id: model.screen == .home) { await model.start() }
+    }
+}
+
+struct LaunchProblemView: View {
+    let message: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Wordmark()
+            Text(message)
+                .font(.jakarta(15))
+                .foregroundStyle(Theme.ink)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Theme.background.ignoresSafeArea())
     }
 }

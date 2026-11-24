@@ -110,3 +110,43 @@ struct Wordmark: View {
             .tracking(-0.6)
     }
 }
+
+struct PrimaryButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.jakarta(16, .bold))
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(isEnabled ? Theme.rose : Theme.muted.opacity(0.4)))
+            .opacity(configuration.isPressed ? 0.85 : 1)
+    }
+}
+
+/// A tappable checkbox with a label, at least 44pt tall.
+struct CheckboxRow: View {
+    let title: LocalizedStringKey
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Button {
+            isOn.toggle()
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: isOn ? "checkmark.square.fill" : "square")
+                    .font(.system(size: 22))
+                    .foregroundStyle(isOn ? Theme.rose : Theme.muted)
+                Text(title)
+                    .font(.jakarta(15))
+                    .foregroundStyle(Theme.ink)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
+            }
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
+    }
+}

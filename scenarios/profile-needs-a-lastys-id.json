@@ -1,0 +1,11 @@
+{
+  "name": "A phone without a Lastys ID cannot set a profile",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": { "nickname": "Alice" },
+      "expect": { "error": "no-lastys-id" }
+    }
+  ]
+}
