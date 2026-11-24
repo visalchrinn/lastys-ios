@@ -331,12 +331,18 @@ public struct MyLastysIDDetails: Equatable, Sendable {
     public let shareLevel: ShareLevel
     /// False for a Lastys ID made before Trustee kept Recovery codes: its owner needs to make a new one.
     public let hasRecoveryCode: Bool
+    /// When a Recovery started on another phone will move this Lastys ID there, unless cancelled.
+    public let recoveryCompletesAt: Date?
 
-    public init(createdAt: Date, phoneTransferCount: Int, shareLevel: ShareLevel, hasRecoveryCode: Bool) {
+    public init(
+        createdAt: Date, phoneTransferCount: Int, shareLevel: ShareLevel, hasRecoveryCode: Bool,
+        recoveryCompletesAt: Date? = nil
+    ) {
         self.createdAt = createdAt
         self.phoneTransferCount = phoneTransferCount
         self.shareLevel = shareLevel
         self.hasRecoveryCode = hasRecoveryCode
+        self.recoveryCompletesAt = recoveryCompletesAt
     }
 }
 
@@ -348,4 +354,52 @@ public struct RecoveryStarted: Equatable, Sendable {
     public init(completesAt: Date) {
         self.completesAt = completesAt
     }
+}
+
+/// A Phone transfer the old phone has offered: the code its QR carries, valid for 5 minutes.
+public struct PhoneTransferOffer: Equatable, Sendable {
+    public static let validMinutes = 5
+    /// One Phone transfer every 30 days.
+    public static let daysBetweenTransfers = 30
+
+    public let code: String
+    public let expiresAt: Date
+
+    public init(code: String, expiresAt: Date) {
+        self.code = code
+        self.expiresAt = expiresAt
+    }
+}
+
+/// What the new phone receives: the Lastys ID, now on its own key, and the old phone's sealed bundle.
+public struct TransferredLastysID: Equatable, Sendable {
+    public let lastysID: LastysID
+    /// The old phone's private data, sealed with a key only the transfer QR carries. Trustee can't read it.
+    public let sealedBundle: Data
+
+    public init(lastysID: LastysID, sealedBundle: Data) {
+        self.lastysID = lastysID
+        self.sealedBundle = sealedBundle
+    }
+}
+
+/// Where a Recovery started from this (new) phone stands.
+public enum RecoveryStatus: Equatable, Sendable {
+    /// This phone hasn't started a Recovery.
+    case notStarted
+    case waiting(completesAt: Date)
+    /// The 7 days are over: completing it moves the Lastys ID here.
+    case ready
+    /// The phone holding the Lastys ID cancelled it.
+    case cancelled
+}
+
+/// Something Trustee tells this Lastys ID once.
+public enum Notice: String, Codable, Sendable {
+    /// Someone started a Recovery of my Lastys ID. If it wasn't me, cancel it.
+    case recoveryStarted = "recovery-started"
+    /// My Partner's Lastys ID moved to another phone.
+    case partnerChangedPhone = "partner-changed-phone"
+    /// Someone started a Recovery of my Partner's Lastys ID.
+    case partnerStartedRecovery = "partner-started-recovery"
 }

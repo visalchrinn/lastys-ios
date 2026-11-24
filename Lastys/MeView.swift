@@ -1,3 +1,4 @@
+import CoreImage.CIFilterBuiltins
 import LastysCore
 import PhotosUI
 import SwiftUI
@@ -26,7 +27,9 @@ struct MeView: View {
                     .font(.jakarta(26, .heavy))
                     .tracking(-0.6)
                 profile
+                pendingRecovery
                 lastysID
+                moveToANewPhone
                 shareLevel
                 whoScannedMe
                 recoveryCode
@@ -207,6 +210,68 @@ struct MeView: View {
         .card()
     }
 
+    @ViewBuilder
+    private var pendingRecovery: some View {
+        if let completesAt = model.myDetails?.recoveryCompletesAt {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("A Recovery of your Lastys ID has started", systemImage: "exclamationmark.triangle.fill")
+                    .font(.jakarta(15, .bold))
+                    .foregroundStyle(Theme.roseDeep)
+                Text("Someone entered your Recovery code on another phone. Unless you cancel, your Lastys ID moves there on \(completesAt, format: .dateTime.day().month(.wide).hour().minute()). If this wasn't you, cancel it and make a new Recovery code.")
+                    .font(.jakarta(13))
+                Button("Cancel this Recovery", role: .destructive) { Task { await model.cancelRecovery() } }
+                    .buttonStyle(GhostButtonStyle())
+            }
+            .card()
+        }
+    }
+
+    private var moveToANewPhone: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            sectionTitle("Move to a new phone")
+            if let qr = model.phoneTransferQR {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let left = model.phoneTransferSecondsLeft(at: context.date)
+                    VStack(spacing: 10) {
+                        if left > 0 {
+                            TransferQRImage(payload: qr.payload)
+                                .frame(width: 220, height: 220)
+                                .frame(maxWidth: .infinity)
+                            Text("On your new phone, choose Move my ID from another phone and scan this. Valid for \(left / 60):\(String(format: "%02d", left % 60)).")
+                                .font(.jakarta(13))
+                                .foregroundStyle(Theme.muted)
+                        } else {
+                            Text("This code has expired.")
+                                .font(.jakarta(13))
+                                .foregroundStyle(Theme.muted)
+                        }
+                    }
+                }
+                Button("Stop") { model.stopOfferingPhoneTransfer() }
+                    .buttonStyle(GhostButtonStyle())
+            } else {
+                Text("Your Lastys ID, Relationship and Moments move to the new phone, which makes its own key. Photos and videos on Moments don't move yet, and this phone starts over. One move every 30 days.")
+                    .font(.jakarta(13))
+                    .foregroundStyle(Theme.muted)
+                Button("Show a transfer code") { Task { await model.offerPhoneTransfer() } }
+                    .buttonStyle(GhostButtonStyle())
+            }
+            if let problem = model.phoneMoveProblem {
+                Text(problem.message)
+                    .font(.jakarta(13, .medium))
+                    .foregroundStyle(Theme.roseDeep)
+            }
+        }
+        .card()
+        // While the code shows, notice as soon as the new phone has taken the Lastys ID.
+        .task(id: model.phoneTransferQR?.payload) {
+            while model.phoneTransferQR != nil, !Task.isCancelled {
+                try? await Task.sleep(for: AppModel.transferWatchInterval)
+                await model.start()
+            }
+        }
+    }
+
     private var deleteMyData: some View {
         VStack(alignment: .leading, spacing: 8) {
             sectionTitle("Delete my data")
@@ -321,6 +386,24 @@ extension DeleteProblem {
         case .notAuthenticated: return "Face ID or your passcode is needed to delete your data."
         case .needsInternet: return "Deleting your data needs an internet connection."
         case .couldNotReachLastys: return "Couldn't reach Lastys. Nothing was deleted. Try again."
+        }
+    }
+}
+
+/// The transfer QR, drawn crisp.
+private struct TransferQRImage: View {
+    let payload: String
+
+    var body: some View {
+        let filter = CIFilter.qrCodeGenerator()
+        let _ = filter.message = Data(payload.utf8)
+        if let output = filter.outputImage, let image = CIContext().createCGImage(output, from: output.extent) {
+            Image(decorative: image, scale: 1)
+                .interpolation(.none)
+                .resizable()
+                .scaledToFit()
+                .padding(12)
+                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white))
         }
     }
 }

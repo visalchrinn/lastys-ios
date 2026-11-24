@@ -3,13 +3,25 @@ import LastysCore
 import UserNotifications
 
 /// Delivers Moment reminders as local notifications. Each call replaces every pending reminder.
-final class NotificationReminderScheduler: ReminderScheduler, @unchecked Sendable {
+final class NotificationReminderScheduler: NSObject, ReminderScheduler, UNUserNotificationCenterDelegate, @unchecked Sendable {
     /// iOS keeps at most 64 pending notifications per app; the soonest win.
     private static let limit = 64
     private let center = UNUserNotificationCenter.current()
     private let lock = NSLock()
     /// The previous replacement: each waits for the one before, so the last set given always wins.
     private var previous: Task<Void, Never>?
+
+    override init() {
+        super.init()
+        // Notices arrive while Lastys is open (it checks when opened), so show them there too.
+        center.delegate = self
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter, willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        [.banner, .sound, .list]
+    }
 
     func replaceAll(with reminders: [Reminder]) {
         let soonest = Array(reminders.sorted { $0.fires < $1.fires }.prefix(Self.limit))
@@ -47,6 +59,14 @@ final class NotificationReminderScheduler: ReminderScheduler, @unchecked Sendabl
         }
     }
 
+    func notifyNow(_ notice: Notice) {
+        let content = UNMutableNotificationContent()
+        content.title = notice.message
+        content.sound = .default
+        let request = UNNotificationRequest(identifier: "notice-\(UUID().uuidString)", content: content, trigger: nil)
+        center.add(request)
+    }
+
     private static func body(for when: Reminder.When) -> String {
         switch when {
         case .inDays(let days): return String(localized: "In \(days) days")
@@ -59,4 +79,16 @@ final class NotificationReminderScheduler: ReminderScheduler, @unchecked Sendabl
 /// Reminds nobody, for SwiftUI previews.
 struct PreviewReminderScheduler: ReminderScheduler {
     func replaceAll(with reminders: [Reminder]) {}
+    func notifyNow(_ notice: Notice) {}
+}
+
+extension Notice {
+    /// One wording for a notice, in the notification and on Home.
+    var message: String {
+        switch self {
+        case .recoveryStarted: return String(localized: "Someone started a Recovery of your Lastys ID. If it wasn't you, cancel it in Me.")
+        case .partnerChangedPhone: return String(localized: "Your Partner's Lastys ID moved to a new phone.")
+        case .partnerStartedRecovery: return String(localized: "A Recovery of your Partner's Lastys ID has started.")
+        }
+    }
 }

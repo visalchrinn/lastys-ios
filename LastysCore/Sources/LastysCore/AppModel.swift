@@ -1,3 +1,4 @@
+import Crypto
 import Foundation
 import Observation
 
@@ -13,6 +14,12 @@ public enum OnboardingStep: Equatable, Sendable {
     case consent
     case recoveryCode
     case profile
+    /// A new phone scanning the old phone's transfer QR.
+    case moveFromAnotherPhone
+    /// A new phone entering the Recovery code after losing the old one.
+    case enterRecoveryCode
+    /// A new phone waiting out the Recovery's 7 days.
+    case waitingForRecovery
 }
 
 /// Owns all domain-visible state on the phone and exposes the person's intents.
@@ -71,7 +78,9 @@ public final class AppModel {
     /// Where a launch picks up, given what the phone saved.
     private static func screen(resumingFrom phone: PhoneState) -> Screen {
         if phone.hasFinishedOnboarding { return .home }
-        if phone.lastysID == nil { return .onboarding(.intro(page: 0)) }
+        if phone.lastysID == nil {
+            return phone.recoveryInProgress ? .onboarding(.waitingForRecovery) : .onboarding(.intro(page: 0))
+        }
         if !phone.hasSavedRecoveryCode { return .onboarding(.recoveryCode) }
         return .onboarding(.profile)
     }
@@ -290,11 +299,16 @@ public final class AppModel {
         guard phone.lastysID != nil else { return }
         do {
             phone.relationship = try await trustee.relationshipStatus()
+        } catch TrusteeError.noLastysID {
+            // Trustee no longer knows this phone: the Lastys ID moved to another phone.
+            lastysIDHasMovedAway()
+            return
         } catch {
             // Errors surface in later slices; for now the last known state stays on screen.
         }
         forgetFormerPartnersBirthDate()
         await syncSharedMoments()
+        await deliverNotices()
     }
 
     // MARK: Shared Moments
@@ -583,6 +597,19 @@ public final class AppModel {
     public private(set) var meProblem: MeProblem?
     /// Why Delete my data didn't go through.
     public private(set) var deleteProblem: DeleteProblem?
+
+    // MARK: Phones state
+
+    /// The transfer QR this (old) phone is showing, while it lasts.
+    public private(set) var phoneTransferQR: PhoneTransferQR?
+    /// Why the last Phone transfer or Recovery step didn't go through.
+    public private(set) var phoneMoveProblem: PhoneMoveProblem?
+    /// This phone used to hold the Lastys ID, which now lives on another phone.
+    public private(set) var lastysIDMovedAway = false
+    /// When the Recovery this (new) phone started completes.
+    public private(set) var recoveryCompletesAt: Date?
+    /// Notices Trustee sent since the app opened, newest last, for Home to show.
+    public private(set) var notices: [Notice] = []
 
     // MARK: Calendar state
 
@@ -1192,7 +1219,7 @@ extension AppModel {
     }
 
     /// Back to first launch: nothing of the deleted Lastys ID stays on the phone or in memory.
-    private func wipeThisPhone() {
+    func wipeThisPhone() {
         // Nothing still running may write into the fresh state.
         syncInFlight?.cancel()
         syncInFlight = nil
@@ -1220,6 +1247,222 @@ extension AppModel {
         calendarShownMonth = nil
         calendarSelectedDay = nil
         currentQRToken = nil
+        phoneTransferQR = nil
+        phoneMoveProblem = nil
+        lastysIDMovedAway = false
+        recoveryCompletesAt = nil
+        notices = []
         reminders.replaceAll(with: [])
+    }
+}
+
+
+// MARK: - Phone transfer and Recovery
+
+/// The transfer QR the old phone shows: the one-time code and the key that opens the sealed bundle.
+public struct PhoneTransferQR: Equatable, Sendable {
+    static let prefix = "LTX1"
+    public let payload: String
+    public let expiresAt: Date
+}
+
+public enum PhoneMoveProblem: Equatable, Sendable {
+    case transferTooSoon
+    case notATransferQR
+    case transferCodeExpired
+    case transferCodeInvalid
+    case wrongRecoveryCode
+    /// The phone that holds the Lastys ID cancelled this Recovery.
+    case recoveryCancelled
+    /// The Lastys ID moved here, but the old phone's data couldn't be opened.
+    case someDataDidNotMove
+    case needsInternet
+    case couldNotReachLastys
+
+    init(_ error: Error) {
+        switch error as? TrusteeError {
+        case .transferTooSoon: self = .transferTooSoon
+        case .transferCodeExpired: self = .transferCodeExpired
+        case .transferCodeInvalid: self = .transferCodeInvalid
+        case .wrongRecoveryCode: self = .wrongRecoveryCode
+        case .noRecovery: self = .recoveryCancelled
+        default:
+            self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+        }
+    }
+}
+
+extension AppModel {
+    // MARK: Old phone
+
+    /// Offers a Phone transfer: this phone's private data, sealed with a fresh key that only the QR carries,
+    /// goes to Trustee, which can't read it. Moments' photos and videos stay on this phone.
+    public func offerPhoneTransfer() async {
+        guard phone.lastysID != nil else { return }
+        guard connectivity.isOnline else {
+            phoneMoveProblem = .needsInternet
+            return
+        }
+        let key = SymmetricKey(size: .bits256)
+        do {
+            var bundle = phone
+            for index in bundle.moments.indices { bundle.moments[index].media = nil }
+            guard let sealed = try AES.GCM.seal(JSONEncoder().encode(bundle), using: key).combined else {
+                phoneMoveProblem = .couldNotReachLastys
+                return
+            }
+            let offer = try await trustee.startPhoneTransfer(sealedBundle: sealed)
+            let keyText = key.withUnsafeBytes { Data($0) }.base64URLEncodedString()
+            phoneTransferQR = PhoneTransferQR(
+                payload: "\(PhoneTransferQR.prefix).\(offer.code).\(keyText)", expiresAt: offer.expiresAt
+            )
+            phoneMoveProblem = nil
+        } catch {
+            phoneTransferQR = nil
+            phoneMoveProblem = PhoneMoveProblem(error)
+        }
+    }
+
+    /// Whole seconds the transfer code still has at `date`; 0 once it has expired.
+    public func phoneTransferSecondsLeft(at date: Date) -> Int {
+        guard let expiresAt = phoneTransferQR?.expiresAt else { return 0 }
+        return max(0, Int(expiresAt.timeIntervalSince(date).rounded(.up)))
+    }
+
+    /// How often the old phone checks whether the new phone has taken the Lastys ID.
+    public static let transferWatchInterval: Duration = .seconds(3)
+    /// How often a phone waiting for a Recovery checks back.
+    public static let recoveryCheckInterval: Duration = .seconds(30)
+
+    public func stopOfferingPhoneTransfer() {
+        phoneTransferQR = nil
+    }
+
+    /// From the phone that holds the Lastys ID: stops a Recovery someone started elsewhere.
+    public func cancelRecovery() async {
+        guard connectivity.isOnline else {
+            meProblem = .needsInternet
+            return
+        }
+        do {
+            try await trustee.cancelRecovery()
+            meProblem = nil
+        } catch {
+            meProblem = MeProblem(error)
+        }
+        await refreshMe()
+    }
+
+    /// The Lastys ID now lives on another phone: this one starts over.
+    func lastysIDHasMovedAway() {
+        wipeThisPhone()
+        lastysIDMovedAway = true
+    }
+
+    /// Shows each notice from Trustee as a notification, and keeps it for Home.
+    func deliverNotices() async {
+        guard let received = try? await trustee.notices(), !received.isEmpty else { return }
+        for notice in received { reminders.notifyNow(notice) }
+        notices += received
+    }
+
+    public func dismissNotices() {
+        notices = []
+    }
+
+    // MARK: New phone
+
+    public func startMovingFromAnotherPhone() {
+        phoneMoveProblem = nil
+        screen = .onboarding(.moveFromAnotherPhone)
+    }
+
+    public func startRecoveryWithCode() {
+        phoneMoveProblem = nil
+        screen = .onboarding(.enterRecoveryCode)
+    }
+
+    public func backToIntro() {
+        phoneMoveProblem = nil
+        screen = .onboarding(.intro(page: 0))
+    }
+
+    /// Scans the old phone's transfer QR: Trustee moves the Lastys ID onto this phone's own key, and this
+    /// phone opens the sealed bundle with the key from the QR.
+    public func receivePhoneTransfer(_ scanned: String) async {
+        let parts = scanned.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        // Check the whole QR before asking Trustee, which spends the code.
+        guard parts.count == 3, parts[0] == PhoneTransferQR.prefix,
+              let keyData = Data(base64URLEncoded: parts[2]), keyData.count == 32
+        else {
+            phoneMoveProblem = .notATransferQR
+            return
+        }
+        guard connectivity.isOnline else {
+            phoneMoveProblem = .needsInternet
+            return
+        }
+        let moved: TransferredLastysID
+        do {
+            moved = try await trustee.completePhoneTransfer(code: parts[1])
+        } catch {
+            phoneMoveProblem = PhoneMoveProblem(error)
+            return
+        }
+        let opened = (try? AES.GCM.open(AES.GCM.SealedBox(combined: moved.sealedBundle), using: SymmetricKey(data: keyData)))
+            .flatMap { try? JSONDecoder().decode(PhoneState.self, from: $0) }
+        var adopted = opened ?? PhoneState()
+        adopted.lastysID = moved.lastysID
+        if adopted.recoveryCode == nil { adopted.hasSavedRecoveryCode = true }
+        phone = adopted
+        // The Lastys ID is here either way; say so if its Moments and settings didn't come with it.
+        phoneMoveProblem = opened == nil ? .someDataDidNotMove : nil
+        screen = Self.screen(resumingFrom: adopted)
+        scheduleReminders()
+        await start()
+    }
+
+    /// Starts a Recovery with the Recovery code. It completes after 7 days unless the current phone cancels.
+    public func beginRecovery(code: String) async {
+        guard connectivity.isOnline else {
+            phoneMoveProblem = .needsInternet
+            return
+        }
+        do {
+            let started = try await trustee.startRecovery(recoveryCode: code)
+            phone.recoveryInProgress = true
+            recoveryCompletesAt = started.completesAt
+            phoneMoveProblem = nil
+            screen = .onboarding(.waitingForRecovery)
+        } catch {
+            phoneMoveProblem = PhoneMoveProblem(error)
+        }
+    }
+
+    /// Asks where the Recovery stands, and completes it once the 7 days are over.
+    public func checkRecovery() async {
+        guard phone.recoveryInProgress, connectivity.isOnline else { return }
+        do {
+            switch try await trustee.recoveryStatus() {
+            case .waiting(let completesAt):
+                recoveryCompletesAt = completesAt
+            case .ready:
+                let recovered = try await trustee.completeRecovery()
+                var fresh = PhoneState()
+                fresh.language = phone.language
+                fresh.lastysID = recovered.lastysID
+                fresh.recoveryCode = recovered.recoveryCode
+                phone = fresh
+                recoveryCompletesAt = nil
+                screen = Self.screen(resumingFrom: fresh)
+            case .cancelled, .notStarted:
+                phone.recoveryInProgress = false
+                recoveryCompletesAt = nil
+                phoneMoveProblem = .recoveryCancelled
+                screen = .onboarding(.intro(page: 0))
+            }
+        } catch {
+            phoneMoveProblem = PhoneMoveProblem(error)
+        }
     }
 }

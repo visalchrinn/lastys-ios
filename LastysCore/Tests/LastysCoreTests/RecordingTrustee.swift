@@ -117,6 +117,36 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         return try await wrapped.startRecovery(recoveryCode: recoveryCode)
     }
 
+    func startPhoneTransfer(sealedBundle: Data) async throws -> PhoneTransferOffer {
+        record("startPhoneTransfer(\(sealedBundle.count) sealed bytes)")
+        return try await wrapped.startPhoneTransfer(sealedBundle: sealedBundle)
+    }
+
+    func completePhoneTransfer(code: String) async throws -> TransferredLastysID {
+        record("completePhoneTransfer(\(code))")
+        return try await wrapped.completePhoneTransfer(code: code)
+    }
+
+    func recoveryStatus() async throws -> RecoveryStatus {
+        record("recoveryStatus()")
+        return try await wrapped.recoveryStatus()
+    }
+
+    func completeRecovery() async throws -> NewLastysID {
+        record("completeRecovery()")
+        return try await wrapped.completeRecovery()
+    }
+
+    func cancelRecovery() async throws {
+        record("cancelRecovery()")
+        try await wrapped.cancelRecovery()
+    }
+
+    func notices() async throws -> [Notice] {
+        record("notices()")
+        return try await wrapped.notices()
+    }
+
     func deleteMyData() async throws {
         record("deleteMyData()")
         try await wrapped.deleteMyData()

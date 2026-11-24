@@ -372,7 +372,7 @@ private struct ScanProblemCard: View {
 // MARK: Camera
 
 /// The camera, reading QR codes. Reports each code once until the view is rebuilt.
-private struct CameraQRScanner: UIViewControllerRepresentable {
+struct CameraQRScanner: UIViewControllerRepresentable {
     let torchOn: Bool
     let onCode: (String) -> Void
 
@@ -388,7 +388,7 @@ private struct CameraQRScanner: UIViewControllerRepresentable {
     }
 }
 
-private final class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+final class QRScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     var onCode: ((String) -> Void)?
     private let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "com.lastys.camera")

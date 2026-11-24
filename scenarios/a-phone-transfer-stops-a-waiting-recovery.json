@@ -1,0 +1,78 @@
+{
+  "name": "Moving the Lastys ID by Phone transfer stops a Recovery that was waiting, and makes any other transfer code useless",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "start-phone-transfer"
+    },
+    {
+      "phone": "someone",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "start-phone-transfer"
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-phone-transfer",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "someone",
+      "do": "get-recovery-status",
+      "expect": {
+        "status": "cancelled"
+      }
+    },
+    {
+      "phone": "someone",
+      "do": "wait",
+      "with": {
+        "days": "7"
+      }
+    },
+    {
+      "phone": "someone",
+      "do": "complete-recovery",
+      "expect": {
+        "error": "no-recovery"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "none"
+      }
+    }
+  ]
+}

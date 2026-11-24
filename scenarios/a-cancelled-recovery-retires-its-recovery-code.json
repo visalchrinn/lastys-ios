@@ -1,0 +1,68 @@
+{
+  "name": "Cancelling a Recovery retires the Recovery code that started it, so it can't simply be started again",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "thief",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "cancel-recovery"
+    },
+    {
+      "phone": "thief",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "error": "wrong-recovery-code"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-my-lastys-id",
+      "expect": {
+        "hasRecoveryCode": "false"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "new-recovery-code"
+    },
+    {
+      "phone": "alice",
+      "do": "get-my-lastys-id",
+      "expect": {
+        "hasRecoveryCode": "true"
+      }
+    }
+  ]
+}

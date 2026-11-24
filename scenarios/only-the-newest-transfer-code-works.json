@@ -1,0 +1,68 @@
+{
+  "name": "Only the newest transfer code works, so two codes can never mean two Phone transfers",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "start-phone-transfer"
+    },
+    {
+      "phone": "alice",
+      "do": "start-phone-transfer"
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-phone-transfer",
+      "with": {
+        "from": "alice",
+        "which": "previous"
+      },
+      "expect": {
+        "error": "transfer-code-invalid"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-phone-transfer",
+      "with": {
+        "from": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "personalIDOf": "alice"
+      }
+    },
+    {
+      "phone": "alice-other",
+      "do": "complete-phone-transfer",
+      "with": {
+        "from": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "error": "transfer-code-invalid"
+      }
+    }
+  ]
+}

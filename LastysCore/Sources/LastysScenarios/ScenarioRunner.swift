@@ -47,6 +47,10 @@ private final class Run: @unchecked Sendable {
     private lazy var trustee = FakeTrustee(now: { [unowned self] in self.lock.withLock { self.now } })
     private var keys: [String: SoftwarePhoneKey] = [:]
     private var personalIDs: [String: String] = [:]
+    /// The order phones made their Lastys IDs, so a moved Lastys ID can be named by its first phone.
+    private var creationOrder: [String] = []
+    /// Every Phone transfer code each phone was given, oldest first.
+    private var transferCodes: [String: [String]] = [:]
     /// Every Recovery code each phone has been given, oldest first.
     private var recoveryCodes: [String: [String]] = [:]
     /// Each phone's latest Scan, and which phone it scanned.
@@ -70,6 +74,7 @@ private final class Run: @unchecked Sendable {
             let created = try await client.createLastysID()
             personalIDs[step.phone] = created.lastysID.personalID
             recoveryCodes[step.phone] = [created.recoveryCode]
+            creationOrder.append(step.phone)
             return ["personalID": created.lastysID.personalID, "recoveryCode": created.recoveryCode]
         case "update-profile":
             try await client.updateProfile(nickname: step.arguments["nickname"] ?? "", photo: nil)
@@ -116,6 +121,8 @@ private final class Run: @unchecked Sendable {
             let details = try await client.myLastysIDDetails()
             let now = lock.withLock { self.now }
             return [
+                "recoveryPending": String(details.recoveryCompletesAt != nil),
+                "hasRecoveryCode": String(details.hasRecoveryCode),
                 "shareLevel": details.shareLevel.rawValue,
                 "idAgeDays": String(Int(now.timeIntervalSince(details.createdAt) / 86_400)),
                 "phoneTransfers": String(details.phoneTransferCount),
@@ -129,6 +136,38 @@ private final class Run: @unchecked Sendable {
             let started = try await client.startRecovery(recoveryCode: try recoveryCode(step.arguments))
             let now = lock.withLock { self.now }
             return ["completesInDays": String(Int((started.completesAt.timeIntervalSince(now) / 86_400).rounded()))]
+        case "start-phone-transfer":
+            let offer = try await client.startPhoneTransfer(sealedBundle: Data("sealed by \(step.phone)".utf8))
+            transferCodes[step.phone, default: []].append(offer.code)
+            let now = lock.withLock { self.now }
+            return ["expiresInMinutes": String(Int((offer.expiresAt.timeIntervalSince(now) / 60).rounded()))]
+        case "complete-phone-transfer":
+            guard let from = step.arguments["from"], let codes = transferCodes[from], let latest = codes.last else {
+                throw ScenarioError(message: "complete-phone-transfer needs from, a phone that started a Phone transfer")
+            }
+            let code = step.arguments["which"] == "previous" && codes.count >= 2 ? codes[codes.count - 2] : latest
+            let moved = try await client.completePhoneTransfer(code: code)
+            personalIDs[step.phone] = moved.lastysID.personalID
+            return ["personalIDOf": owner(of: moved.lastysID.personalID)]
+        case "get-recovery-status":
+            switch try await client.recoveryStatus() {
+            case .notStarted: return ["status": "none"]
+            case .waiting: return ["status": "waiting"]
+            case .ready: return ["status": "ready"]
+            case .cancelled: return ["status": "cancelled"]
+            }
+        case "complete-recovery":
+            let recovered = try await client.completeRecovery()
+            let owner = owner(of: recovered.lastysID.personalID)
+            personalIDs[step.phone] = recovered.lastysID.personalID
+            recoveryCodes[owner, default: []].append(recovered.recoveryCode)
+            return ["personalIDOf": owner]
+        case "cancel-recovery":
+            try await client.cancelRecovery()
+            return [:]
+        case "get-notices":
+            let notices = try await client.notices().map(\.rawValue).sorted()
+            return ["notices": notices.isEmpty ? "none" : notices.joined(separator: "|")]
         case "delete-my-data":
             try await client.deleteMyData()
             return [:]
@@ -154,6 +193,11 @@ private final class Run: @unchecked Sendable {
         default:
             return nil
         }
+    }
+
+    /// The first phone in the scenario that made this Lastys ID, which names it in expectations.
+    private func owner(of personalID: String) -> String {
+        creationOrder.first { personalIDs[$0] == personalID } ?? personalID
     }
 
     /// `codeOf` a phone, `which` (`current` or `previous`) of its Recovery codes.
@@ -246,6 +290,11 @@ extension TrusteeError {
         case .wrongRecoveryCode: return "wrong-recovery-code"
         case .relationshipNotOver: return "relationship-not-over"
         case .phoneMadeALastysIDRecently: return "phone-made-a-lastys-id-recently"
+        case .transferTooSoon: return "transfer-too-soon"
+        case .transferCodeExpired: return "transfer-code-expired"
+        case .transferCodeInvalid: return "transfer-code-invalid"
+        case .recoveryNotReady: return "recovery-not-ready"
+        case .noRecovery: return "no-recovery"
         }
     }
 }

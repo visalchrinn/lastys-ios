@@ -29,6 +29,8 @@ public actor FakeTrustee {
         var phoneTransferCount = 0
         /// SHA-256 of the Recovery code, never the code itself.
         var recoveryCodeHash: String?
+        /// When this Lastys ID last moved phone by a Phone transfer.
+        var lastTransferAt: Date?
 
         init(lastysID: LastysID, createdAt: Date, nickname: String = "", photo: Data? = nil) {
             self.lastysID = lastysID
@@ -51,6 +53,7 @@ public actor FakeTrustee {
             pastRelationships = try c.decodeIfPresent([PastRelationship].self, forKey: .pastRelationships) ?? []
             phoneTransferCount = try c.decodeIfPresent(Int.self, forKey: .phoneTransferCount) ?? 0
             recoveryCodeHash = try c.decodeIfPresent(String.self, forKey: .recoveryCodeHash)
+            lastTransferAt = try c.decodeIfPresent(Date.self, forKey: .lastTransferAt)
         }
     }
 
@@ -83,6 +86,10 @@ public actor FakeTrustee {
         var recoveries: [String: RecoveryRecord] = [:]
         /// When each phone last made a Lastys ID. Kept when the Lastys ID is deleted, as DeviceCheck would be.
         var lastCreatedByPhone: [String: Date] = [:]
+        /// Phone transfers on offer, by code.
+        var transfers: [String: TransferRecord] = [:]
+        /// What Trustee has to tell each Lastys ID, by Personal ID.
+        var notices: [String: [Notice]] = [:]
 
         init() {}
 
@@ -102,6 +109,8 @@ public actor FakeTrustee {
             formerSharedMoments = try c.decodeIfPresent([String: [SharedMoment]].self, forKey: .formerSharedMoments) ?? [:]
             recoveries = try c.decodeIfPresent([String: RecoveryRecord].self, forKey: .recoveries) ?? [:]
             lastCreatedByPhone = try c.decodeIfPresent([String: Date].self, forKey: .lastCreatedByPhone) ?? [:]
+            transfers = try c.decodeIfPresent([String: TransferRecord].self, forKey: .transfers) ?? [:]
+            notices = try c.decodeIfPresent([String: [Notice]].self, forKey: .notices) ?? [:]
             let earlierProfiles = try c.decodeIfPresent([String: EarlierProfile].self, forKey: .profileByLastysID) ?? [:]
             for id in lastysIDByPhone.values where people[id.personalID] == nil {
                 let profile = earlierProfiles[id.personalID]
@@ -122,10 +131,12 @@ public actor FakeTrustee {
             try c.encode(formerSharedMoments, forKey: .formerSharedMoments)
             try c.encode(recoveries, forKey: .recoveries)
             try c.encode(lastCreatedByPhone, forKey: .lastCreatedByPhone)
+            try c.encode(transfers, forKey: .transfers)
+            try c.encode(notices, forKey: .notices)
         }
 
         private enum CodingKeys: String, CodingKey {
-            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments, recoveries, lastCreatedByPhone
+            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments, recoveries, lastCreatedByPhone, transfers, notices
             case profileByLastysID // written by the build from ticket #3
         }
 
@@ -359,6 +370,30 @@ public actor FakeTrustee {
 
         func deleteMyData() async throws {
             try await trustee.deleteMyData(phone: phone)
+        }
+
+        func startPhoneTransfer(sealedBundle: Data) async throws -> PhoneTransferOffer {
+            try await trustee.startPhoneTransfer(phone: phone, sealedBundle: sealedBundle)
+        }
+
+        func completePhoneTransfer(code: String) async throws -> TransferredLastysID {
+            try await trustee.completePhoneTransfer(phone: phone, code: code)
+        }
+
+        func recoveryStatus() async throws -> RecoveryStatus {
+            await trustee.recoveryStatus(phone: phone)
+        }
+
+        func completeRecovery() async throws -> NewLastysID {
+            try await trustee.completeRecovery(phone: phone)
+        }
+
+        func cancelRecovery() async throws {
+            try await trustee.cancelRecovery(phone: phone)
+        }
+
+        func notices() async throws -> [Notice] {
+            try await trustee.notices(phone: phone)
         }
     }
 }

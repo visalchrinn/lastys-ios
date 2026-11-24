@@ -144,15 +144,22 @@ enum TestPhoneError: Error {
     case requestNotSent
 }
 
-/// Keeps the latest full set of reminders the phone asked for, as iOS would hold them.
+/// Keeps the latest full set of reminders the phone asked for, as iOS would hold them,
+/// and every notice it showed straight away.
 final class RecordingReminderScheduler: ReminderScheduler, @unchecked Sendable {
     private let lock = NSLock()
     private var current: [Reminder] = []
+    private var shown: [Notice] = []
 
     var scheduled: [Reminder] { lock.withLock { current } }
+    var notices: [Notice] { lock.withLock { shown } }
 
     func replaceAll(with reminders: [Reminder]) {
         lock.withLock { current = reminders }
+    }
+
+    func notifyNow(_ notice: Notice) {
+        lock.withLock { shown.append(notice) }
     }
 }
 

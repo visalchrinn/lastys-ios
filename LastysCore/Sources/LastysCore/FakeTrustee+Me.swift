@@ -3,12 +3,6 @@ import Foundation
 
 /// The Me tab: Share level, details of my Lastys ID, Who scanned me, and the Recovery code.
 extension FakeTrustee {
-    struct RecoveryRecord: Codable {
-        /// The new phone the Lastys ID will move to.
-        var newPhone: String
-        var completesAt: Date
-    }
-
     func setShareLevel(phone: String, level: ShareLevel) throws {
         let id = try lastysID(of: phone)
         state.people[id.personalID]?.shareLevel = level
@@ -19,7 +13,8 @@ extension FakeTrustee {
         let me = try person(of: phone)
         return MyLastysIDDetails(
             createdAt: me.createdAt, phoneTransferCount: me.phoneTransferCount,
-            shareLevel: me.shareLevel, hasRecoveryCode: me.recoveryCodeHash != nil
+            shareLevel: me.shareLevel, hasRecoveryCode: me.recoveryCodeHash != nil,
+            recoveryCompletesAt: state.recoveries[me.lastysID.personalID].flatMap { $0.cancelled ? nil : $0.completesAt }
         )
     }
 
@@ -39,18 +34,6 @@ extension FakeTrustee {
         return code
     }
 
-    /// Checks the code against every Lastys ID's stored hash and records a Recovery to the asking phone.
-    func startRecovery(phone: String, recoveryCode: String) throws -> RecoveryStarted {
-        let hash = Self.hash(recoveryCode: recoveryCode)
-        guard let person = state.people.values.first(where: { $0.recoveryCodeHash == hash }) else {
-            throw TrusteeError.wrongRecoveryCode
-        }
-        let completesAt = now().addingTimeInterval(Double(RecoveryStarted.waitDays) * 86_400)
-        state.recoveries[person.lastysID.personalID] = RecoveryRecord(newPhone: phone, completesAt: completesAt)
-        save()
-        return RecoveryStarted(completesAt: completesAt)
-    }
-
     /// Removes the Lastys ID and everything about it: Scans either way, Relationship requests, Shared
     /// Moment copies and any pending Recovery. A former Partner keeps their own copies.
     func deleteMyData(phone: String) throws {
@@ -64,6 +47,7 @@ extension FakeTrustee {
         state.sharedMoments[id] = nil
         state.formerSharedMoments[id] = nil
         state.recoveries[id] = nil
+        state.transfers = state.transfers.filter { $0.value.personalID != id }
         save()
     }
 

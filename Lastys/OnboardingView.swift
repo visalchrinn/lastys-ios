@@ -17,6 +17,9 @@ struct OnboardingView: View {
             case .consent: ConsentStep()
             case .recoveryCode: RecoveryCodeStep()
             case .profile: ProfileStep()
+            case .moveFromAnotherPhone: MoveFromAnotherPhoneStep()
+            case .enterRecoveryCode: EnterRecoveryCodeStep()
+            case .waitingForRecovery: WaitingForRecoveryStep()
             }
         }
         .foregroundStyle(Theme.ink)
@@ -149,12 +152,27 @@ private struct IntroStep: View {
             .accessibilityLabel(Text("Page \(page + 1) of \(AppModel.introPageCount)"))
             .padding(.bottom, 20)
 
+            if model.lastysIDMovedAway {
+                Text("Your Lastys ID now lives on your new phone. This phone no longer holds it.")
+                    .font(.jakarta(14, .semibold))
+                    .foregroundStyle(Theme.roseDeep)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+            }
             Button(page + 1 < AppModel.introPageCount ? LocalizedStringKey("Next") : LocalizedStringKey("Get started")) {
                 model.nextIntroPage()
             }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(.horizontal, 20)
-                .padding(.bottom, 16)
+            HStack(spacing: 8) {
+                Button("Move my ID from another phone") { model.startMovingFromAnotherPhone() }
+                Text(verbatim: "·").foregroundStyle(Theme.muted)
+                Button("I lost my phone") { model.startRecoveryWithCode() }
+            }
+            .font(.jakarta(13, .semibold))
+            .foregroundStyle(Theme.roseDark)
+            .frame(minHeight: 44)
+            .padding(.bottom, 8)
         }
     }
 }
@@ -406,6 +424,128 @@ private struct ProfileStep: View {
         }
     }
 
+}
+
+// MARK: Moving to this phone
+
+/// A new phone scanning the old phone's transfer QR (Me > Move to a new phone).
+private struct MoveFromAnotherPhoneStep: View {
+    @Environment(AppModel.self) private var model
+    @State private var scanned = false
+    /// A new scanner after each failed attempt, so the camera reads codes again.
+    @State private var attempt = 0
+
+    var body: some View {
+        StepLayout(
+            title: "Move your Lastys ID here",
+            subtitle: "On your old phone, open Me and choose Move to a new phone, then scan its code. The code works for 5 minutes."
+        ) {
+            CameraQRScanner(torchOn: false) { payload in
+                guard !scanned else { return }
+                scanned = true
+                Task {
+                    await model.receivePhoneTransfer(payload)
+                    scanned = false
+                    attempt += 1
+                }
+            }
+            .id(attempt)
+            .frame(height: 320)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            PhoneMoveProblemText(problem: model.phoneMoveProblem)
+        } footer: {
+            Button("Back") { model.backToIntro() }
+                .buttonStyle(GhostButtonStyle())
+        }
+    }
+}
+
+/// A new phone starting a Recovery with the Recovery code.
+private struct EnterRecoveryCodeStep: View {
+    @Environment(AppModel.self) private var model
+    @State private var code = ""
+
+    var body: some View {
+        StepLayout(
+            title: "Recover your Lastys ID",
+            subtitle: "Enter the Recovery code you saved. Your Lastys ID moves to this phone after 7 days, unless your old phone cancels."
+        ) {
+            TextField("XXXX-XXXX-XXXX-XXXX", text: $code)
+                .font(.system(size: 20, weight: .bold, design: .monospaced))
+                .textInputAutocapitalization(.characters)
+                .autocorrectionDisabled()
+                .frame(minHeight: 44)
+                .card()
+            PhoneMoveProblemText(problem: model.phoneMoveProblem)
+        } footer: {
+            Button("Start Recovery") { Task { await model.beginRecovery(code: code) } }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(code.trimmingCharacters(in: .whitespaces).isEmpty)
+            Button("Back") { model.backToIntro() }
+                .buttonStyle(GhostButtonStyle())
+        }
+    }
+}
+
+/// A new phone waiting out the Recovery's 7 days. It checks back now and then.
+private struct WaitingForRecoveryStep: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        StepLayout(title: "Recovery in progress", subtitle: "Your old phone has been told, in case this wasn't you.") {
+            VStack(alignment: .leading, spacing: 8) {
+                if let completesAt = model.recoveryCompletesAt {
+                    Text("Your Lastys ID moves to this phone on \(completesAt, format: .dateTime.weekday(.wide).day().month(.wide).hour().minute()).")
+                        .font(.jakarta(15, .semibold))
+                }
+                Text("Keep Lastys installed. You can close it; it checks again when you open it.")
+                    .font(.jakarta(13))
+                    .foregroundStyle(Theme.muted)
+            }
+            .card()
+            PhoneMoveProblemText(problem: model.phoneMoveProblem)
+        } footer: {
+            Button("Check now") { Task { await model.checkRecovery() } }
+                .buttonStyle(GhostButtonStyle())
+        }
+        .task {
+            while !Task.isCancelled {
+                await model.checkRecovery()
+                try? await Task.sleep(for: AppModel.recoveryCheckInterval)
+            }
+        }
+    }
+}
+
+private struct PhoneMoveProblemText: View {
+    let problem: PhoneMoveProblem?
+
+    var body: some View {
+        if let problem {
+            Text(problem.message)
+                .font(.jakarta(14, .medium))
+                .foregroundStyle(Theme.roseDeep)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.roseTint))
+        }
+    }
+}
+
+extension PhoneMoveProblem {
+    var message: LocalizedStringKey {
+        switch self {
+        case .transferTooSoon: return "Your Lastys ID moved phone less than 30 days ago. You can move it again after that."
+        case .notATransferQR: return "That's not a Lastys transfer code. Open Me > Move to a new phone on your old phone."
+        case .transferCodeExpired: return "That transfer code has expired. Make a new one on your old phone."
+        case .transferCodeInvalid: return "That transfer code was already used or isn't valid. Make a new one on your old phone."
+        case .wrongRecoveryCode: return "That Recovery code doesn't match any Lastys ID. Check it and try again."
+        case .recoveryCancelled: return "The Recovery was cancelled from the phone that holds the Lastys ID."
+        case .someDataDidNotMove: return "Your Lastys ID is now on this phone, but your Moments and settings couldn't be opened. Add them again here."
+        case .needsInternet: return "This needs an internet connection."
+        case .couldNotReachLastys: return "Couldn't reach Lastys. Try again."
+        }
+    }
 }
 
 #Preview("New phone") {

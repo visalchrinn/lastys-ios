@@ -1,0 +1,113 @@
+{
+  "name": "A Phone transfer moves the Lastys ID and its Relationship to the new phone's own key, and the old phone no longer holds it",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "start-phone-transfer",
+      "expect": {
+        "expiresInMinutes": "5"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-phone-transfer",
+      "with": {
+        "from": "alice"
+      },
+      "expect": {
+        "personalIDOf": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "error": "no-lastys-id"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "partner": "Bob"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice-new"
+      },
+      "expect": {
+        "nickname": "Alice",
+        "status": "taken",
+        "phoneTransfers": "1"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      },
+      "expect": {
+        "error": "forged-qr"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-notices",
+      "expect": {
+        "notices": "partner-changed-phone"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-notices",
+      "expect": {
+        "notices": "none"
+      }
+    }
+  ]
+}

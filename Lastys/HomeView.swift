@@ -20,6 +20,9 @@ struct HomeView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 16) {
                 header
+                if !model.notices.isEmpty {
+                    NoticesBanner()
+                }
                 if model.showsStatusCard {
                     statusCard
                 }
@@ -461,3 +464,23 @@ private struct MomentMediaBadge: View {
         .environment(AppModel.preview())
         .background(Theme.background)
 }
+
+/// What Trustee told this Lastys ID since the app opened.
+private struct NoticesBanner: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(Array(model.notices.enumerated()), id: \.offset) { _, notice in
+                Label(notice.message, systemImage: "bell.fill")
+                    .font(.jakarta(14, .semibold))
+            }
+            Button("Dismiss") { model.dismissNotices() }
+                .font(.jakarta(13, .semibold))
+                .foregroundStyle(Theme.roseDark)
+                .frame(minHeight: 44)
+        }
+        .card()
+    }
+}
+

@@ -50,6 +50,18 @@ public protocol TrusteeClient: Sendable {
     /// Removes this Lastys ID and everything Trustee holds about it. Refused while it has a Relationship
     /// at any stage, so deleting can never end one one-sidedly (ADR 0002).
     func deleteMyData() async throws
+    /// From the old phone: offers a Phone transfer, leaving Trustee a bundle it can't read. One every 30 days.
+    func startPhoneTransfer(sealedBundle: Data) async throws -> PhoneTransferOffer
+    /// From the new phone: moves the Lastys ID onto this phone's own key and retires the old phone.
+    func completePhoneTransfer(code: String) async throws -> TransferredLastysID
+    /// From the new phone: where its Recovery stands.
+    func recoveryStatus() async throws -> RecoveryStatus
+    /// From the new phone, after the 7 days: moves the Lastys ID here, with a new Recovery code.
+    func completeRecovery() async throws -> NewLastysID
+    /// From the phone holding the Lastys ID: stops a Recovery started elsewhere.
+    func cancelRecovery() async throws
+    /// What Trustee has to tell this Lastys ID, each notice delivered once.
+    func notices() async throws -> [Notice]
 }
 
 /// What the person is given when their Lastys ID is created.
@@ -104,4 +116,14 @@ public enum TrusteeError: Error, Equatable, Sendable {
     case relationshipNotOver
     /// This phone made a Lastys ID too recently to make another (ADR 0001), even if that one was deleted.
     case phoneMadeALastysIDRecently
+    /// This Lastys ID moved phone less than 30 days ago.
+    case transferTooSoon
+    /// The transfer code is more than 5 minutes old.
+    case transferCodeExpired
+    /// No such transfer code, or it was already used.
+    case transferCodeInvalid
+    /// The Recovery's 7 days aren't over yet.
+    case recoveryNotReady
+    /// No Recovery is waiting (none was started, or it was cancelled).
+    case noRecovery
 }

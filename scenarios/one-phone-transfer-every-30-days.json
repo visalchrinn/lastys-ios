@@ -1,0 +1,73 @@
+{
+  "name": "Only one Phone transfer every 30 days",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "start-phone-transfer"
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-phone-transfer",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "start-phone-transfer",
+      "expect": {
+        "error": "transfer-too-soon"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "wait",
+      "with": {
+        "days": "29"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "start-phone-transfer",
+      "expect": {
+        "error": "transfer-too-soon"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "wait",
+      "with": {
+        "days": "1"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "start-phone-transfer",
+      "expect": {
+        "expiresInMinutes": "5"
+      }
+    }
+  ]
+}

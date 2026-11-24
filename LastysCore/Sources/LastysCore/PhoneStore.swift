@@ -31,6 +31,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var partnerBirthDate: Date?
     /// When the Relationship the Partner's birth date belongs to started; nil if entered while single.
     public var partnerBirthDateRelationshipSince: Date?
+    /// This phone started a Recovery and is waiting out the 7 days.
+    public var recoveryInProgress = false
 
     public init() {}
 
@@ -58,6 +60,7 @@ public struct PhoneState: Codable, Equatable, Sendable {
         formerlySharedMomentIDs = ((try? c.decodeIfPresent([UUID].self, forKey: .formerlySharedMomentIDs)) ?? nil) ?? []
         partnerBirthDate = try? c.decodeIfPresent(Date.self, forKey: .partnerBirthDate)
         partnerBirthDateRelationshipSince = try? c.decodeIfPresent(Date.self, forKey: .partnerBirthDateRelationshipSince)
+        recoveryInProgress = (try? c.decodeIfPresent(Bool.self, forKey: .recoveryInProgress)) ?? nil ?? false
     }
 }
 

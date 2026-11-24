@@ -1,0 +1,166 @@
+{
+  "name": "A Recovery waits 7 days, the current phone and the Partner are told when it starts, and then it moves the Lastys ID",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "completesInDays": "7"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "get-recovery-status",
+      "expect": {
+        "status": "waiting"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-my-lastys-id",
+      "expect": {
+        "recoveryPending": "true"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-notices",
+      "expect": {
+        "notices": "recovery-started"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-notices",
+      "expect": {
+        "notices": "partner-started-recovery"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "wait",
+      "with": {
+        "days": "6"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-recovery",
+      "expect": {
+        "error": "recovery-not-ready"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "wait",
+      "with": {
+        "days": "1"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "get-recovery-status",
+      "expect": {
+        "status": "ready"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-recovery",
+      "expect": {
+        "personalIDOf": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "error": "no-lastys-id"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "active",
+        "partner": "Bob"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice-new"
+      },
+      "expect": {
+        "phoneTransfers": "1"
+      }
+    },
+    {
+      "phone": "alice-other",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "previous"
+      },
+      "expect": {
+        "error": "wrong-recovery-code"
+      }
+    },
+    {
+      "phone": "alice-other",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "completesInDays": "7"
+      }
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "name": "The phone that holds the Lastys ID can cancel a Recovery while it waits",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "cancel-recovery",
+      "expect": {
+        "error": "no-lastys-id"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "cancel-recovery"
+    },
+    {
+      "phone": "alice",
+      "do": "get-my-lastys-id",
+      "expect": {
+        "recoveryPending": "false"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "get-recovery-status",
+      "expect": {
+        "status": "cancelled"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "wait",
+      "with": {
+        "days": "7"
+      }
+    },
+    {
+      "phone": "alice-new",
+      "do": "complete-recovery",
+      "expect": {
+        "error": "no-recovery"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "none"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "error": "phone-already-has-lastys-id"
+      }
+    }
+  ]
+}

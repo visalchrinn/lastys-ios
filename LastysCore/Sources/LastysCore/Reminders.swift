@@ -31,6 +31,8 @@ public struct Reminder: Equatable, Sendable {
 /// so a changed or deleted Moment never leaves a stale reminder behind.
 public protocol ReminderScheduler: Sendable {
     func replaceAll(with reminders: [Reminder])
+    /// Shows a notice from Trustee as a notification straight away.
+    func notifyNow(_ notice: Notice)
 }
 
 
