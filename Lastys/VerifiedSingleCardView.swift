@@ -6,7 +6,7 @@ import UIKit
 struct VerifiedSingleCardSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
-    @State private var shareImage: UIImage?
+    @State private var sharedCard: SharedCardImage?
     @State private var renderFailed = false
 
     var body: some View {
@@ -32,16 +32,14 @@ struct VerifiedSingleCardSheet: View {
                             }
                         }
                     }
-                    if let shareImage {
-                        ShareLink(
-                            item: Image(uiImage: shareImage),
-                            preview: SharePreview(Text("Verified Single"), image: Image(uiImage: shareImage))
-                        ) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .frame(maxWidth: .infinity, minHeight: 52)
-                        }
-                        .buttonStyle(PrimaryButtonStyle())
-                    } else if renderFailed {
+                    Button {
+                        shareNow(card)
+                    } label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity, minHeight: 52)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    if renderFailed {
                         Text("Couldn't make the card image. Close this and try again.")
                             .font(.jakarta(13))
                             .foregroundStyle(Theme.roseDeep)
@@ -75,24 +73,35 @@ struct VerifiedSingleCardSheet: View {
                 }
             }
         }
+        .sheet(item: $sharedCard) { shared in
+            // The system share sheet for an image, which offers Save Image.
+            ActivityView(image: shared.image)
+                .presentationDetents([.medium, .large])
+        }
         .task { await check() }
         .onDisappear { model.dismissVerifiedSingleCard() }
     }
 
-    /// Asks Trustee again, then draws the card to share.
+    /// Asks Trustee again before the card is shown.
     private func check() async {
-        shareImage = nil
         renderFailed = false
         await model.prepareVerifiedSingleCard()
-        guard let card = model.verifiedSingleCard else { return }
-        shareImage = Self.render(card, qrPayload: model.verifiedSingleCardQR(at: Date())?.payload)
-        renderFailed = shareImage == nil
+    }
+
+    /// Draws the image at the moment of sharing, so the QR in it is fresh then.
+    private func shareNow(_ card: VerifiedSingleCard) {
+        renderFailed = false
+        guard let qr = model.verifiedSingleCardQR(at: Date()), let image = Self.render(card, qr: qr) else {
+            renderFailed = true
+            return
+        }
+        sharedCard = SharedCardImage(image: image)
     }
 
     /// The card as an image at 3x, 1080 by 1350 pixels: the portrait size social apps show best.
     @MainActor
-    private static func render(_ card: VerifiedSingleCard, qrPayload: String?) -> UIImage? {
-        let renderer = ImageRenderer(content: VerifiedSingleCardArt(card: card, qrPayload: qrPayload).frame(width: VerifiedSingleCardArt.designSize.width, height: VerifiedSingleCardArt.designSize.height))
+    private static func render(_ card: VerifiedSingleCard, qr: VerifiedSingleCardQR) -> UIImage? {
+        let renderer = ImageRenderer(content: VerifiedSingleCardArt(card: card, qrPayload: qr.payload, validUntil: qr.validUntil).frame(width: VerifiedSingleCardArt.designSize.width, height: VerifiedSingleCardArt.designSize.height))
         renderer.scale = 3
         return renderer.uiImage
     }
@@ -103,12 +112,14 @@ struct VerifiedSingleCardArt: View {
     let card: VerifiedSingleCard
     /// The Lastys QR to print on the card, if there is one.
     let qrPayload: String?
+    /// When the QR stops working. Printed on the shared image only, so a viewer knows why an old card won't scan.
+    var validUntil: Date? = nil
 
     /// The size the card is drawn at: the shared image at 1x. On screen it is scaled down from this.
     static let designSize = CGSize(width: 360, height: 450)
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Wordmark(size: 26)
             Spacer(minLength: 0)
             avatar
@@ -136,9 +147,16 @@ struct VerifiedSingleCardArt: View {
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.cardBorder, lineWidth: 1))
                     .accessibilityLabel(Text("My Lastys QR"))
             }
-            Label("Scan my QR to confirm", systemImage: "qrcode.viewfinder")
-                .font(.jakarta(14, .bold))
-                .foregroundStyle(Theme.roseDark)
+            VStack(spacing: 2) {
+                Label("Scan my QR to confirm", systemImage: "qrcode.viewfinder")
+                    .font(.jakarta(14, .bold))
+                    .foregroundStyle(Theme.roseDark)
+                if let validUntil {
+                    Text("QR valid until \(validUntil, format: .dateTime.hour().minute())")
+                        .font(.jakarta(12))
+                        .foregroundStyle(Theme.muted)
+                }
+            }
         }
         .padding(22)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -170,4 +188,21 @@ extension VerifiedSingleCardProblem {
         case .couldNotReachLastys: return "Couldn't reach Lastys to check your status. Try again."
         }
     }
+}
+
+/// The card image made at the moment of sharing, so the share sheet can be shown for it.
+private struct SharedCardImage: Identifiable {
+    let id = UUID()
+    let image: UIImage
+}
+
+/// The system share sheet for one image. For an image it offers Save Image, which saves it to Photos.
+private struct ActivityView: UIViewControllerRepresentable {
+    let image: UIImage
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: [image], applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }

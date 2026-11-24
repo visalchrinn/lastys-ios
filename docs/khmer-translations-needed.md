@@ -388,6 +388,7 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Not linked to anyone on Lastys | មិនបានភ្ជាប់ជាមួយនរណាលើ Lastys ទេ |
 | Checked %@ | បានពិនិត្យ %@ |
 | Scan my QR to confirm | ស្កេន QR របស់ខ្ញុំដើម្បីបញ្ជាក់ |
+| QR valid until %@ | QR មានសុពលភាពរហូតដល់ %@ |
 | Create your Lastys ID first. | សូមបង្កើតអត្តសញ្ញាណ Lastys របស់អ្នកជាមុនសិន។ |
 | You're in a Relationship, so there's no Verified Single card to share. | អ្នកស្ថិតក្នុងទំនាក់ទំនង ដូច្នេះគ្មានប័ណ្ណនៅលីវដែលបានផ្ទៀងផ្ទាត់ត្រូវចែករំលែកទេ។ |
 | Your status is checked with Lastys before every card, so this needs an internet connection. | ស្ថានភាពរបស់អ្នកត្រូវបានពិនិត្យជាមួយ Lastys មុនប័ណ្ណនីមួយៗ ដូច្នេះត្រូវការអ៊ីនធឺណិត។ |

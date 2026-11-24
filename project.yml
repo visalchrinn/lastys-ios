@@ -38,6 +38,7 @@ targets:
         UIUserInterfaceStyle: Light
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Lastys uses the camera to Scan Lastys QR codes.
+        NSPhotoLibraryAddUsageDescription: Lastys saves your Verified Single card to Photos when you choose Save Image.
         NSFaceIDUsageDescription: Lastys asks for Face ID before showing or changing your Recovery code.
     settings:
       base:

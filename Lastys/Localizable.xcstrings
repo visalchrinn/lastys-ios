@@ -2993,6 +2993,22 @@
         }
       }
     },
+    "QR valid until %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "QR valid until %@"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "QR មានសុពលភាពរហូតដល់ %@"
+          }
+        }
+      }
+    },
     "Quick hide" : {
       "localizations" : {
         "en" : {
