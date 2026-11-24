@@ -73,7 +73,17 @@ private struct ScannerStep: View {
                     .frame(maxWidth: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
 
-                Text("Point the camera at someone's Lastys QR. Their status comes live from Lastys.")
+                ChooseFromPhotosButton { codes in
+                    Task { await model.scan(photoCodes: codes) }
+                }
+
+                if model.photoProblem == .noQRFound {
+                    Label("No QR found in that photo. Try another, or use the camera.", systemImage: "qrcode.viewfinder")
+                        .font(.jakarta(14, .semibold))
+                        .foregroundStyle(Theme.roseDeep)
+                }
+
+                Text("Point the camera at someone's Lastys QR, or choose a photo of it. Their status comes live from Lastys.")
                     .font(.jakarta(14))
                     .foregroundStyle(Theme.muted)
 

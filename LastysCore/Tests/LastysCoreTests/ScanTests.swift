@@ -105,4 +105,86 @@ struct ScanTests {
         #expect(model.scanProblem == nil)
         #expect(!model.isScanning)
     }
+
+    // MARK: Scanning from a photo
+
+    @Test func aPhotoOfAFreshLastysQRGivesTheSameScanResultAsTheCamera() async throws {
+        let (dara, me) = await twoPhones()
+        let qr = try #require(dara.model.myLastysQR(at: Date()))
+
+        await me.model.scan(photoCodes: [qr.payload])
+
+        let result = try #require(me.model.scanResult)
+        #expect(result.nickname == "Dara")
+        #expect(me.model.scanProblem == nil)
+        #expect(me.model.photoProblem == nil)
+    }
+
+    @Test func aPhotoWithNoQRStaysOnTheScannerAndNeverAsksTrustee() async throws {
+        let (_, me) = await twoPhones()
+        let requestsBefore = me.trusteeRequests
+
+        await me.model.scan(photoCodes: [])
+
+        #expect(me.model.photoProblem == .noQRFound)
+        #expect(me.model.scanProblem == nil)
+        #expect(me.model.scanResult == nil)
+        #expect(!me.model.isScanning)
+        #expect(me.trusteeRequests == requestsBefore)
+    }
+
+    @Test func aPhotoWithSeveralQRsScansTheFirstLastysQR() async throws {
+        let (dara, me) = await twoPhones()
+        let qr = try #require(dara.model.myLastysQR(at: Date()))
+
+        let sara = TestPhone(nearby: dara)
+        await sara.onboard(as: "Sara")
+        let saraQR = try #require(sara.model.myLastysQR(at: Date()))
+
+        await me.model.scan(photoCodes: ["https://example.com/pay/123", qr.payload, saraQR.payload])
+
+        #expect(me.model.scanResult?.nickname == "Dara")
+        #expect(me.model.scanProblem == nil)
+    }
+
+    @Test func aScanFromAPhotoShowsUpInWhoScannedMeAsATimeOnly() async throws {
+        let (dara, me) = await twoPhones()
+        let qr = try #require(dara.model.myLastysQR(at: Date()))
+
+        await me.model.scan(photoCodes: [qr.payload])
+        await dara.model.refreshMe()
+
+        #expect(dara.model.whoScannedMe == [me.clock.now])
+    }
+
+    @Test func aPhotoWhoseQRsAreNotLastysQRsSaysSo() async throws {
+        let (_, me) = await twoPhones()
+
+        await me.model.scan(photoCodes: ["https://example.com/pay/123", "hello"])
+
+        #expect(me.model.scanResult == nil)
+        #expect(me.model.scanProblem == .notALastysQR)
+        #expect(me.model.photoProblem == nil)
+    }
+
+    @Test func anOldScreenshotFromThePhotosIsRejectedAsExpired() async throws {
+        let (dara, me) = await twoPhones()
+        let screenshot = try #require(dara.model.myLastysQR(at: Date().addingTimeInterval(-10 * 60)))
+
+        await me.model.scan(photoCodes: [screenshot.payload])
+
+        #expect(me.model.scanResult == nil)
+        #expect(me.model.scanProblem == .expiredQR)
+    }
+
+    @Test func aGoodPhotoClearsAnEarlierNoQRProblem() async throws {
+        let (dara, me) = await twoPhones()
+        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        await me.model.scan(photoCodes: [])
+
+        await me.model.scan(photoCodes: [qr.payload])
+
+        #expect(me.model.photoProblem == nil)
+        #expect(me.model.scanResult != nil)
+    }
 }

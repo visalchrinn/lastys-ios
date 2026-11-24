@@ -118,6 +118,8 @@ public final class AppModel {
     public private(set) var scanProblem: ScanProblem?
     /// True while Trustee is resolving a Scan.
     public private(set) var isScanning = false
+    /// Why a picked photo gave nothing to Scan. The scanner stays up, since nothing was Scanned.
+    public private(set) var photoProblem: PhotoProblem?
 
     /// Counts Scans, so only the latest one may show what it returns.
     @ObservationIgnored private var scanNumber = 0
@@ -151,9 +153,22 @@ public final class AppModel {
         }
     }
 
+    /// Scans a Lastys QR found in a photo, exactly as if the camera had read it. Takes the first code that
+    /// reads as a Lastys QR; if none does, the first code goes the usual way and fails as not a Lastys QR.
+    public func scan(photoCodes: [String]) async {
+        clearScan()
+        guard let first = photoCodes.first else {
+            photoProblem = .noQRFound
+            return
+        }
+        let code = photoCodes.first { LastysQRToken(parsing: $0) != nil } ?? first
+        await scan(code)
+    }
+
     /// Forgets the last Scan, and discards the answer of any Scan still running.
     public func clearScan() {
         scanNumber += 1
+        photoProblem = nil
         requestProblem = nil
         scanResult = nil
         scanProblem = nil
@@ -773,6 +788,12 @@ public enum OnboardingProblem: Equatable, Sendable {
     case phoneMadeALastysIDRecently
     /// Trustee couldn't be reached; trying again may work.
     case couldNotReachTrustee
+}
+
+/// Why a picked photo gave nothing to read.
+public enum PhotoProblem: Equatable, Sendable {
+    /// The photo has no QR in it.
+    case noQRFound
 }
 
 public enum ScanProblem: Equatable, Sendable {
