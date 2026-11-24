@@ -277,6 +277,7 @@ public final class AppModel {
         if let status = try? await trustee.relationshipStatus() {
             phone.relationship = status
         }
+        forgetFormerPartnersBirthDate()
         await syncSharedMoments()
     }
 
@@ -289,6 +290,7 @@ public final class AppModel {
         } catch {
             // Errors surface in later slices; for now the last known state stays on screen.
         }
+        forgetFormerPartnersBirthDate()
         await syncSharedMoments()
     }
 
@@ -565,6 +567,11 @@ public final class AppModel {
     }
 
     // MARK: Calendar state
+
+    /// What the Lucky Day Planner is planning for.
+    public var plannerEvent: LuckyEvent = .wedding
+    /// My birth date as changed in the planner only; nil means my profile's.
+    var plannerMyBirthDateOverride: Date?
 
     /// The month the Calendar shows; nil means the current month.
     private var calendarShownMonth: Date?
@@ -919,5 +926,75 @@ extension AppModel {
 
     private func publicHolidays(in years: ClosedRange<Int>) -> [PublicHoliday] {
         years.flatMap { CambodianPublicHolidays.days(in: $0, calendar: calendar) }
+    }
+}
+
+// MARK: - Lucky Day Planner
+
+extension AppModel {
+    /// The planner's suggestions are samples until the cultural advisor's rules arrive.
+    public var luckyDaysAreSample: Bool { SampleLuckyDays.isSample }
+
+    /// My birth date as the planner uses it: my profile's, unless changed here.
+    public var plannerMyBirthDate: Date? {
+        get { plannerMyBirthDateOverride ?? birthDate }
+        set { plannerMyBirthDateOverride = newValue }
+    }
+
+    /// My Partner's birth date, kept on this phone for next time. Entered while Taken, it belongs to that
+    /// Relationship and is forgotten when it ends.
+    public var plannerPartnerBirthDate: Date? {
+        get { phone.partnerBirthDate }
+        set {
+            var updated = phone
+            updated.partnerBirthDate = newValue.map { calendar.startOfDay(for: $0) }
+            if case .active(_, let since, _) = relationship, newValue != nil {
+                updated.partnerBirthDateRelationshipSince = since
+            } else if newValue == nil {
+                updated.partnerBirthDateRelationshipSince = nil
+            }
+            phone = updated
+        }
+    }
+
+    /// A birth date to start the pickers from: 25 years before today.
+    public var plannerDefaultBirthDate: Date {
+        calendar.date(byAdding: .year, value: -25, to: today) ?? today
+    }
+
+    /// The latest birth date a picker allows: today.
+    public var plannerLatestBirthDate: Date { today }
+
+    public func addPlannerPartnerBirthDate() {
+        plannerPartnerBirthDate = plannerDefaultBirthDate
+    }
+
+    public func removePlannerPartnerBirthDate() {
+        plannerPartnerBirthDate = nil
+    }
+
+    /// The sample score of each given day for `plannerEvent`, or nothing without both birth dates.
+    public func luckyDayScores(for days: [Date]) -> [LuckyDay] {
+        guard let mine = plannerMyBirthDate, let partner = plannerPartnerBirthDate else { return [] }
+        return SampleLuckyDays.scores(for: days, event: plannerEvent, myBirthDate: mine, partnerBirthDate: partner, calendar: calendar)
+    }
+
+    /// Forgets a Partner's birth date entered during a Relationship that has since ended.
+    func forgetFormerPartnersBirthDate() {
+        guard let since = phone.partnerBirthDateRelationshipSince else { return }
+        if case .active(_, let current, _) = relationship, current == since { return }
+        var updated = phone
+        updated.partnerBirthDate = nil
+        updated.partnerBirthDateRelationshipSince = nil
+        phone = updated
+    }
+
+    public var plannerNeedsPartnerBirthDate: Bool { plannerPartnerBirthDate == nil }
+
+    /// The best days for `plannerEvent` in the next six months, best first. Worked out on the phone:
+    /// no birth date goes to Trustee.
+    public var luckyDays: [LuckyDay] {
+        guard let mine = plannerMyBirthDate, let partner = plannerPartnerBirthDate else { return [] }
+        return SampleLuckyDays.suggest(plannerEvent, myBirthDate: mine, partnerBirthDate: partner, after: today, calendar: calendar)
     }
 }

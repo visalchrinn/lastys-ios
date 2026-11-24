@@ -27,6 +27,10 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var hasSharedMoments = false
     /// My own Moments that were shared when my Relationship ended, waiting for my keep or delete decision.
     public var formerlySharedMomentIDs: [UUID] = []
+    /// My Partner's birth date for the Lucky Day Planner. Like mine, it never leaves the phone.
+    public var partnerBirthDate: Date?
+    /// When the Relationship the Partner's birth date belongs to started; nil if entered while single.
+    public var partnerBirthDateRelationshipSince: Date?
 
     public init() {}
 
@@ -52,6 +56,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
         formerPartnerMoments = ((try? c.decodeIfPresent([Skippable<SharedMoment>].self, forKey: .formerPartnerMoments)) ?? nil)?.compactMap(\.value) ?? []
         hasSharedMoments = try c.decodeIfPresent(Bool.self, forKey: .hasSharedMoments) ?? false
         formerlySharedMomentIDs = ((try? c.decodeIfPresent([UUID].self, forKey: .formerlySharedMomentIDs)) ?? nil) ?? []
+        partnerBirthDate = try? c.decodeIfPresent(Date.self, forKey: .partnerBirthDate)
+        partnerBirthDateRelationshipSince = try? c.decodeIfPresent(Date.self, forKey: .partnerBirthDateRelationshipSince)
     }
 }
 

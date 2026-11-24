@@ -5,6 +5,7 @@ import SwiftUI
 /// and the public holidays to come. Lunar dates and Sil days are samples, and say so.
 struct CalendarView: View {
     @Environment(AppModel.self) private var model
+    @State private var showingPlanner = false
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
 
@@ -16,6 +17,7 @@ struct CalendarView: View {
                     .tracking(-0.6)
                 monthCard
                 SelectedDayCard(details: model.selectedCalendarDay)
+                plannerButton
                 upcomingHolidays
             }
             .padding(.horizontal, 20)
@@ -23,6 +25,34 @@ struct CalendarView: View {
             .padding(.bottom, 24)
         }
         .foregroundStyle(Theme.ink)
+        .sheet(isPresented: $showingPlanner) {
+            LuckyDayPlannerView()
+                .environment(model)
+        }
+    }
+
+    private var plannerButton: some View {
+        Button {
+            showingPlanner = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Theme.rose)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Lucky Day Planner")
+                        .font(.jakarta(15, .bold))
+                    Text("Dates for an engagement, a wedding or a house blessing (sample)")
+                        .font(.jakarta(13))
+                        .foregroundStyle(Theme.muted)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(Theme.muted)
+            }
+            .card()
+        }
+        .buttonStyle(PressableStyle())
     }
 
     // MARK: Month
