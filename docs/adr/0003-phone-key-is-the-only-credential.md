@@ -1,0 +1,3 @@
+# The phone's key is the only credential
+
+Lastys has no accounts, passwords, phone numbers or session logins. Each phone generates a key in the Secure Enclave that can never be exported. Every request to Trustee is signed with that key, and App Attest proves at Lastys ID creation that the request comes from the genuine app. A Phone transfer or Recovery never copies the key: Trustee moves the Lastys ID onto the new phone's key and retires the old one. A future reader expecting a login, OAuth or refresh tokens won't find any, and that is deliberate. The trade-off is that the Recovery code (7-day wait, which the current phone can cancel) is the only way back after losing a phone.
