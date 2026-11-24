@@ -113,9 +113,9 @@ extension LuckyEvent {
     /// Lower case, for use inside a sentence.
     var inSentence: String {
         switch self {
-        case .engagement: return String(localized: "an engagement")
-        case .wedding: return String(localized: "a wedding")
-        case .houseBlessing: return String(localized: "a house blessing")
+        case .engagement: return AppText.string("an engagement")
+        case .wedding: return AppText.string("a wedding")
+        case .houseBlessing: return AppText.string("a house blessing")
         }
     }
 }
@@ -123,14 +123,14 @@ extension LuckyEvent {
 extension LuckyReason {
     var text: String {
         switch self {
-        case .waxingMoon: return String(localized: "Waxing moon")
-        case .fullMoon: return String(localized: "Full moon")
-        case .silDay: return String(localized: "Sil day")
-        case .goodMonthFor(let event): return String(localized: "A good month for \(event.inSentence)")
-        case .yourBirthWeekday: return String(localized: "Your birth weekday")
-        case .partnersBirthWeekday: return String(localized: "Your Partner's birth weekday")
-        case .numbersAgree: return String(localized: "Your birth days add up with this date")
-        case .publicHoliday: return String(localized: "A public holiday, so busier")
+        case .waxingMoon: return AppText.string("Waxing moon")
+        case .fullMoon: return AppText.string("Full moon")
+        case .silDay: return AppText.string("Sil day")
+        case .goodMonthFor(let event): return AppText.string("A good month for \(event.inSentence)")
+        case .yourBirthWeekday: return AppText.string("Your birth weekday")
+        case .partnersBirthWeekday: return AppText.string("Your Partner's birth weekday")
+        case .numbersAgree: return AppText.string("Your birth days add up with this date")
+        case .publicHoliday: return AppText.string("A public holiday, so busier")
         }
     }
 }

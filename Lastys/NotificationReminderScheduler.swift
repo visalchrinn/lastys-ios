@@ -69,9 +69,9 @@ final class NotificationReminderScheduler: NSObject, ReminderScheduler, UNUserNo
 
     private static func body(for when: Reminder.When) -> String {
         switch when {
-        case .inDays(let days): return String(localized: "In \(days) days")
-        case .tomorrow: return String(localized: "Tomorrow")
-        case .today: return String(localized: "Today")
+        case .inDays(let days): return AppText.string("In \(days) days")
+        case .tomorrow: return AppText.string("Tomorrow")
+        case .today: return AppText.string("Today")
         }
     }
 }
@@ -86,9 +86,9 @@ extension Notice {
     /// One wording for a notice, in the notification and on Home.
     var message: String {
         switch self {
-        case .recoveryStarted: return String(localized: "Someone started a Recovery of your Lastys ID. If it wasn't you, cancel it in Me.")
-        case .partnerChangedPhone: return String(localized: "Your Partner's Lastys ID moved to a new phone.")
-        case .partnerStartedRecovery: return String(localized: "A Recovery of your Partner's Lastys ID has started.")
+        case .recoveryStarted: return AppText.string("Someone started a Recovery of your Lastys ID. If it wasn't you, cancel it in Me.")
+        case .partnerChangedPhone: return AppText.string("Your Partner's Lastys ID moved to a new phone.")
+        case .partnerStartedRecovery: return AppText.string("A Recovery of your Partner's Lastys ID has started.")
         }
     }
 }

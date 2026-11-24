@@ -8,7 +8,7 @@ struct LocalDeviceAuthenticator: DeviceAuthenticator {
         let context = LAContext()
         var error: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else { return false }
-        return (try? await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason)) ?? false
+        return (try? await context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: AppText.lookup(reason))) ?? false
     }
 }
 

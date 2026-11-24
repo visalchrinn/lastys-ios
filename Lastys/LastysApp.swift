@@ -46,6 +46,7 @@ enum Launch {
             authenticator: LocalDeviceAuthenticator()
         )
         MomentMediaFiles.removeUnused(keeping: model.mediaFileNamesInUse)
+        AppText.language = model.language
         return .ready(model, trustee)
     }
 }
@@ -65,6 +66,8 @@ struct AppRootView: View {
             }
         }
         .environment(\.locale, Locale(identifier: model.language.rawValue))
+        // Text made in code (notifications, Face ID prompts) follows the app's language too.
+        .onChange(of: model.language) { _, language in AppText.language = language }
         .task(id: model.screen == .home) { await model.start() }
         // Coming back to the app refreshes the status and books the next reminders.
         .onChange(of: scenePhase) { _, phase in
