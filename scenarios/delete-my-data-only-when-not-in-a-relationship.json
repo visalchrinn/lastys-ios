@@ -1,0 +1,175 @@
+{
+  "name": "Delete my data is refused while the Lastys ID has a Relationship at any stage, removes it otherwise, and the phone can make a new Lastys ID only after 30 days (ADR 0001)",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Carol"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "scan",
+      "with": {
+        "qrOf": "bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-relationship-request"
+    },
+    {
+      "phone": "bob",
+      "do": "accept-relationship-request",
+      "with": {
+        "from": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "delete-my-data",
+      "expect": {
+        "error": "relationship-not-over"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "send-end-request"
+    },
+    {
+      "phone": "bob",
+      "do": "delete-my-data",
+      "expect": {
+        "error": "relationship-not-over"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "escalate-to-team-review",
+      "expect": {
+        "error": "cannot-escalate-yet"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "decline-end-request"
+    },
+    {
+      "phone": "alice",
+      "do": "escalate-to-team-review"
+    },
+    {
+      "phone": "alice",
+      "do": "delete-my-data",
+      "expect": {
+        "error": "relationship-not-over"
+      }
+    },
+    {
+      "phone": "lastys-team",
+      "do": "team-decides",
+      "with": {
+        "about": "alice",
+        "end": "true"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "cooling-off"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "delete-my-data"
+    },
+    {
+      "phone": "alice",
+      "do": "get-relationship-status",
+      "expect": {
+        "error": "no-lastys-id"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      },
+      "expect": {
+        "error": "forged-qr"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "delete-my-data"
+    },
+    {
+      "phone": "carol",
+      "do": "get-relationship-status",
+      "expect": {
+        "error": "no-lastys-id"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id",
+      "expect": {
+        "error": "phone-made-a-lastys-id-recently"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "create-lastys-id",
+      "expect": {
+        "error": "phone-made-a-lastys-id-recently"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "wait",
+      "with": {
+        "days": "30"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "carol",
+      "do": "get-relationship-status",
+      "expect": {
+        "status": "none"
+      }
+    }
+  ]
+}

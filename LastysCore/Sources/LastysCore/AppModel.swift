@@ -494,6 +494,8 @@ public final class AppModel {
             screen = .onboarding(.recoveryCode)
         } catch TrusteeError.phoneAlreadyHasLastysID {
             onboardingProblem = .phoneAlreadyHasLastysID
+        } catch TrusteeError.phoneMadeALastysIDRecently {
+            onboardingProblem = .phoneMadeALastysIDRecently
         } catch {
             onboardingProblem = .couldNotReachTrustee
         }
@@ -579,6 +581,8 @@ public final class AppModel {
     public private(set) var revealedRecoveryCode: String?
     /// Why the last step on the Me tab didn't go through.
     public private(set) var meProblem: MeProblem?
+    /// Why Delete my data didn't go through.
+    public private(set) var deleteProblem: DeleteProblem?
 
     // MARK: Calendar state
 
@@ -734,6 +738,8 @@ public final class AppModel {
 public enum OnboardingProblem: Equatable, Sendable {
     /// This phone already made a Lastys ID (ADR 0001). Recovery or Phone transfer are the way back.
     case phoneAlreadyHasLastysID
+    /// This phone made a Lastys ID recently, even if it was deleted (ADR 0001): it must wait.
+    case phoneMadeALastysIDRecently
     /// Trustee couldn't be reached; trying again may work.
     case couldNotReachTrustee
 }
@@ -1136,5 +1142,84 @@ extension AppModel {
         } catch {
             meProblem = MeProblem(error)
         }
+    }
+}
+
+
+// MARK: - Delete my data
+
+public enum DeleteProblem: Equatable, Sendable {
+    /// Still in a Relationship (active, ending or in Team review): end it first (ADR 0002).
+    case relationshipNotOver
+    case notAuthenticated
+    case needsInternet
+    case couldNotReachLastys
+}
+
+extension AppModel {
+    /// Only while not in a Relationship at any stage: deleting must never end one one-sidedly (ADR 0002).
+    public var canDeleteMyData: Bool {
+        guard phone.lastysID != nil else { return false }
+        if case .active = relationship { return false }
+        return true
+    }
+
+    /// Removes my Lastys ID from Trustee, then wipes everything on this phone and starts over.
+    public func deleteMyData() async {
+        guard phone.lastysID != nil else { return }
+        guard canDeleteMyData else {
+            deleteProblem = .relationshipNotOver
+            return
+        }
+        guard connectivity.isOnline else {
+            deleteProblem = .needsInternet
+            return
+        }
+        guard await authenticator.authenticate(reason: "Delete your Lastys ID and all your data") else {
+            deleteProblem = .notAuthenticated
+            return
+        }
+        do {
+            try await trustee.deleteMyData()
+        } catch TrusteeError.relationshipNotOver {
+            deleteProblem = .relationshipNotOver
+            return
+        } catch {
+            deleteProblem = .couldNotReachLastys
+            return
+        }
+        wipeThisPhone()
+    }
+
+    /// Back to first launch: nothing of the deleted Lastys ID stays on the phone or in memory.
+    private func wipeThisPhone() {
+        // Nothing still running may write into the fresh state.
+        syncInFlight?.cancel()
+        syncInFlight = nil
+        clearScan()
+        plannerEvent = .wedding
+        phone = PhoneState()
+        screen = .onboarding(.intro(page: 0))
+        outgoingRequest = nil
+        requestProblem = nil
+        endingProblem = nil
+        sharingProblem = nil
+        meProblem = nil
+        deleteProblem = nil
+        onboardingProblem = nil
+        myDetails = nil
+        whoScannedMe = []
+        revealedRecoveryCode = nil
+        isOver18 = false
+        acceptsTerms = false
+        hasSavedRecoveryCode = false
+        profileNickname = ""
+        profilePhoto = nil
+        profileBirthDate = nil
+        plannerMyBirthDateOverride = nil
+        calendarShownMonth = nil
+        calendarSelectedDay = nil
+        currentQRToken = nil
+        reminders.replaceAll(with: [])
     }
 }

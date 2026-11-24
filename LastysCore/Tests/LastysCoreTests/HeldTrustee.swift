@@ -38,6 +38,7 @@ final class HeldTrustee: TrusteeClient, @unchecked Sendable {
     func whoScannedMe() async throws -> [Date] { try await wrapped.whoScannedMe() }
     func newRecoveryCode() async throws -> String { try await wrapped.newRecoveryCode() }
     func startRecovery(recoveryCode: String) async throws -> RecoveryStarted { try await wrapped.startRecovery(recoveryCode: recoveryCode) }
+    func deleteMyData() async throws { try await wrapped.deleteMyData() }
     func sendRelationshipRequest(scanID: String) async throws -> RelationshipRequest { try await wrapped.sendRelationshipRequest(scanID: scanID) }
     func relationshipRequest(id: String) async throws -> RelationshipRequest { try await wrapped.relationshipRequest(id: id) }
     func respondToRelationshipRequest(id: String, accept: Bool) async throws { try await wrapped.respondToRelationshipRequest(id: id, accept: accept) }

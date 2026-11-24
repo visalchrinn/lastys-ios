@@ -6,6 +6,10 @@ import Foundation
 ///
 /// A phone is known by its key's `trusteeID`, so Trustee can check what that phone signed.
 public actor FakeTrustee {
+    /// After making a Lastys ID, a phone can't make another for this long, even if it deleted that one.
+    /// Stands in for DeviceCheck's per-device bits (ADR 0001); the real window is Trustee's to set (#18).
+    public static let daysBetweenNewLastysIDsOnOnePhone = 30
+
     /// How many minutes back a Lastys QR is still accepted, so a code that just changed still scans.
     public static let qrMinutesAccepted = 2
 
@@ -77,6 +81,8 @@ public actor FakeTrustee {
         var formerSharedMoments: [String: [SharedMoment]] = [:]
         /// Recoveries waiting out their 7 days, by Personal ID (#15 completes and cancels them).
         var recoveries: [String: RecoveryRecord] = [:]
+        /// When each phone last made a Lastys ID. Kept when the Lastys ID is deleted, as DeviceCheck would be.
+        var lastCreatedByPhone: [String: Date] = [:]
 
         init() {}
 
@@ -95,6 +101,7 @@ public actor FakeTrustee {
             sharedMoments = try c.decodeIfPresent([String: [SharedMoment]].self, forKey: .sharedMoments) ?? [:]
             formerSharedMoments = try c.decodeIfPresent([String: [SharedMoment]].self, forKey: .formerSharedMoments) ?? [:]
             recoveries = try c.decodeIfPresent([String: RecoveryRecord].self, forKey: .recoveries) ?? [:]
+            lastCreatedByPhone = try c.decodeIfPresent([String: Date].self, forKey: .lastCreatedByPhone) ?? [:]
             let earlierProfiles = try c.decodeIfPresent([String: EarlierProfile].self, forKey: .profileByLastysID) ?? [:]
             for id in lastysIDByPhone.values where people[id.personalID] == nil {
                 let profile = earlierProfiles[id.personalID]
@@ -114,10 +121,11 @@ public actor FakeTrustee {
             try c.encode(sharedMoments, forKey: .sharedMoments)
             try c.encode(formerSharedMoments, forKey: .formerSharedMoments)
             try c.encode(recoveries, forKey: .recoveries)
+            try c.encode(lastCreatedByPhone, forKey: .lastCreatedByPhone)
         }
 
         private enum CodingKeys: String, CodingKey {
-            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments, recoveries
+            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments, recoveries, lastCreatedByPhone
             case profileByLastysID // written by the build from ticket #3
         }
 
@@ -157,9 +165,14 @@ public actor FakeTrustee {
     func createLastysID(phone: String) throws -> NewLastysID {
         // ADR 0001: a device that already holds a Lastys ID cannot create another.
         guard state.lastysIDByPhone[phone] == nil else { throw TrusteeError.phoneAlreadyHasLastysID }
+        if let last = state.lastCreatedByPhone[phone],
+           now() < last.addingTimeInterval(Double(Self.daysBetweenNewLastysIDsOnOnePhone) * 86_400) {
+            throw TrusteeError.phoneMadeALastysIDRecently
+        }
         var id = LastysID(personalID: Self.randomPersonalID())
         while state.people[id.personalID] != nil { id = LastysID(personalID: Self.randomPersonalID()) }
         state.lastysIDByPhone[phone] = id
+        state.lastCreatedByPhone[phone] = now()
         let recoveryCode = Self.randomRecoveryCode()
         var person = Person(lastysID: id, createdAt: now())
         person.recoveryCodeHash = Self.hash(recoveryCode: recoveryCode)
@@ -342,6 +355,10 @@ public actor FakeTrustee {
 
         func startRecovery(recoveryCode: String) async throws -> RecoveryStarted {
             try await trustee.startRecovery(phone: phone, recoveryCode: recoveryCode)
+        }
+
+        func deleteMyData() async throws {
+            try await trustee.deleteMyData(phone: phone)
         }
     }
 }

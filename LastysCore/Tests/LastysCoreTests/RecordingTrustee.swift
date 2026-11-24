@@ -117,6 +117,11 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         return try await wrapped.startRecovery(recoveryCode: recoveryCode)
     }
 
+    func deleteMyData() async throws {
+        record("deleteMyData()")
+        try await wrapped.deleteMyData()
+    }
+
     func relationshipStatus() async throws -> RelationshipStatus {
         record("relationshipStatus()")
         return try await wrapped.relationshipStatus()

@@ -51,6 +51,22 @@ extension FakeTrustee {
         return RecoveryStarted(completesAt: completesAt)
     }
 
+    /// Removes the Lastys ID and everything about it: Scans either way, Relationship requests, Shared
+    /// Moment copies and any pending Recovery. A former Partner keeps their own copies.
+    func deleteMyData(phone: String) throws {
+        let me = try person(of: phone)
+        guard me.partner == nil else { throw TrusteeError.relationshipNotOver }
+        let id = me.lastysID.personalID
+        state.lastysIDByPhone = state.lastysIDByPhone.filter { $0.value.personalID != id }
+        state.people[id] = nil
+        state.scans = state.scans.filter { $0.value.scanner != id && $0.value.scanned != id }
+        state.requests = state.requests.filter { $0.value.from != id && $0.value.to != id }
+        state.sharedMoments[id] = nil
+        state.formerSharedMoments[id] = nil
+        state.recoveries[id] = nil
+        save()
+    }
+
     /// The Recovery code's SHA-256, ignoring case, spaces and dashes so a typed code matches.
     static func hash(recoveryCode: String) -> String {
         let normalised = recoveryCode.uppercased().filter { $0.isLetter || $0.isNumber }

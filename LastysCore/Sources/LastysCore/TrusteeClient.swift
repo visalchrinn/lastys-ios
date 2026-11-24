@@ -47,6 +47,9 @@ public protocol TrusteeClient: Sendable {
     func newRecoveryCode() async throws -> String
     /// From a new phone: starts a Recovery with a Recovery code. It completes after a 7-day wait (#15).
     func startRecovery(recoveryCode: String) async throws -> RecoveryStarted
+    /// Removes this Lastys ID and everything Trustee holds about it. Refused while it has a Relationship
+    /// at any stage, so deleting can never end one one-sidedly (ADR 0002).
+    func deleteMyData() async throws
 }
 
 /// What the person is given when their Lastys ID is created.
@@ -97,4 +100,8 @@ public enum TrusteeError: Error, Equatable, Sendable {
     case cannotEscalateYet
     /// No Lastys ID has this Recovery code (or it was replaced by a newer one).
     case wrongRecoveryCode
+    /// This Lastys ID still has a Relationship (active, ending or in Team review).
+    case relationshipNotOver
+    /// This phone made a Lastys ID too recently to make another (ADR 0001), even if that one was deleted.
+    case phoneMadeALastysIDRecently
 }

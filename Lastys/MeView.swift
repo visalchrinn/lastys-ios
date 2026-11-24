@@ -17,6 +17,7 @@ struct MeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var editingProfile = false
     @State private var confirmingNewCode = false
+    @State private var confirmingDelete = false
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -30,6 +31,7 @@ struct MeView: View {
                 whoScannedMe
                 recoveryCode
                 help
+                deleteMyData
                 if let problem = model.meProblem {
                     Text(problem.message)
                         .font(.jakarta(13, .medium))
@@ -50,6 +52,17 @@ struct MeView: View {
         }
         .sheet(isPresented: $editingProfile) {
             ProfileEditorView().environment(model)
+        }
+        .confirmationDialog("Delete your Lastys ID and all your data?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete everything", role: .destructive) {
+                Task {
+                    await model.deleteMyData()
+                    // Photos and videos no Moment uses any more go too.
+                    MomentMediaFiles.removeUnused(keeping: model.mediaFileNamesInUse)
+                }
+            }
+        } message: {
+            Text("Your Lastys ID, profile, Moments and reminders are removed from this phone and from Lastys. This can't be undone.")
         }
         .confirmationDialog("Make a new Recovery code?", isPresented: $confirmingNewCode, titleVisibility: .visible) {
             Button("Make a new code") { Task { await model.makeNewRecoveryCode() } }
@@ -194,6 +207,29 @@ struct MeView: View {
         .card()
     }
 
+    private var deleteMyData: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionTitle("Delete my data")
+            if model.canDeleteMyData {
+                Text("Removes your Lastys ID and everything about you from Lastys and this phone.")
+                    .font(.jakarta(13))
+                    .foregroundStyle(Theme.muted)
+                Button("Delete my data", role: .destructive) { confirmingDelete = true }
+                    .buttonStyle(GhostButtonStyle())
+            } else {
+                Text("You can't delete your data while you're in a Relationship, because that would end it one-sidedly. Ask to end it first: your Partner can agree, or the Lastys team can decide after a Team review.")
+                    .font(.jakarta(13))
+                    .foregroundStyle(Theme.muted)
+            }
+            if let problem = model.deleteProblem {
+                Text(problem.message)
+                    .font(.jakarta(13, .medium))
+                    .foregroundStyle(Theme.roseDeep)
+            }
+        }
+        .card()
+    }
+
     private func sectionTitle(_ title: LocalizedStringKey) -> some View {
         Text(title).font(.jakarta(16, .bold))
     }
@@ -274,6 +310,17 @@ extension MeProblem {
         case .needsInternet: return "This needs an internet connection."
         case .couldNotReachLastys: return "Couldn't reach Lastys. Try again."
         case .notAuthenticated: return "Face ID or your passcode is needed for this."
+        }
+    }
+}
+
+extension DeleteProblem {
+    var message: LocalizedStringKey {
+        switch self {
+        case .relationshipNotOver: return "Your Relationship isn't over yet. End it first with an End request or a Team review."
+        case .notAuthenticated: return "Face ID or your passcode is needed to delete your data."
+        case .needsInternet: return "Deleting your data needs an internet connection."
+        case .couldNotReachLastys: return "Couldn't reach Lastys. Nothing was deleted. Try again."
         }
     }
 }

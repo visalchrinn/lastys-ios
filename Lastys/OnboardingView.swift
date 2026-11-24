@@ -78,6 +78,8 @@ private struct ProblemText: View {
         switch problem {
         case .phoneAlreadyHasLastysID:
             return "This iPhone has already made a Lastys ID, so it can't make another. To get your Lastys ID back, use Recovery with your Recovery code, or a Phone transfer from your old phone."
+        case .phoneMadeALastysIDRecently:
+            return "This iPhone made a Lastys ID recently, so it can't make a new one yet, even after a deletion. Try again in a few weeks, or use Recovery if you still have your Recovery code."
         case .couldNotReachTrustee:
             return "Couldn't reach Lastys. Check your connection and try again."
         }

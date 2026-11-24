@@ -44,7 +44,7 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 
 | Action                    | `with`     | Response |
 |---------------------------|------------|----------|
-| `create-lastys-id`        |            | `personalID`, `recoveryCode`; error `phone-already-has-lastys-id` |
+| `create-lastys-id`        |            | `personalID`, `recoveryCode`; errors `phone-already-has-lastys-id`, `phone-made-a-lastys-id-recently` |
 | `update-profile`          | `nickname` | nothing; error `no-lastys-id` |
 | `get-relationship-status` |            | `status`: `none`, `active` or `cooling-off`. When active: `partner` (nickname), `stage` (`together`, `ending` or `team-review`); while ending, `endRequestFrom` (`me` or `partner`) and `declined` (`true`/`false`); in Team review, `reviewReason` (`end-request` or `safety-concern`). When cooling off: `until` (UTC day, `yyyy-MM-dd`) |
 | `scan`                    | see below  | `status` (`single` or `taken`), `nickname`, `idAgeDays`, `phoneTransfers`, `history` (`hidden`, or the number of past Relationships), `requestBlocked` (`none`, `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `that-is-you`); errors `no-lastys-id`, `not-a-lastys-qr`, `expired-qr`, `forged-qr` |
@@ -59,6 +59,7 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 | `get-who-scanned-me` | | `count`. Trustee returns only times; nothing says who scanned. Error `no-lastys-id` |
 | `new-recovery-code` | | nothing a scenario names; the runner remembers the code. The previous code stops working, and so does a Recovery already started with it. Error `no-lastys-id` |
 | `start-recovery` | `codeOf` (a phone), `which` (`current` or `previous`) | `completesInDays` (`7`). Sent from a phone that may hold no Lastys ID. Error `wrong-recovery-code` |
+| `delete-my-data` | | nothing. Removes the Lastys ID and everything about it. Errors `no-lastys-id`, `relationship-not-over` |
 | `send-relationship-request` | optional `scanOf` | `status` (`pending`), `to` (the receiver's nickname). Uses the sending phone's latest `scan`, or another phone's with `scanOf` (which Trustee must refuse). Errors `scan-required`, `scan-too-old`, `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `that-is-you` |
 | `get-relationship-request-status` | `to` (receiver phone) | `status`: `pending`, `accepted`, `declined` or `expired`, and `to` |
 | `accept-relationship-request` | `from` (sender phone) | nothing. Errors `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `they-are-cooling-off`, `request-not-pending`, `request-not-found` |
@@ -101,6 +102,8 @@ A Lastys QR is accepted from 2 minutes before the current minute up to 1 minute 
 | `not-allowed-now` | The Relationship's stage doesn't allow this, or this Partner can't do it. |
 | `cannot-escalate-yet` | A Team review needs a declined End request, or 7 days without an answer. |
 | `wrong-recovery-code` | No Lastys ID has this Recovery code, or it was replaced by a newer one. |
+| `relationship-not-over` | The Lastys ID still has a Relationship, active, ending or in Team review (ADR 0002). |
+| `phone-made-a-lastys-id-recently` | This phone made a Lastys ID less than 30 days ago, even if it was since deleted (ADR 0001). |
 
 When a Relationship starts, every other pending request to or from either Partner becomes `expired`. Accepting checks both Lastys IDs before the request's own status, so a Lastys ID that became Taken gets `you-are-taken`.
 

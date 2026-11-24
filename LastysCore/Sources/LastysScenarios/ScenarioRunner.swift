@@ -129,6 +129,9 @@ private final class Run: @unchecked Sendable {
             let started = try await client.startRecovery(recoveryCode: try recoveryCode(step.arguments))
             let now = lock.withLock { self.now }
             return ["completesInDays": String(Int((started.completesAt.timeIntervalSince(now) / 86_400).rounded()))]
+        case "delete-my-data":
+            try await client.deleteMyData()
+            return [:]
         case "set-my-shared-moments":
             let titles = (step.arguments["titles"] ?? "").split(separator: "|").map(String.init)
             try await client.setMySharedMoments(titles.map(sharedMoment(titled:)))
@@ -241,6 +244,8 @@ extension TrusteeError {
         case .notAllowedNow: return "not-allowed-now"
         case .cannotEscalateYet: return "cannot-escalate-yet"
         case .wrongRecoveryCode: return "wrong-recovery-code"
+        case .relationshipNotOver: return "relationship-not-over"
+        case .phoneMadeALastysIDRecently: return "phone-made-a-lastys-id-recently"
         }
     }
 }
