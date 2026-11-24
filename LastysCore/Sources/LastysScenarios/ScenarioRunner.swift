@@ -47,6 +47,8 @@ private final class Run: @unchecked Sendable {
     private lazy var trustee = FakeTrustee(now: { [unowned self] in self.lock.withLock { self.now } })
     private var keys: [String: SoftwarePhoneKey] = [:]
     private var personalIDs: [String: String] = [:]
+    /// Every Recovery code each phone has been given, oldest first.
+    private var recoveryCodes: [String: [String]] = [:]
     /// Each phone's latest Scan, and which phone it scanned.
     private var lastScan: [String: (scanID: String, of: String?)] = [:]
     /// Relationship requests sent, by sender phone then receiver phone.
@@ -67,6 +69,7 @@ private final class Run: @unchecked Sendable {
         case "create-lastys-id":
             let created = try await client.createLastysID()
             personalIDs[step.phone] = created.lastysID.personalID
+            recoveryCodes[step.phone] = [created.recoveryCode]
             return ["personalID": created.lastysID.personalID, "recoveryCode": created.recoveryCode]
         case "update-profile":
             try await client.updateProfile(nickname: step.arguments["nickname"] ?? "", photo: nil)
@@ -103,6 +106,29 @@ private final class Run: @unchecked Sendable {
         case "report-safety-concern":
             try await client.reportSafetyConcern()
             return [:]
+        case "set-share-level":
+            guard let level = ShareLevel(rawValue: step.arguments["level"] ?? "") else {
+                throw ScenarioError(message: "set-share-level needs level: status-only or status-and-history")
+            }
+            try await client.setShareLevel(level)
+            return [:]
+        case "get-my-lastys-id":
+            let details = try await client.myLastysIDDetails()
+            let now = lock.withLock { self.now }
+            return [
+                "shareLevel": details.shareLevel.rawValue,
+                "idAgeDays": String(Int(now.timeIntervalSince(details.createdAt) / 86_400)),
+                "phoneTransfers": String(details.phoneTransferCount),
+            ]
+        case "get-who-scanned-me":
+            return ["count": String(try await client.whoScannedMe().count)]
+        case "new-recovery-code":
+            recoveryCodes[step.phone, default: []].append(try await client.newRecoveryCode())
+            return [:]
+        case "start-recovery":
+            let started = try await client.startRecovery(recoveryCode: try recoveryCode(step.arguments))
+            let now = lock.withLock { self.now }
+            return ["completesInDays": String(Int((started.completesAt.timeIntervalSince(now) / 86_400).rounded()))]
         case "set-my-shared-moments":
             let titles = (step.arguments["titles"] ?? "").split(separator: "|").map(String.init)
             try await client.setMySharedMoments(titles.map(sharedMoment(titled:)))
@@ -125,6 +151,18 @@ private final class Run: @unchecked Sendable {
         default:
             return nil
         }
+    }
+
+    /// `codeOf` a phone, `which` (`current` or `previous`) of its Recovery codes.
+    private func recoveryCode(_ arguments: [String: String]) throws -> String {
+        guard let owner = arguments["codeOf"], let codes = recoveryCodes[owner], !codes.isEmpty else {
+            throw ScenarioError(message: "start-recovery needs codeOf, a phone that has created a Lastys ID")
+        }
+        if arguments["which"] == "previous" {
+            guard codes.count >= 2 else { throw ScenarioError(message: "\(owner) has no previous Recovery code") }
+            return codes[codes.count - 2]
+        }
+        return codes[codes.count - 1]
     }
 
     /// A Shared Moment the scenario names only by title; its other fields don't matter to the rules.
@@ -202,6 +240,7 @@ extension TrusteeError {
         case .noRelationship: return "no-relationship"
         case .notAllowedNow: return "not-allowed-now"
         case .cannotEscalateYet: return "cannot-escalate-yet"
+        case .wrongRecoveryCode: return "wrong-recovery-code"
         }
     }
 }

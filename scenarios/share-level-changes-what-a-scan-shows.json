@@ -1,0 +1,87 @@
+{
+  "name": "A new Lastys ID shares Status only; switching to Status + history changes what the next Scan shows",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-my-lastys-id",
+      "expect": {
+        "shareLevel": "status-only",
+        "idAgeDays": "0",
+        "phoneTransfers": "0"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      },
+      "expect": {
+        "history": "hidden"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "set-share-level",
+      "with": {
+        "level": "status-and-history"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-my-lastys-id",
+      "expect": {
+        "shareLevel": "status-and-history"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      },
+      "expect": {
+        "history": "0"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "set-share-level",
+      "with": {
+        "level": "status-only"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      },
+      "expect": {
+        "history": "hidden"
+      }
+    }
+  ]
+}

@@ -38,8 +38,7 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 
 - **Phones.** Each phone named in a scenario gets its own key the first time it appears. Trustee knows the phone by that key, and the phone signs what it shows. The one exception is `team-decides`, which is the Lastys team rather than a phone: its `phone` field is ignored and gets no key.
 - **Clock.** Every scenario starts at 2026-11-29 05:00:15 UTC, and Trustee runs on that clock. Only `wait` moves it. The .NET runner hosts Trustee in-process, so it gives Trustee a controllable `TimeProvider` (such as `FakeTimeProvider`) set to that start, and `wait` advances it.
-- **What the runner remembers.** Trustee's responses also carry opaque IDs that scenarios never mention: a `scan` returns a Scan ID, and `send-relationship-request` returns a request ID. The runner keeps each phone's Personal ID from `create-lastys-id` (which `team-decides` names with `about`), each phone's latest Scan ID (and which phone it scanned), and each request ID by sender and receiver phone. That is how `scanOf`, `to` and `from` resolve. With no Scan to name, the runner sends an ID Trustee has never issued.
-- **Not yet expressible.** Relationship history under *Status + history* needs the Share level (#13); only the Swift demo tests cover it so far.
+- **What the runner remembers.** Trustee's responses also carry opaque IDs that scenarios never mention: a `scan` returns a Scan ID, and `send-relationship-request` returns a request ID. The runner keeps each phone's Recovery codes (from `create-lastys-id` and `new-recovery-code`, which `start-recovery` names with `codeOf` and `which`), each phone's Personal ID from `create-lastys-id` (which `team-decides` names with `about`), each phone's latest Scan ID (and which phone it scanned), and each request ID by sender and receiver phone. That is how `scanOf`, `to` and `from` resolve. With no Scan to name, the runner sends an ID Trustee has never issued.
 
 ## Actions
 
@@ -55,6 +54,11 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 | `get-partner-shared-moments` | | `count`, `titles` (sorted, joined with `\|`). Error `no-relationship` |
 | `get-former-shared-moments` | | `count`, `titles`: this person's own copy of what their former Partner shared, after the Relationship ended. Error `no-lastys-id` |
 | `discard-former-shared-moments` | | nothing. This person kept (on the phone) or deleted their copy; the former Partner's copy is untouched. Error `no-lastys-id` |
+| `set-share-level` | `level` (`status-only` or `status-and-history`) | nothing. Trustee applies it to the next Scan. Error `no-lastys-id` |
+| `get-my-lastys-id` | | `shareLevel`, `idAgeDays`, `phoneTransfers`. Error `no-lastys-id` |
+| `get-who-scanned-me` | | `count`. Trustee returns only times; nothing says who scanned. Error `no-lastys-id` |
+| `new-recovery-code` | | nothing a scenario names; the runner remembers the code. The previous code stops working, and so does a Recovery already started with it. Error `no-lastys-id` |
+| `start-recovery` | `codeOf` (a phone), `which` (`current` or `previous`) | `completesInDays` (`7`). Sent from a phone that may hold no Lastys ID. Error `wrong-recovery-code` |
 | `send-relationship-request` | optional `scanOf` | `status` (`pending`), `to` (the receiver's nickname). Uses the sending phone's latest `scan`, or another phone's with `scanOf` (which Trustee must refuse). Errors `scan-required`, `scan-too-old`, `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `that-is-you` |
 | `get-relationship-request-status` | `to` (receiver phone) | `status`: `pending`, `accepted`, `declined` or `expired`, and `to` |
 | `accept-relationship-request` | `from` (sender phone) | nothing. Errors `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `they-are-cooling-off`, `request-not-pending`, `request-not-found` |
@@ -96,6 +100,7 @@ A Lastys QR is accepted from 2 minutes before the current minute up to 1 minute 
 | `no-relationship` | The acting Lastys ID has no active Relationship. |
 | `not-allowed-now` | The Relationship's stage doesn't allow this, or this Partner can't do it. |
 | `cannot-escalate-yet` | A Team review needs a declined End request, or 7 days without an answer. |
+| `wrong-recovery-code` | No Lastys ID has this Recovery code, or it was replaced by a newer one. |
 
 When a Relationship starts, every other pending request to or from either Partner becomes `expired`. Accepting checks both Lastys IDs before the request's own status, so a Lastys ID that became Taken gets `you-are-taken`.
 

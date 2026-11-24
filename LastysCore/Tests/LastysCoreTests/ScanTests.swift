@@ -91,7 +91,7 @@ struct ScanTests {
         let model = AppModel(
             phoneKey: me.key, trustee: held,
             store: FilePhoneStore(url: me.phoneFile), connectivity: SwitchableConnectivity(),
-            reminders: RecordingReminderScheduler()
+            reminders: RecordingReminderScheduler(), authenticator: SwitchableAuthenticator()
         )
         let qr = try #require(dara.model.myLastysQR(at: Date()))
 

@@ -32,7 +32,8 @@ extension AppModel {
             trustee: FakeTrustee().client(forPhone: "preview"),
             store: InMemoryPhoneStore(phone),
             connectivity: PreviewConnectivity(),
-            reminders: PreviewReminderScheduler()
+            reminders: PreviewReminderScheduler(),
+            authenticator: PreviewAuthenticator()
         )
     }
 }

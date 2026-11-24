@@ -35,7 +35,7 @@ struct RootView: View {
                 case .calendar:
                     CalendarView()
                 case .me:
-                    ComingSoonView(title: "Me")
+                    MeView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

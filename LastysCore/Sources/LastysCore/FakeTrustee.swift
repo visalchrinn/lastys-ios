@@ -23,6 +23,8 @@ public actor FakeTrustee {
         var coolingOffUntil: Date?
         var pastRelationships: [PastRelationship] = []
         var phoneTransferCount = 0
+        /// SHA-256 of the Recovery code, never the code itself.
+        var recoveryCodeHash: String?
 
         init(lastysID: LastysID, createdAt: Date, nickname: String = "", photo: Data? = nil) {
             self.lastysID = lastysID
@@ -44,6 +46,7 @@ public actor FakeTrustee {
             coolingOffUntil = try c.decodeIfPresent(Date.self, forKey: .coolingOffUntil)
             pastRelationships = try c.decodeIfPresent([PastRelationship].self, forKey: .pastRelationships) ?? []
             phoneTransferCount = try c.decodeIfPresent(Int.self, forKey: .phoneTransferCount) ?? 0
+            recoveryCodeHash = try c.decodeIfPresent(String.self, forKey: .recoveryCodeHash)
         }
     }
 
@@ -72,6 +75,8 @@ public actor FakeTrustee {
         var sharedMoments: [String: [SharedMoment]] = [:]
         /// Each former Partner's own copy of what the other shared, until they keep or delete it.
         var formerSharedMoments: [String: [SharedMoment]] = [:]
+        /// Recoveries waiting out their 7 days, by Personal ID (#15 completes and cancels them).
+        var recoveries: [String: RecoveryRecord] = [:]
 
         init() {}
 
@@ -89,6 +94,7 @@ public actor FakeTrustee {
             endings = try c.decodeIfPresent([String: EndingRecord].self, forKey: .endings) ?? [:]
             sharedMoments = try c.decodeIfPresent([String: [SharedMoment]].self, forKey: .sharedMoments) ?? [:]
             formerSharedMoments = try c.decodeIfPresent([String: [SharedMoment]].self, forKey: .formerSharedMoments) ?? [:]
+            recoveries = try c.decodeIfPresent([String: RecoveryRecord].self, forKey: .recoveries) ?? [:]
             let earlierProfiles = try c.decodeIfPresent([String: EarlierProfile].self, forKey: .profileByLastysID) ?? [:]
             for id in lastysIDByPhone.values where people[id.personalID] == nil {
                 let profile = earlierProfiles[id.personalID]
@@ -107,10 +113,11 @@ public actor FakeTrustee {
             try c.encode(endings, forKey: .endings)
             try c.encode(sharedMoments, forKey: .sharedMoments)
             try c.encode(formerSharedMoments, forKey: .formerSharedMoments)
+            try c.encode(recoveries, forKey: .recoveries)
         }
 
         private enum CodingKeys: String, CodingKey {
-            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments
+            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments, recoveries
             case profileByLastysID // written by the build from ticket #3
         }
 
@@ -153,9 +160,12 @@ public actor FakeTrustee {
         var id = LastysID(personalID: Self.randomPersonalID())
         while state.people[id.personalID] != nil { id = LastysID(personalID: Self.randomPersonalID()) }
         state.lastysIDByPhone[phone] = id
-        state.people[id.personalID] = Person(lastysID: id, createdAt: now())
+        let recoveryCode = Self.randomRecoveryCode()
+        var person = Person(lastysID: id, createdAt: now())
+        person.recoveryCodeHash = Self.hash(recoveryCode: recoveryCode)
+        state.people[id.personalID] = person
         save()
-        return NewLastysID(lastysID: id, recoveryCode: Self.randomRecoveryCode())
+        return NewLastysID(lastysID: id, recoveryCode: recoveryCode)
     }
 
     func updateProfile(phone: String, nickname: String, photo: Data?) throws {
@@ -232,7 +242,7 @@ public actor FakeTrustee {
         try? data.writeAtomicallyProtected(to: fileURL)
     }
 
-    private static func randomRecoveryCode() -> String {
+    static func randomRecoveryCode() -> String {
         (0..<4).map { _ in randomBlock() }.joined(separator: "-")
     }
 
@@ -312,6 +322,26 @@ public actor FakeTrustee {
 
         func discardFormerSharedMoments() async throws {
             try await trustee.discardFormerSharedMoments(phone: phone)
+        }
+
+        func setShareLevel(_ level: ShareLevel) async throws {
+            try await trustee.setShareLevel(phone: phone, level: level)
+        }
+
+        func myLastysIDDetails() async throws -> MyLastysIDDetails {
+            try await trustee.myLastysIDDetails(phone: phone)
+        }
+
+        func whoScannedMe() async throws -> [Date] {
+            try await trustee.whoScannedMe(phone: phone)
+        }
+
+        func newRecoveryCode() async throws -> String {
+            try await trustee.newRecoveryCode(phone: phone)
+        }
+
+        func startRecovery(recoveryCode: String) async throws -> RecoveryStarted {
+            try await trustee.startRecovery(phone: phone, recoveryCode: recoveryCode)
         }
     }
 }

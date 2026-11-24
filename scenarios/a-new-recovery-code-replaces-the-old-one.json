@@ -1,0 +1,75 @@
+{
+  "name": "Making a new Recovery code makes the old one stop working for Recovery",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "newphone",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "completesInDays": "7"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "new-recovery-code"
+    },
+    {
+      "phone": "otherphone",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "previous"
+      },
+      "expect": {
+        "error": "wrong-recovery-code"
+      }
+    },
+    {
+      "phone": "thirdphone",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "alice",
+        "which": "current"
+      },
+      "expect": {
+        "completesInDays": "7"
+      }
+    },
+    {
+      "phone": "fourthphone",
+      "do": "start-recovery",
+      "with": {
+        "codeOf": "bob",
+        "which": "current"
+      },
+      "expect": {
+        "completesInDays": "7"
+      }
+    }
+  ]
+}

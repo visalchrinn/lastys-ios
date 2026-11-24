@@ -38,6 +38,15 @@ public protocol TrusteeClient: Sendable {
     func formerSharedMoments() async throws -> [SharedMoment]
     /// This person has kept (on the phone) or deleted their copy; the former Partner's copy is untouched.
     func discardFormerSharedMoments() async throws
+    /// What a Scan of this Lastys ID shows: Status only, or Status + history.
+    func setShareLevel(_ level: ShareLevel) async throws
+    func myLastysIDDetails() async throws -> MyLastysIDDetails
+    /// When this Lastys ID was Scanned, newest first. Never who scanned: only the Lastys team may know that.
+    func whoScannedMe() async throws -> [Date]
+    /// Replaces the Recovery code. Trustee keeps only its hash, and the old code stops working.
+    func newRecoveryCode() async throws -> String
+    /// From a new phone: starts a Recovery with a Recovery code. It completes after a 7-day wait (#15).
+    func startRecovery(recoveryCode: String) async throws -> RecoveryStarted
 }
 
 /// What the person is given when their Lastys ID is created.
@@ -86,4 +95,6 @@ public enum TrusteeError: Error, Equatable, Sendable {
     case notAllowedNow
     /// A Team review needs a declined End request, or 7 days without an answer.
     case cannotEscalateYet
+    /// No Lastys ID has this Recovery code (or it was replaced by a newer one).
+    case wrongRecoveryCode
 }

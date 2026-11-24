@@ -92,6 +92,31 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         try await wrapped.discardFormerSharedMoments()
     }
 
+    func setShareLevel(_ level: ShareLevel) async throws {
+        record("setShareLevel(" + level.rawValue + ")")
+        try await wrapped.setShareLevel(level)
+    }
+
+    func myLastysIDDetails() async throws -> MyLastysIDDetails {
+        record("myLastysIDDetails()")
+        return try await wrapped.myLastysIDDetails()
+    }
+
+    func whoScannedMe() async throws -> [Date] {
+        record("whoScannedMe()")
+        return try await wrapped.whoScannedMe()
+    }
+
+    func newRecoveryCode() async throws -> String {
+        record("newRecoveryCode()")
+        return try await wrapped.newRecoveryCode()
+    }
+
+    func startRecovery(recoveryCode: String) async throws -> RecoveryStarted {
+        record("startRecovery(" + recoveryCode + ")")
+        return try await wrapped.startRecovery(recoveryCode: recoveryCode)
+    }
+
     func relationshipStatus() async throws -> RelationshipStatus {
         record("relationshipStatus()")
         return try await wrapped.relationshipStatus()

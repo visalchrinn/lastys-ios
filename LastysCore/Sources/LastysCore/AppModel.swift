@@ -41,6 +41,7 @@ public final class AppModel {
     @ObservationIgnored private let store: PhoneStore
     @ObservationIgnored private let connectivity: Connectivity
     @ObservationIgnored private let reminders: ReminderScheduler
+    @ObservationIgnored private let authenticator: DeviceAuthenticator
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let now: () -> Date
 
@@ -50,6 +51,7 @@ public final class AppModel {
         store: PhoneStore,
         connectivity: Connectivity,
         reminders: ReminderScheduler,
+        authenticator: DeviceAuthenticator,
         calendar: Calendar = .current,
         now: @escaping () -> Date = Date.init
     ) {
@@ -58,6 +60,7 @@ public final class AppModel {
         self.store = store
         self.connectivity = connectivity
         self.reminders = reminders
+        self.authenticator = authenticator
         self.calendar = calendar
         self.now = now
         let phone = store.load() ?? PhoneState()
@@ -566,6 +569,17 @@ public final class AppModel {
         scheduleReminders()
     }
 
+    // MARK: Me state
+
+    /// What Trustee last said about my Lastys ID.
+    public private(set) var myDetails: MyLastysIDDetails?
+    /// When I was Scanned, newest first. Never who scanned.
+    public private(set) var whoScannedMe: [Date] = []
+    /// The Recovery code while it is on screen after device authentication; nil otherwise.
+    public private(set) var revealedRecoveryCode: String?
+    /// Why the last step on the Me tab didn't go through.
+    public private(set) var meProblem: MeProblem?
+
     // MARK: Calendar state
 
     /// What the Lucky Day Planner is planning for.
@@ -996,5 +1010,131 @@ extension AppModel {
     public var luckyDays: [LuckyDay] {
         guard let mine = plannerMyBirthDate, let partner = plannerPartnerBirthDate else { return [] }
         return SampleLuckyDays.suggest(plannerEvent, myBirthDate: mine, partnerBirthDate: partner, after: today, calendar: calendar)
+    }
+}
+
+
+// MARK: - Me
+
+public enum MeProblem: Equatable, Sendable {
+    case needsInternet
+    case couldNotReachLastys
+    /// Face ID or the passcode didn't confirm it's the phone's owner.
+    case notAuthenticated
+
+    init(_ error: Error) {
+        self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+    }
+}
+
+extension AppModel {
+    /// Loads my Lastys ID's details and Who scanned me.
+    public func refreshMe() async {
+        guard phone.lastysID != nil else { return }
+        guard connectivity.isOnline else {
+            meProblem = .needsInternet
+            return
+        }
+        do {
+            let details = try await trustee.myLastysIDDetails()
+            myDetails = details
+            phone.shareLevel = details.shareLevel
+            whoScannedMe = Array(try await trustee.whoScannedMe().prefix(Self.whoScannedMeShown))
+            meProblem = nil
+        } catch {
+            meProblem = MeProblem(error)
+        }
+    }
+
+    /// How many of the latest Scans Who scanned me lists.
+    public static let whoScannedMeShown = 50
+
+    /// Switches what a Scan of me shows. Trustee applies it to the next Scan.
+    public func setShareLevel(_ level: ShareLevel) async {
+        guard connectivity.isOnline else {
+            meProblem = .needsInternet
+            return
+        }
+        do {
+            try await trustee.setShareLevel(level)
+            phone.shareLevel = level
+            meProblem = nil
+        } catch {
+            meProblem = MeProblem(error)
+        }
+    }
+
+    /// A profile needs a nickname that isn't only spaces.
+    public func canSaveProfile(nickname: String) -> Bool {
+        !nickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// True when Trustee has no working Recovery code for me (a Lastys ID made by an earlier build).
+    public var needsNewRecoveryCode: Bool {
+        myDetails?.hasRecoveryCode == false
+    }
+
+    /// Saves a new nickname and photo (sent to Trustee: they show on a Scan) and birth date (kept here).
+    @discardableResult
+    public func saveProfile(nickname: String, photo: Data?, birthDate: Date) async -> Bool {
+        guard canSaveProfile(nickname: nickname) else { return false }
+        let trimmed = nickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard connectivity.isOnline else {
+            meProblem = .needsInternet
+            return false
+        }
+        do {
+            try await trustee.updateProfile(nickname: trimmed, photo: photo)
+        } catch {
+            meProblem = MeProblem(error)
+            return false
+        }
+        var updated = phone
+        updated.nickname = trimmed
+        updated.photo = photo
+        updated.birthDate = birthDate
+        phone = updated
+        meProblem = nil
+        return true
+    }
+
+    /// Shows the Recovery code once Face ID or the passcode confirms the owner is holding the phone.
+    public func revealRecoveryCode() async {
+        guard await authenticator.authenticate(reason: "Show your Recovery code") else {
+            meProblem = .notAuthenticated
+            return
+        }
+        meProblem = nil
+        revealedRecoveryCode = phone.recoveryCode
+    }
+
+    public func hideRecoveryCode() {
+        revealedRecoveryCode = nil
+    }
+
+    /// Replaces the Recovery code after device authentication. The old one stops working at once.
+    public func makeNewRecoveryCode() async {
+        guard connectivity.isOnline else {
+            meProblem = .needsInternet
+            return
+        }
+        guard await authenticator.authenticate(reason: "Make a new Recovery code") else {
+            meProblem = .notAuthenticated
+            return
+        }
+        do {
+            let code = try await trustee.newRecoveryCode()
+            phone.recoveryCode = code
+            revealedRecoveryCode = code
+            meProblem = nil
+            if let details = myDetails {
+                myDetails = MyLastysIDDetails(
+                    createdAt: details.createdAt, phoneTransferCount: details.phoneTransferCount,
+                    shareLevel: details.shareLevel, hasRecoveryCode: true
+                )
+            }
+        } catch {
+            meProblem = MeProblem(error)
+        }
     }
 }

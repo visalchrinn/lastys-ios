@@ -1,0 +1,73 @@
+{
+  "name": "Who scanned me lists each Scan by its time only, never by who scanned",
+  "steps": [
+    {
+      "phone": "alice",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Alice"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "bob",
+      "do": "update-profile",
+      "with": {
+        "nickname": "Bob"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "create-lastys-id"
+    },
+    {
+      "phone": "alice",
+      "do": "get-who-scanned-me",
+      "expect": {
+        "count": "0"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "wait",
+      "with": {
+        "minutes": "5"
+      }
+    },
+    {
+      "phone": "carol",
+      "do": "scan",
+      "with": {
+        "qrOf": "alice"
+      }
+    },
+    {
+      "phone": "alice",
+      "do": "get-who-scanned-me",
+      "expect": {
+        "count": "2"
+      }
+    },
+    {
+      "phone": "bob",
+      "do": "get-who-scanned-me",
+      "expect": {
+        "count": "0"
+      }
+    }
+  ]
+}

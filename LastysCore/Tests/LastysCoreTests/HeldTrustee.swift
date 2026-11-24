@@ -33,6 +33,11 @@ final class HeldTrustee: TrusteeClient, @unchecked Sendable {
     func partnerSharedMoments() async throws -> [SharedMoment] { try await wrapped.partnerSharedMoments() }
     func formerSharedMoments() async throws -> [SharedMoment] { try await wrapped.formerSharedMoments() }
     func discardFormerSharedMoments() async throws { try await wrapped.discardFormerSharedMoments() }
+    func setShareLevel(_ level: ShareLevel) async throws { try await wrapped.setShareLevel(level) }
+    func myLastysIDDetails() async throws -> MyLastysIDDetails { try await wrapped.myLastysIDDetails() }
+    func whoScannedMe() async throws -> [Date] { try await wrapped.whoScannedMe() }
+    func newRecoveryCode() async throws -> String { try await wrapped.newRecoveryCode() }
+    func startRecovery(recoveryCode: String) async throws -> RecoveryStarted { try await wrapped.startRecovery(recoveryCode: recoveryCode) }
     func sendRelationshipRequest(scanID: String) async throws -> RelationshipRequest { try await wrapped.sendRelationshipRequest(scanID: scanID) }
     func relationshipRequest(id: String) async throws -> RelationshipRequest { try await wrapped.relationshipRequest(id: id) }
     func respondToRelationshipRequest(id: String, accept: Bool) async throws { try await wrapped.respondToRelationshipRequest(id: id, accept: accept) }

@@ -42,7 +42,8 @@ enum Launch {
             trustee: trustee.client(forPhone: phoneKey.trusteeID),
             store: FilePhoneStore(url: folder.appending(path: "phone.json")),
             connectivity: NetworkConnectivity(),
-            reminders: NotificationReminderScheduler()
+            reminders: NotificationReminderScheduler(),
+            authenticator: LocalDeviceAuthenticator()
         )
         MomentMediaFiles.removeUnused(keeping: model.mediaFileNamesInUse)
         return .ready(model, trustee)

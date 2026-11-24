@@ -323,3 +323,29 @@ public struct SharedMoment: Codable, Equatable, Sendable {
                   repeatsOnKhmerLunarDate: moment.repeatsOnKhmerLunarDate)
     }
 }
+
+/// What Trustee knows about my own Lastys ID, as the Me tab shows it.
+public struct MyLastysIDDetails: Equatable, Sendable {
+    public let createdAt: Date
+    public let phoneTransferCount: Int
+    public let shareLevel: ShareLevel
+    /// False for a Lastys ID made before Trustee kept Recovery codes: its owner needs to make a new one.
+    public let hasRecoveryCode: Bool
+
+    public init(createdAt: Date, phoneTransferCount: Int, shareLevel: ShareLevel, hasRecoveryCode: Bool) {
+        self.createdAt = createdAt
+        self.phoneTransferCount = phoneTransferCount
+        self.shareLevel = shareLevel
+        self.hasRecoveryCode = hasRecoveryCode
+    }
+}
+
+/// A Recovery that has started on a new phone. It takes effect after a 7-day wait.
+public struct RecoveryStarted: Equatable, Sendable {
+    public static let waitDays = 7
+    public let completesAt: Date
+
+    public init(completesAt: Date) {
+        self.completesAt = completesAt
+    }
+}

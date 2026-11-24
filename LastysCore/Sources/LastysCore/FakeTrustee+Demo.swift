@@ -77,6 +77,12 @@ extension FakeTrustee {
         save()
     }
 
+    /// For tests: a Lastys ID as an earlier build left it, with no Recovery code on file.
+    public func forgetRecoveryCodeForTesting(of personalID: String) {
+        state.people[personalID]?.recoveryCodeHash = nil
+        save()
+    }
+
     private func phoneOfPartner(of personalID: String) throws -> String {
         guard let partner = state.people[personalID]?.partner,
               let phone = state.lastysIDByPhone.first(where: { $0.value.personalID == partner })?.key

@@ -37,6 +37,7 @@ targets:
         UIUserInterfaceStyle: Light
         ITSAppUsesNonExemptEncryption: false
         NSCameraUsageDescription: Lastys uses the camera to Scan Lastys QR codes.
+        NSFaceIDUsageDescription: Lastys asks for Face ID before showing or changing your Recovery code.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lastys.app

@@ -27,6 +27,8 @@ final class TestPhone {
         set { connectivity.isOnline = newValue }
     }
 
+    /// Face ID or the passcode, as the test decides.
+    let authenticator = SwitchableAuthenticator()
     /// Every reminder the phone has asked iOS to deliver.
     let reminders = RecordingReminderScheduler()
     private let calendar: Calendar
@@ -48,7 +50,7 @@ final class TestPhone {
         trustee = other?.trustee ?? FakeTrustee(savingTo: folder.appendingPathComponent("trustee.json"), now: { clock.now })
         (model, recorder) = Self.open(
             key: key, trustee: trustee, phoneFile: folder.appendingPathComponent(Self.phoneFileName),
-            connectivity: connectivity, reminders: reminders, calendar: calendar, clock: clock
+            connectivity: connectivity, reminders: reminders, authenticator: authenticator, calendar: calendar, clock: clock
         )
     }
 
@@ -56,19 +58,20 @@ final class TestPhone {
     func relaunch() {
         (model, recorder) = Self.open(
             key: key, trustee: trustee, phoneFile: phoneFile, connectivity: connectivity,
-            reminders: reminders, calendar: calendar, clock: clock
+            reminders: reminders, authenticator: authenticator, calendar: calendar, clock: clock
         )
     }
 
     /// Opens the app on this phone: what a launch builds from what the phone saved.
     private static func open(
         key: PhoneKey, trustee: FakeTrustee, phoneFile: URL, connectivity: Connectivity,
-        reminders: ReminderScheduler, calendar: Calendar, clock: TestClock
+        reminders: ReminderScheduler, authenticator: DeviceAuthenticator, calendar: Calendar, clock: TestClock
     ) -> (AppModel, RecordingTrustee) {
         let recorder = RecordingTrustee(trustee.client(forPhone: key.trusteeID))
         let model = AppModel(
             phoneKey: key, trustee: recorder, store: FilePhoneStore(url: phoneFile),
-            connectivity: connectivity, reminders: reminders, calendar: calendar, now: { clock.now }
+            connectivity: connectivity, reminders: reminders, authenticator: authenticator, calendar: calendar,
+            now: { clock.now }
         )
         return (model, recorder)
     }
@@ -151,4 +154,17 @@ final class RecordingReminderScheduler: ReminderScheduler, @unchecked Sendable {
     func replaceAll(with reminders: [Reminder]) {
         lock.withLock { current = reminders }
     }
+}
+
+/// Face ID that succeeds or fails as the test sets it.
+final class SwitchableAuthenticator: DeviceAuthenticator, @unchecked Sendable {
+    private let lock = NSLock()
+    private var allowed = true
+
+    var allows: Bool {
+        get { lock.withLock { allowed } }
+        set { lock.withLock { allowed = newValue } }
+    }
+
+    func authenticate(reason: String) async -> Bool { allows }
 }
