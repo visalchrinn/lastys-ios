@@ -36,6 +36,7 @@ targets:
           - UIInterfaceOrientationPortrait
         UIUserInterfaceStyle: Light
         ITSAppUsesNonExemptEncryption: false
+        NSCameraUsageDescription: Lastys uses the camera to Scan Lastys QR codes.
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.lastys.app

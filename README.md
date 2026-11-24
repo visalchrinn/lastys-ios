@@ -9,7 +9,7 @@ Then the **Home** screen:
 - Header with the Lastys wordmark, today's date and the profile button
 - "Verified Single" status card with the share button
 - "Show my QR" opens My Lastys QR: a token signed by the phone's key with the Lastys ID and the current minute (format in `LastysCore/Sources/LastysCore/LastysQR.swift`), a new code every minute with a countdown, made offline, and what scanners will see
-- "Scan a QR" quick action
+- "Scan a QR" opens the camera scanner (with torch) and shows the Scan result live from Trustee: photo or initial, nickname, Verified Single or Taken, ID age (with a warning for a very new ID), Phone transfers and Relationship history (or "Hidden by owner"). Without internet a Scan fails rather than show anything stale. Debug builds add a picker of sample people (Dara, Vanna, Sokha).
 - Dating safety tips
 - Upcoming moments and the personal timeline
 - Bottom navigation (Home, Calendar, Me). Calendar and Me are placeholders for now.

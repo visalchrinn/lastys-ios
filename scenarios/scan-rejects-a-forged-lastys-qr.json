@@ -1,0 +1,10 @@
+{
+  "name": "A Lastys QR signed by any phone other than the Lastys ID's own is rejected as forged",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "mallory", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "scan", "with": { "qrOf": "alice", "signedBy": "mallory" }, "expect": { "error": "forged-qr" } }
+  ]
+}

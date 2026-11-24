@@ -1,0 +1,7 @@
+{
+  "name": "A QR that isn't a Lastys QR is rejected",
+  "steps": [
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "scan", "with": { "payload": "https://example.com" }, "expect": { "error": "not-a-lastys-qr" } }
+  ]
+}

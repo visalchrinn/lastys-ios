@@ -27,7 +27,7 @@ struct ScenarioTests {
 
     @Test(arguments: sharedScenarios)
     func sharedScenarioPassesAgainstTheFakeTrustee(_ scenario: Scenario) async {
-        let failures = await ScenarioRunner(trustee: FakeTrustee()).run(scenario)
+        let failures = await ScenarioRunner().run(scenario)
         #expect(failures.isEmpty, "\(failures)")
     }
 
@@ -42,7 +42,7 @@ struct ScenarioTests {
         }
         """#)
 
-        let failures = await ScenarioRunner(trustee: FakeTrustee()).run(scenario)
+        let failures = await ScenarioRunner().run(scenario)
 
         #expect(failures == [
             ScenarioFailure(step: 2, message: #"expected status = "active", got "none""#),
@@ -59,7 +59,7 @@ struct ScenarioTests {
         }
         """#)
 
-        let failures = await ScenarioRunner(trustee: FakeTrustee()).run(scenario)
+        let failures = await ScenarioRunner().run(scenario)
 
         #expect(failures.isEmpty, "\(failures)")
     }
@@ -69,7 +69,7 @@ struct ScenarioTests {
         { "name": "Typo", "steps": [ { "phone": "alice", "do": "crate-lastys-id" } ] }
         """#)
 
-        let failures = await ScenarioRunner(trustee: FakeTrustee()).run(scenario)
+        let failures = await ScenarioRunner().run(scenario)
 
         #expect(failures == [ScenarioFailure(step: 1, message: #"unknown action "crate-lastys-id""#)])
     }

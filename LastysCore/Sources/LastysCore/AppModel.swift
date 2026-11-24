@@ -34,6 +34,7 @@ public final class AppModel {
     @ObservationIgnored private let phoneKey: PhoneKey
     @ObservationIgnored private let trustee: TrusteeClient
     @ObservationIgnored private let store: PhoneStore
+    @ObservationIgnored private let connectivity: Connectivity
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private let now: () -> Date
 
@@ -41,6 +42,7 @@ public final class AppModel {
         phoneKey: PhoneKey,
         trustee: TrusteeClient,
         store: PhoneStore,
+        connectivity: Connectivity,
         moments: [Moment] = [],
         calendar: Calendar = .current,
         now: @escaping () -> Date = Date.init
@@ -48,6 +50,7 @@ public final class AppModel {
         self.phoneKey = phoneKey
         self.trustee = trustee
         self.store = store
+        self.connectivity = connectivity
         self.moments = moments
         self.calendar = calendar
         self.now = now
@@ -87,6 +90,55 @@ public final class AppModel {
         }
         guard let token = currentQRToken else { return nil }
         return MyLastysQR(payload: token.text, secondsUntilNextCode: LastysQRToken.secondsUntilNextCode(after: date))
+    }
+
+    // MARK: Scan
+
+    /// What the last Scan showed. Cleared before every new Scan, so it is never stale.
+    public private(set) var scanResult: ScanResult?
+    /// Why the last Scan showed nothing, if it didn't work.
+    public private(set) var scanProblem: ScanProblem?
+    /// True while Trustee is resolving a Scan.
+    public private(set) var isScanning = false
+
+    /// Counts Scans, so only the latest one may show what it returns.
+    @ObservationIgnored private var scanNumber = 0
+
+    /// Resolves a scanned code live with Trustee. A newer Scan, or closing this one, discards its answer.
+    public func scan(_ payload: String) async {
+        clearScan()
+        let number = scanNumber
+        guard connectivity.isOnline else {
+            scanProblem = .needsInternet
+            return
+        }
+        isScanning = true
+        let outcome: Result<ScanResult, Error>
+        do {
+            outcome = .success(try await trustee.scan(payload))
+        } catch {
+            outcome = .failure(error)
+        }
+        guard number == scanNumber else { return }
+        isScanning = false
+        switch outcome {
+        case .success(let result):
+            scanResult = result
+        case .failure(let error as TrusteeError):
+            scanProblem = ScanProblem(error)
+        case .failure(let error as URLError):
+            scanProblem = error.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+        case .failure:
+            scanProblem = .couldNotReachLastys
+        }
+    }
+
+    /// Forgets the last Scan, and discards the answer of any Scan still running.
+    public func clearScan() {
+        scanNumber += 1
+        scanResult = nil
+        scanProblem = nil
+        isScanning = false
     }
 
     /// What a Scan of my Lastys QR shows.
@@ -240,4 +292,25 @@ public enum OnboardingProblem: Equatable, Sendable {
     case phoneAlreadyHasLastysID
     /// Trustee couldn't be reached; trying again may work.
     case couldNotReachTrustee
+}
+
+public enum ScanProblem: Equatable, Sendable {
+    /// No internet: a Scan always asks Trustee, so it never shows a stale status.
+    case needsInternet
+    case notALastysQR
+    case expiredQR
+    case forgedQR
+    /// Lastys couldn't be reached or answered strangely; trying again may work.
+    case couldNotReachLastys
+    /// This phone has no Lastys ID yet.
+    case noLastysID
+
+    init(_ error: TrusteeError) {
+        switch error {
+        case .notALastysQR: self = .notALastysQR
+        case .expiredQR: self = .expiredQR
+        case .forgedQR: self = .forgedQR
+        case .noLastysID, .phoneAlreadyHasLastysID: self = .noLastysID
+        }
+    }
 }

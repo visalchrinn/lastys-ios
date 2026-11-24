@@ -7,6 +7,12 @@ struct HomeView: View {
 
     @Environment(AppModel.self) private var model
     @State private var showingMyLastysQR = false
+    @State private var showingScan = false
+    #if DEBUG
+    @Environment(\.demoTrustee) private var demoTrustee
+    #else
+    private let demoTrustee: FakeTrustee? = nil
+    #endif
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -26,6 +32,11 @@ struct HomeView: View {
             MyLastysQRView()
                 .environment(model)
                 .presentationDragIndicator(.visible)
+        }
+        .fullScreenCover(isPresented: $showingScan) {
+            ScanView()
+                .environment(model)
+                .demoTrustee(demoTrustee)
         }
     }
 
@@ -98,7 +109,7 @@ struct HomeView: View {
                 showingMyLastysQR = true
             }
             actionTile(icon: "qrcode.viewfinder", title: "Scan a QR", dark: true) {
-                showToast("The camera scanner opens here")
+                showingScan = true
             }
         }
     }

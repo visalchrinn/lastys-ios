@@ -1,0 +1,8 @@
+{
+  "name": "Scanning needs a Lastys ID of your own",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "carol", "do": "scan", "with": { "qrOf": "alice" }, "expect": { "error": "no-lastys-id" } }
+  ]
+}

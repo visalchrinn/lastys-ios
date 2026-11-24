@@ -9,9 +9,10 @@ struct LastysApp: App {
         WindowGroup {
             Group {
                 switch launch {
-                case .ready(let model):
+                case .ready(let model, let trustee):
                     AppRootView()
                         .environment(model)
+                        .demoTrustee(trustee)
                 case .failed(let message):
                     LaunchProblemView(message: message)
                 }
@@ -23,7 +24,7 @@ struct LastysApp: App {
 
 /// Builds the app's state model from what this phone has saved.
 enum Launch {
-    case ready(AppModel)
+    case ready(AppModel, FakeTrustee)
     case failed(String)
 
     @MainActor static func start() -> Launch {
@@ -40,9 +41,10 @@ enum Launch {
             phoneKey: phoneKey,
             trustee: trustee.client(forPhone: phoneKey.trusteeID),
             store: FilePhoneStore(url: folder.appending(path: "phone.json")),
+            connectivity: NetworkConnectivity(),
             moments: SampleData.moments()
         )
-        return .ready(model)
+        return .ready(model, trustee)
     }
 }
 

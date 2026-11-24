@@ -1,0 +1,10 @@
+{
+  "name": "A Scan shows how many days old the Lastys ID is",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "wait", "with": { "days": "30" } },
+    { "phone": "bob", "do": "scan", "with": { "qrOf": "alice" }, "expect": { "idAgeDays": "30" } }
+  ]
+}

@@ -19,6 +19,7 @@ struct MomentsTests {
             phoneKey: SoftwarePhoneKey(),
             trustee: FakeTrustee().client(forPhone: "phone-a"),
             store: InMemoryPhoneStore(),
+            connectivity: SwitchableConnectivity(),
             moments: moments,
             calendar: Self.calendar,
             now: { now }

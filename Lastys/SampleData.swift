@@ -30,6 +30,7 @@ extension AppModel {
             phoneKey: SoftwarePhoneKey(),
             trustee: FakeTrustee().client(forPhone: "preview"),
             store: InMemoryPhoneStore(phone),
+            connectivity: PreviewConnectivity(),
             moments: SampleData.moments()
         )
     }
