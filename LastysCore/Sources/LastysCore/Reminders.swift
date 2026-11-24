@@ -33,25 +33,6 @@ public protocol ReminderScheduler: Sendable {
     func replaceAll(with reminders: [Reminder])
 }
 
-/// SAMPLE Khmer lunar dates until the cultural advisor's rules arrive: each year after the original,
-/// the date moves by the whole number of synodic months nearest that many solar years, with no real
-/// leap-month rules. It stays within about two weeks of the solar anniversary, however long ago.
-public enum SampleKhmerLunarCalendar {
-    static let synodicMonth: TimeInterval = 29.530_588 * 86_400
-    static let lunarMonthsPerYear = 365.242_19 / 29.530_588
-
-    /// The first day on or after `day` that falls on the same sample lunar date as `original`.
-    public static func nextOccurrence(of original: Date, onOrAfter day: Date, calendar: Calendar) -> Date {
-        let start = calendar.startOfDay(for: original)
-        var years = 0.0
-        while true {
-            let months = (years * lunarMonthsPerYear).rounded()
-            let candidate = calendar.startOfDay(for: start.addingTimeInterval(months * synodicMonth))
-            if candidate >= day { return candidate }
-            years += 1
-        }
-    }
-}
 
 extension Reminder.When {
     init(daysBefore days: Int) {

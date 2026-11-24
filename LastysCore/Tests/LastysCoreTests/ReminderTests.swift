@@ -32,7 +32,7 @@ struct ReminderTests {
         let phone = phone()
 
         // In 3 days: the 7-days-before reminder is already in the past.
-        try #require(phone.model.addMoment(
+        _ = try #require(phone.model.addMoment(
             MomentDraft(type: .custom, title: "Exam", date: date(2026, 11, 27), repeatsOnKhmerLunarDate: false)
         ))
 
@@ -69,7 +69,7 @@ struct ReminderTests {
 
     @Test func eachYearTheNextOccurrenceIsRemindedAgain() async throws {
         let phone = phone()
-        try #require(phone.model.addMoment(
+        _ = try #require(phone.model.addMoment(
             MomentDraft(type: .birthday, title: "Mom's birthday", date: date(1970, 11, 26), repeatsOnKhmerLunarDate: false)
         ))
         #expect(phone.reminders.scheduled.map(\.fires).contains(date(2026, 11, 26, hour: 9)))
@@ -87,7 +87,7 @@ struct ReminderTests {
     @Test func onTheDayAfterItsReminderNextYearIsAlreadyBooked() throws {
         let phone = TestPhone(calendar: MomentsTests.calendar, now: date(2026, 12, 10, hour: 10))
 
-        try #require(phone.model.addMoment(
+        _ = try #require(phone.model.addMoment(
             MomentDraft(type: .birthday, title: "Mom's birthday", date: date(1970, 12, 10), repeatsOnKhmerLunarDate: false)
         ))
 

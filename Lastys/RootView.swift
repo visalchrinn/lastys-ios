@@ -33,7 +33,7 @@ struct RootView: View {
                 case .home:
                     HomeView(showToast: showToast, openMe: { tab = .me })
                 case .calendar:
-                    ComingSoonView(title: "Calendar")
+                    CalendarView()
                 case .me:
                     ComingSoonView(title: "Me")
                 }

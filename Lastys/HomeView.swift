@@ -62,7 +62,8 @@ struct HomeView: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
                 Wordmark()
-                Text("\(Self.headerDate.string(from: Date())) · Khmer lunar date (sample)")
+                (Text(model.currentDay, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated).year())
+                    + Text(verbatim: " · ") + Text(model.todayLunarDate.text))
                     .font(.jakarta(13))
                     .foregroundStyle(Theme.muted)
             }
@@ -337,13 +338,6 @@ struct HomeView: View {
                 .environment(model)
         }
     }
-
-    static let headerDate: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "EEE d MMM yyyy"
-        return f
-    }()
 }
 
 private struct UpcomingRow: View {

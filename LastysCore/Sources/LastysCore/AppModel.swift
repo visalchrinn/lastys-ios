@@ -564,6 +564,13 @@ public final class AppModel {
         scheduleReminders()
     }
 
+    // MARK: Calendar state
+
+    /// The month the Calendar shows; nil means the current month.
+    private var calendarShownMonth: Date?
+    /// The day the Calendar has selected; nil means today.
+    private var calendarSelectedDay: Date?
+
     // MARK: Moments
 
     /// The start of today on this phone.
@@ -651,7 +658,7 @@ public final class AppModel {
 
     private func nextOccurrence(of moment: Moment, onOrAfter day: Date) -> Date {
         if moment.repeatsOnKhmerLunarDate {
-            return SampleKhmerLunarCalendar.nextOccurrence(of: moment.date, onOrAfter: day, calendar: calendar)
+            return SampleKhmerCalendar.nextOccurrence(of: moment.date, onOrAfter: day, calendar: calendar)
         }
         let original = calendar.startOfDay(for: moment.date)
         if original >= day { return original }
@@ -773,5 +780,144 @@ public enum SharingProblem: Equatable, Sendable {
 
     init(_ error: Error) {
         self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+    }
+}
+
+// MARK: - Calendar
+
+/// One square of the month grid.
+public struct CalendarDay: Identifiable, Equatable, Sendable {
+    public let date: Date
+    public let isInMonth: Bool
+    public let isToday: Bool
+    public let isSelected: Bool
+    public let holiday: PublicHoliday?
+    public let hasMoments: Bool
+    /// A sample Sil day (see `SampleKhmerCalendar`).
+    public let isSilDay: Bool
+
+    public var id: Date { date }
+}
+
+/// The month the Calendar shows, as weeks of seven days starting on the calendar's first weekday.
+public struct CalendarMonth: Equatable, Sendable {
+    /// The first day of the month.
+    public let firstDay: Date
+    public let weeks: [[CalendarDay]]
+
+    /// Every square, week after week.
+    public var days: [CalendarDay] { weeks.flatMap { $0 } }
+}
+
+/// What's on the selected day.
+public struct CalendarDayDetails: Equatable, Sendable {
+    public let date: Date
+    public let lunarDate: KhmerLunarDate
+    public let holiday: PublicHoliday?
+    public let moments: [Moment]
+    public let isSilDay: Bool
+
+    /// No public holiday, no Moment and no Sil day: the day shows as having nothing on it.
+    public var hasNothingOn: Bool { holiday == nil && moments.isEmpty && !isSilDay }
+}
+
+extension AppModel {
+    /// Today's Khmer lunar date for Home's header: a sample, from the same provider as the Calendar.
+    public var todayLunarDate: KhmerLunarDate {
+        SampleKhmerCalendar.lunarDate(of: today, calendar: calendar)
+    }
+
+    /// Today, as this phone's clock has it.
+    public var currentDay: Date { today }
+
+    /// The last year whose official public holidays this build knows.
+    public var publicHolidaysKnownThrough: Int { CambodianPublicHolidays.coveredYears.upperBound }
+
+    /// Lunar dates and Sil days are samples until the cultural advisor's rules arrive.
+    public var silDaysAreSample: Bool { SampleKhmerCalendar.isSample }
+
+    /// Short weekday names in grid order, starting on the calendar's first weekday.
+    public var calendarWeekdaySymbols: [String] {
+        let symbols = calendar.veryShortStandaloneWeekdaySymbols
+        let start = calendar.firstWeekday - 1
+        return Array(symbols[start...] + symbols[..<start])
+    }
+
+    private var shownMonth: Date {
+        calendarShownMonth ?? firstOfMonth(today)
+    }
+
+    private var selectedDay: Date {
+        calendarSelectedDay ?? today
+    }
+
+    public var calendarMonth: CalendarMonth {
+        let first = shownMonth
+        let leading = (calendar.component(.weekday, from: first) - calendar.firstWeekday + 7) % 7
+        let daysInMonth = calendar.range(of: .day, in: .month, for: first)?.count ?? 30
+        let cells = Int((Double(leading + daysInMonth) / 7).rounded(.up)) * 7
+        let gridStart = calendar.date(byAdding: .day, value: -leading, to: first) ?? first
+        let holidays = holidaysByDay(around: first)
+        let days = (0..<cells).compactMap { offset -> CalendarDay? in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: gridStart) else { return nil }
+            return CalendarDay(
+                date: date,
+                isInMonth: calendar.isDate(date, equalTo: first, toGranularity: .month),
+                isToday: date == today,
+                isSelected: date == selectedDay,
+                holiday: holidays[date],
+                hasMoments: !moments(on: date).isEmpty,
+                isSilDay: SampleKhmerCalendar.isSilDay(date, calendar: calendar)
+            )
+        }
+        return CalendarMonth(firstDay: first, weeks: stride(from: 0, to: days.count, by: 7).map { Array(days[$0..<min($0 + 7, days.count)]) })
+    }
+
+    public var selectedCalendarDay: CalendarDayDetails {
+        let day = selectedDay
+        return CalendarDayDetails(
+            date: day,
+            lunarDate: SampleKhmerCalendar.lunarDate(of: day, calendar: calendar),
+            holiday: holidaysByDay(around: day)[day],
+            moments: moments(on: day),
+            isSilDay: SampleKhmerCalendar.isSilDay(day, calendar: calendar)
+        )
+    }
+
+    public func selectCalendarDay(_ date: Date) {
+        let day = calendar.startOfDay(for: date)
+        calendarSelectedDay = day
+        calendarShownMonth = firstOfMonth(day)
+    }
+
+    public func showNextCalendarMonth() { moveCalendar(byMonths: 1) }
+    public func showPreviousCalendarMonth() { moveCalendar(byMonths: -1) }
+
+    /// The next public holidays from today, soonest first.
+    public func upcomingPublicHolidays(limit: Int) -> [PublicHoliday] {
+        let year = calendar.component(.year, from: today)
+        return Array(publicHolidays(in: year...year + 1).filter { $0.date >= today }.prefix(limit))
+    }
+
+    private func moveCalendar(byMonths months: Int) {
+        calendarShownMonth = calendar.date(byAdding: .month, value: months, to: shownMonth).map(firstOfMonth)
+    }
+
+    private func firstOfMonth(_ date: Date) -> Date {
+        calendar.date(from: calendar.dateComponents([.year, .month], from: date)) ?? calendar.startOfDay(for: date)
+    }
+
+    /// The Moments that fall on `day` (each comes back every year), Quick hide respected.
+    private func moments(on day: Date) -> [Moment] {
+        visibleMoments.filter { nextOccurrence(of: $0, onOrAfter: day) == day }
+    }
+
+    private func holidaysByDay(around date: Date) -> [Date: PublicHoliday] {
+        let year = calendar.component(.year, from: date)
+        return Dictionary(publicHolidays(in: year - 1...year + 1).map { ($0.date, $0) }, uniquingKeysWith: { first, _ in first })
+    }
+
+    private func publicHolidays(in years: ClosedRange<Int>) -> [PublicHoliday] {
+        years.flatMap { CambodianPublicHolidays.days(in: $0, calendar: calendar) }
     }
 }
