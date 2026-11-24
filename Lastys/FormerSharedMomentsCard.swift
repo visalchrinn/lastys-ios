@@ -61,3 +61,12 @@ struct FormerSharedMomentsCard: View {
         }
     }
 }
+
+extension SharingProblem {
+    var message: LocalizedStringKey {
+        switch self {
+        case .needsInternet: return "Shared Moments go through Lastys, so this needs an internet connection."
+        case .couldNotReachLastys: return "Couldn't reach Lastys. Try again."
+        }
+    }
+}
