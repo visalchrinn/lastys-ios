@@ -13,25 +13,14 @@ struct VerifiedSingleCardSheet: View {
         NavigationStack {
             VStack(spacing: 20) {
                 if let card = model.verifiedSingleCard {
-                    // Ticks on whole seconds from the start of the minute, so the QR changes right at the boundary.
-                    TimelineView(.periodic(from: LastysQRToken.startOfMinute(containing: .now), by: 1)) { context in
-                        let qr = model.verifiedSingleCardQR(at: context.date)
-                        VStack(spacing: 12) {
-                            // Drawn at the shared image's size, then scaled down, so the screen and the image match.
-                            VerifiedSingleCardArt(card: card, qrPayload: qr?.payload)
-                                .frame(width: VerifiedSingleCardArt.designSize.width, height: VerifiedSingleCardArt.designSize.height)
-                                .scaleEffect(0.8)
-                                .frame(width: 288, height: 360)
-                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                                .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
-                            if let qr {
-                                Text("New code in \(qr.secondsUntilNextCode)s")
-                                    .font(.jakarta(13, .semibold))
-                                    .monospacedDigit()
-                                    .foregroundStyle(Theme.muted)
-                            }
-                        }
-                    }
+                    // The QR stays the same until it is revoked from My Lastys QR.
+                    // Drawn at the shared image's size, then scaled down, so the screen and the image match.
+                    VerifiedSingleCardArt(card: card, qrPayload: model.verifiedSingleCardQR()?.payload)
+                        .frame(width: VerifiedSingleCardArt.designSize.width, height: VerifiedSingleCardArt.designSize.height)
+                        .scaleEffect(0.8)
+                        .frame(width: 288, height: 360)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .shadow(color: .black.opacity(0.12), radius: 16, y: 8)
                     Button {
                         shareNow(card)
                     } label: {
@@ -88,10 +77,10 @@ struct VerifiedSingleCardSheet: View {
         await model.prepareVerifiedSingleCard()
     }
 
-    /// Draws the image at the moment of sharing, so the QR in it is fresh then.
+    /// Draws the image at the moment of sharing, with whatever QR is current then.
     private func shareNow(_ card: VerifiedSingleCard) {
         renderFailed = false
-        guard let qr = model.verifiedSingleCardQR(at: Date()), let image = Self.render(card, qr: qr) else {
+        guard let qr = model.verifiedSingleCardQR(), let image = Self.render(card, qr: qr) else {
             renderFailed = true
             return
         }
@@ -101,7 +90,7 @@ struct VerifiedSingleCardSheet: View {
     /// The card as an image at 3x, 1080 by 1350 pixels: the portrait size social apps show best.
     @MainActor
     private static func render(_ card: VerifiedSingleCard, qr: VerifiedSingleCardQR) -> UIImage? {
-        let renderer = ImageRenderer(content: VerifiedSingleCardArt(card: card, qrPayload: qr.payload, validUntil: qr.validUntil).frame(width: VerifiedSingleCardArt.designSize.width, height: VerifiedSingleCardArt.designSize.height))
+        let renderer = ImageRenderer(content: VerifiedSingleCardArt(card: card, qrPayload: qr.payload).frame(width: VerifiedSingleCardArt.designSize.width, height: VerifiedSingleCardArt.designSize.height))
         renderer.scale = 3
         return renderer.uiImage
     }
@@ -112,8 +101,6 @@ struct VerifiedSingleCardArt: View {
     let card: VerifiedSingleCard
     /// The Lastys QR to print on the card, if there is one.
     let qrPayload: String?
-    /// When the QR stops working. Printed on the shared image only, so a viewer knows why an old card won't scan.
-    var validUntil: Date? = nil
 
     /// The size the card is drawn at: the shared image at 1x. On screen it is scaled down from this.
     static let designSize = CGSize(width: 360, height: 450)
@@ -147,16 +134,9 @@ struct VerifiedSingleCardArt: View {
                     .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.cardBorder, lineWidth: 1))
                     .accessibilityLabel(Text("My Lastys QR"))
             }
-            VStack(spacing: 2) {
-                Label("Scan my QR to confirm", systemImage: "qrcode.viewfinder")
-                    .font(.jakarta(14, .bold))
-                    .foregroundStyle(Theme.roseDark)
-                if let validUntil {
-                    Text("QR valid until \(validUntil, format: .dateTime.hour().minute())")
-                        .font(.jakarta(12))
-                        .foregroundStyle(Theme.muted)
-                }
-            }
+            Label("Scan my QR to confirm", systemImage: "qrcode.viewfinder")
+                .font(.jakarta(14, .bold))
+                .foregroundStyle(Theme.roseDark)
         }
         .padding(22)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

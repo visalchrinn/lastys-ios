@@ -10,7 +10,7 @@ struct RelationshipRequestTests {
         await dara.onboard(as: "Dara")
         let me = TestPhone(nearby: dara)
         await me.onboard()
-        await me.model.scan(try #require(dara.model.myLastysQR(at: Date())).payload)
+        await me.model.scan(try #require(dara.model.myLastysQR()).payload)
         return (dara, me)
     }
 
@@ -81,7 +81,7 @@ struct RelationshipRequestTests {
         let vanna = TestPhone(nearby: dara)
         await vanna.onboard(as: "Vanna")
 
-        await vanna.model.scan(try #require(dara.model.myLastysQR(at: Date())).payload)
+        await vanna.model.scan(try #require(dara.model.myLastysQR()).payload)
         let requestsBefore = vanna.trusteeRequests
         await vanna.model.sendRelationshipRequest()
 
@@ -98,7 +98,7 @@ struct RelationshipRequestTests {
         let vanna = TestPhone(nearby: dara)
         await vanna.onboard(as: "Vanna")
 
-        await me.model.scan(try #require(vanna.model.myLastysQR(at: Date())).payload)
+        await me.model.scan(try #require(vanna.model.myLastysQR()).payload)
 
         #expect(me.model.scanResult?.status == .single)
         #expect(me.model.scanResult?.requestBlock == .youAreTaken)
@@ -126,7 +126,7 @@ struct RelationshipRequestTests {
         #expect(me.model.requestProblem == .needsInternet)
 
         me.isOnline = true
-        await me.model.scan(try #require(dara.model.myLastysQR(at: Date())).payload)
+        await me.model.scan(try #require(dara.model.myLastysQR()).payload)
 
         #expect(me.model.requestProblem == nil)
     }

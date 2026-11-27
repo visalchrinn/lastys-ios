@@ -102,6 +102,8 @@ extension FakeTrustee {
         // The code that was just used is spent: the person gets a new one.
         let code = Self.randomRecoveryCode()
         state.people[id]?.recoveryCodeHash = Self.hash(recoveryCode: code)
+        // The Recovery phone has a new key, so no earlier QR scans; it starts again from QR number 0.
+        state.people[id]?.qrNumber = 0
         save()
         return NewLastysID(lastysID: LastysID(personalID: id), recoveryCode: code)
     }

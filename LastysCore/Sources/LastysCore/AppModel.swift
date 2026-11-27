@@ -95,19 +95,46 @@ public final class AppModel {
 
     // MARK: Lastys QR
 
-    /// The token for the current minute. ECDSA signatures differ every time, so it is made once per
-    /// minute; otherwise the QR would change on every redraw.
+    /// The token being shown. ECDSA signatures differ every time, so it is made once and kept until the
+    /// QR number changes; otherwise the QR would change on every redraw.
     @ObservationIgnored private var currentQRToken: LastysQRToken?
 
-    /// My Lastys QR at `date`, made on the phone with no network. Nil until there is a Lastys ID,
-    /// or if the phone's key can't sign. Makes a new token only when the minute changes.
-    public func myLastysQR(at date: Date) -> MyLastysQR? {
+    /// Why the last Revoke didn't go through; nil when it did or none was tried.
+    public private(set) var qrProblem: MeProblem?
+    /// A Revoke is waiting for Trustee.
+    public private(set) var isRevokingQR = false
+    /// Bumps each time a new QR is made, so a screen showing it redraws.
+    public private(set) var qrRevokedCount = 0
+
+    /// My Lastys QR, made on the phone with no network. It stays the same until I Revoke it. Nil until
+    /// there is a Lastys ID, or if the phone's key can't sign.
+    public func myLastysQR() -> MyLastysQR? {
         guard let personalID = phone.lastysID?.personalID else { return nil }
-        if currentQRToken?.minute != LastysQRToken.minute(containing: date) || currentQRToken?.personalID != personalID {
-            currentQRToken = try? LastysQRToken(personalID: personalID, at: date, signedBy: phoneKey)
+        if currentQRToken?.number != phone.qrNumber || currentQRToken?.personalID != personalID {
+            currentQRToken = try? LastysQRToken(personalID: personalID, number: phone.qrNumber, signedBy: phoneKey)
         }
         guard let token = currentQRToken else { return nil }
-        return MyLastysQR(payload: token.text, secondsUntilNextCode: LastysQRToken.secondsUntilNextCode(after: date))
+        return MyLastysQR(payload: token.text)
+    }
+
+    /// Revokes the QR I have been showing and makes a new one. Every older copy, such as a screenshot,
+    /// stops working at once. Needs internet, because Trustee is the one that stops accepting the old QR.
+    public func revokeMyLastysQR() async {
+        guard phone.lastysID != nil, !isRevokingQR else { return }
+        guard connectivity.isOnline else {
+            qrProblem = .needsInternet
+            return
+        }
+        isRevokingQR = true
+        defer { isRevokingQR = false }
+        do {
+            phone.qrNumber = try await trustee.revokeLastysQR()
+            currentQRToken = nil
+            qrProblem = nil
+            qrRevokedCount += 1
+        } catch {
+            qrProblem = MeProblem(error)
+        }
     }
 
     // MARK: Scan
@@ -813,7 +840,7 @@ public enum ScanProblem: Equatable, Sendable {
     /// No internet: a Scan always asks Trustee, so it never shows a stale status.
     case needsInternet
     case notALastysQR
-    case expiredQR
+    case revokedQR
     case forgedQR
     /// Lastys couldn't be reached or answered strangely; trying again may work.
     case couldNotReachLastys
@@ -823,7 +850,7 @@ public enum ScanProblem: Equatable, Sendable {
     init(_ error: TrusteeError) {
         switch error {
         case .notALastysQR: self = .notALastysQR
-        case .expiredQR: self = .expiredQR
+        case .revokedQR: self = .revokedQR
         case .forgedQR: self = .forgedQR
         case .noLastysID: self = .noLastysID
         default: self = .couldNotReachLastys // not something a Scan returns
@@ -1285,6 +1312,7 @@ extension AppModel {
         calendarShownMonth = nil
         calendarSelectedDay = nil
         currentQRToken = nil
+        qrProblem = nil
         phoneTransferQR = nil
         phoneMoveProblem = nil
         lastysIDMovedAway = false
@@ -1537,13 +1565,9 @@ public struct VerifiedSingleCard: Equatable, Sendable {
     public let checkedAt: Date
 }
 
-/// The Lastys QR shown on a Verified Single card, with how long the card can promise it works.
+/// The Lastys QR shown on a Verified Single card. It works until its owner revokes it.
 public struct VerifiedSingleCardQR: Equatable, Sendable {
     public let payload: String
-    /// The last moment the card promises this code can be Scanned. Never later than Trustee accepts it.
-    public let validUntil: Date
-    /// Whole seconds until the next code replaces this one, from 60 down to 1.
-    public let secondsUntilNextCode: Int
 }
 
 public enum VerifiedSingleCardProblem: Equatable, Sendable {
@@ -1601,16 +1625,12 @@ extension AppModel {
         }
     }
 
-    /// The Lastys QR for the card at date, made on the phone with no network. Nil without a checked card,
+    /// The Lastys QR for the card, made on the phone with no network. Nil without a checked card,
     /// and never while Taken, so a card can't carry a QR once there is nothing to vouch for.
-    public func verifiedSingleCardQR(at date: Date) -> VerifiedSingleCardQR? {
-        guard verifiedSingleCard != nil, canShareVerifiedSingleCard, let qr = myLastysQR(at: date) else { return nil }
-        let madeAt = LastysQRToken.startOfMinute(containing: date)
-        return VerifiedSingleCardQR(
-            payload: qr.payload,
-            validUntil: madeAt.addingTimeInterval(Double(LastysQRToken.secondsCardPromisesValid)),
-            secondsUntilNextCode: qr.secondsUntilNextCode
-        )
+    /// A shared card image keeps working until I Revoke my Lastys QR.
+    public func verifiedSingleCardQR() -> VerifiedSingleCardQR? {
+        guard verifiedSingleCard != nil, canShareVerifiedSingleCard, let qr = myLastysQR() else { return nil }
+        return VerifiedSingleCardQR(payload: qr.payload)
     }
 
     public func dismissVerifiedSingleCard() {

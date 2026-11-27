@@ -2,10 +2,11 @@ import CoreImage.CIFilterBuiltins
 import LastysCore
 import SwiftUI
 
-/// My Lastys QR: a new code every minute with a countdown, made on the phone with no network.
+/// My Lastys QR: made on the phone with no network, and the same until its owner revokes it for a new one.
 struct MyLastysQRView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
+    @State private var confirmingRevoke = false
 
     var body: some View {
         VStack(spacing: 20) {
@@ -26,30 +27,18 @@ struct MyLastysQRView: View {
                 .accessibilityLabel(Text("Close"))
             }
 
-            // Ticks on whole seconds from the start of the minute, so the code changes right at the boundary.
-            TimelineView(.periodic(from: LastysQRToken.startOfMinute(containing: .now), by: 1)) { context in
-                if let qr = model.myLastysQR(at: context.date) {
-                    VStack(spacing: 16) {
-                        QRCodeImage(payload: qr.payload)
-                            .frame(maxWidth: 280, maxHeight: 280)
-                            .padding(20)
-                            .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                    .strokeBorder(Theme.cardBorder, lineWidth: 1)
-                            )
-                            .accessibilityLabel(Text("My Lastys QR"))
-
-                        HStack(spacing: 10) {
-                            ProgressView(value: Double(qr.secondsUntilNextCode), total: Double(LastysQRToken.secondsPerCode))
-                                .tint(Theme.rose)
-                            Text("New code in \(qr.secondsUntilNextCode)s")
-                                .font(.jakarta(13, .semibold))
-                                .monospacedDigit()
-                                .foregroundStyle(Theme.muted)
-                        }
-                    }
-                }
+            if let qr = model.myLastysQR() {
+                QRCodeImage(payload: qr.payload)
+                    .frame(maxWidth: 280, maxHeight: 280)
+                    .padding(20)
+                    .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.white))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .strokeBorder(Theme.cardBorder, lineWidth: 1)
+                    )
+                    .accessibilityLabel(Text("My Lastys QR"))
+                    .id(model.qrRevokedCount)
+                    .transition(.opacity)
             }
 
             if let personalID = model.lastysID?.personalID {
@@ -73,12 +62,42 @@ struct MyLastysQRView: View {
             }
             .card()
 
-            Text("Works without internet. Each code is good for a minute, so a screenshot can't be reused.")
-                .font(.jakarta(13))
-                .foregroundStyle(Theme.muted)
-                .multilineTextAlignment(.center)
+            VStack(spacing: 10) {
+                Button {
+                    confirmingRevoke = true
+                } label: {
+                    HStack(spacing: 8) {
+                        if model.isRevokingQR { ProgressView() }
+                        Label("Revoke and get a new QR", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                }
+                .buttonStyle(GhostButtonStyle())
+                .disabled(model.isRevokingQR)
+
+                if let problem = model.qrProblem {
+                    Text(problem == .needsInternet
+                        ? LocalizedStringKey("Revoking needs an internet connection. Your current QR still works.")
+                        : LocalizedStringKey("Couldn't reach Lastys. Your current QR still works. Try again."))
+                        .font(.jakarta(13, .medium))
+                        .foregroundStyle(Theme.roseDeep)
+                        .multilineTextAlignment(.center)
+                }
+
+                Text("Your QR stays the same until you revoke it, and works without internet. If someone has a screenshot of it, revoke it: the old QR stops working at once.")
+                    .font(.jakarta(13))
+                    .foregroundStyle(Theme.muted)
+                    .multilineTextAlignment(.center)
+            }
 
             Spacer(minLength: 0)
+        }
+        .animation(.easeInOut(duration: 0.25), value: model.qrRevokedCount)
+        .confirmationDialog("Revoke this QR?", isPresented: $confirmingRevoke, titleVisibility: .visible) {
+            Button("Revoke and get a new QR", role: .destructive) {
+                Task { await model.revokeMyLastysQR() }
+            }
+        } message: {
+            Text("The QR you are showing now, and any screenshot or shared card that has it, will stop working. Share the new one instead.")
         }
         .foregroundStyle(Theme.ink)
         .padding(20)

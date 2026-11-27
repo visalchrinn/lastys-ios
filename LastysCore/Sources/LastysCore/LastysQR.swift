@@ -1,42 +1,38 @@
 import Crypto
 import Foundation
 
-/// What a Lastys QR encodes: a token signed by the showing phone's key, naming the Lastys ID and
-/// the minute it was made. Trustee rejects it once that minute is too old, so a screenshot can't be
-/// reused. Making one needs no network.
+/// What a Lastys QR encodes: a token signed by the showing phone's key, naming the Lastys ID and its
+/// QR number. The QR stays the same, and works offline, until its owner presses Revoke: that makes
+/// Trustee accept only the next QR number, so every older copy, such as a screenshot, stops working.
+/// Making one needs no network; revoking does.
 ///
-/// Text form, shared with the real Trustee: `LT1.<Personal ID>.<minute>.<signature>`, where
-/// - the minute counts whole minutes since 1970 (UTC), in plain decimal with no leading zeros or sign;
-/// - the signature is ECDSA P-256 with SHA-256 over the UTF-8 bytes of `LT1.<Personal ID>.<minute>`,
+/// Text form, shared with the real Trustee: `LT2.<Personal ID>.<QR number>.<signature>`, where
+/// - the QR number starts at 0 and goes up by one with every Revoke, in plain decimal with no leading zeros or sign;
+/// - the signature is ECDSA P-256 with SHA-256 over the UTF-8 bytes of `LT2.<Personal ID>.<QR number>`,
 ///   in raw r‖s form (64 bytes, IEEE P1363), base64url-encoded without padding.
 /// Any other spelling is not a Lastys QR, so the fake and the real Trustee accept exactly the same tokens.
 public struct LastysQRToken: Equatable, Sendable {
-    static let version = "LT1"
-    /// A Lastys QR is replaced by a new one every minute.
-    public static let secondsPerCode = 60
-    /// How long after a code began a Verified Single card promises it still works. Trustee decides how long it
-    /// really accepts a code, and a card must never promise more than that, so this stays on the safe side.
-    public static let secondsCardPromisesValid = 2 * secondsPerCode
+    static let version = "LT2"
 
     public let personalID: String
-    public let minute: Int64
+    public let number: Int
     public let signature: Data
 
     /// The part the signature covers.
-    public var signedText: String { "\(Self.version).\(personalID).\(minute)" }
+    public var signedText: String { "\(Self.version).\(personalID).\(number)" }
 
     public var text: String { "\(signedText).\(signature.base64URLEncodedString())" }
 
-    /// Signs a token for this Lastys ID and the minute containing `date`.
-    public init(personalID: String, at date: Date, signedBy key: PhoneKey) throws {
-        let unsigned = LastysQRToken(personalID: personalID, minute: Self.minute(containing: date), signature: Data())
+    /// Signs a token for this Lastys ID and QR number.
+    public init(personalID: String, number: Int = 0, signedBy key: PhoneKey) throws {
+        let unsigned = LastysQRToken(personalID: personalID, number: number, signature: Data())
         let signature = try key.signature(for: Data(unsigned.signedText.utf8))
-        self.init(personalID: personalID, minute: unsigned.minute, signature: signature.rawRepresentation)
+        self.init(personalID: personalID, number: number, signature: signature.rawRepresentation)
     }
 
-    private init(personalID: String, minute: Int64, signature: Data) {
+    private init(personalID: String, number: Int, signature: Data) {
         self.personalID = personalID
-        self.minute = minute
+        self.number = number
         self.signature = signature
     }
 
@@ -45,39 +41,23 @@ public struct LastysQRToken: Equatable, Sendable {
     public init?(parsing text: String) {
         let parts = text.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
         guard parts.count == 4, parts[0] == Self.version,
-              let minute = Int64(parts[2]), minute >= 0,
+              let number = Int(parts[2]), number >= 0,
               let signature = Data(base64URLEncoded: parts[3])
         else { return nil }
-        self.init(personalID: parts[1], minute: minute, signature: signature)
+        self.init(personalID: parts[1], number: number, signature: signature)
         guard self.text == text else { return nil }
     }
 
-    /// True when the phone holding this public key signed exactly this Lastys ID and minute.
+    /// True when the phone holding this public key signed exactly this Lastys ID and QR number.
     public func isSigned(by publicKey: P256.Signing.PublicKey) -> Bool {
         guard let signature = try? P256.Signing.ECDSASignature(rawRepresentation: signature) else { return false }
         return publicKey.isValidSignature(signature, for: Data(signedText.utf8))
     }
-
-    public static func minute(containing date: Date) -> Int64 {
-        Int64((date.timeIntervalSince1970 / Double(secondsPerCode)).rounded(.down))
-    }
-
-    /// When the minute containing `date` began: the moment the current code replaced the last one.
-    public static func startOfMinute(containing date: Date) -> Date {
-        Date(timeIntervalSince1970: Double(minute(containing: date) * Int64(secondsPerCode)))
-    }
-
-    /// Whole seconds from `date` until the next code, from 60 down to 1.
-    public static func secondsUntilNextCode(after date: Date) -> Int {
-        secondsPerCode - Int(date.timeIntervalSince(startOfMinute(containing: date)))
-    }
 }
 
-/// My Lastys QR as shown on screen: what to encode, and how long until the next code replaces it.
+/// My Lastys QR as shown on screen: what to encode.
 public struct MyLastysQR: Equatable, Sendable {
     public let payload: String
-    /// Whole seconds until the next code, from 60 down to 1.
-    public let secondsUntilNextCode: Int
 }
 
 extension Data {

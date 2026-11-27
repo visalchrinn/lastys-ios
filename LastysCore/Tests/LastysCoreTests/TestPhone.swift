@@ -92,7 +92,7 @@ final class TestPhone {
 
     /// Scans `other`, sends them a Relationship request, and has them accept it, so the two become Partners.
     func becomePartners(with other: TestPhone) async throws {
-        guard let qr = other.model.myLastysQR(at: clock.now) else { throw TestPhoneError.notOnboarded }
+        guard let qr = other.model.myLastysQR() else { throw TestPhoneError.notOnboarded }
         await model.scan(qr.payload)
         await model.sendRelationshipRequest()
         guard let request = model.outgoingRequest else { throw TestPhoneError.requestNotSent }

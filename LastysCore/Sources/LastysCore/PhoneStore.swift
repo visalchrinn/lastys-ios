@@ -33,6 +33,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var partnerBirthDateRelationshipSince: Date?
     /// This phone started a Recovery and is waiting out the 7 days.
     public var recoveryInProgress = false
+    /// Which Lastys QR this phone shows. Each Revoke raises it by one; Trustee accepts only the latest.
+    public var qrNumber = 0
 
     public init() {}
 
@@ -61,6 +63,7 @@ public struct PhoneState: Codable, Equatable, Sendable {
         partnerBirthDate = try? c.decodeIfPresent(Date.self, forKey: .partnerBirthDate)
         partnerBirthDateRelationshipSince = try? c.decodeIfPresent(Date.self, forKey: .partnerBirthDateRelationshipSince)
         recoveryInProgress = (try? c.decodeIfPresent(Bool.self, forKey: .recoveryInProgress)) ?? nil ?? false
+        qrNumber = (try? c.decodeIfPresent(Int.self, forKey: .qrNumber)) ?? nil ?? 0
     }
 }
 

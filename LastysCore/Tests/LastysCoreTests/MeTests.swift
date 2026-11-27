@@ -13,7 +13,7 @@ struct MeTests {
     }
 
     private func daraScans(_ me: TestPhone, _ dara: TestPhone) async throws -> ScanResult {
-        await dara.model.scan(try #require(me.model.myLastysQR(at: me.clock.now)).payload)
+        await dara.model.scan(try #require(me.model.myLastysQR()).payload)
         return try #require(dara.model.scanResult)
     }
 

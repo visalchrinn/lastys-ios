@@ -14,7 +14,7 @@ struct ScanTests {
 
     @Test func scanningASecondPhonesLiveLastysQRShowsThatLastysIDsScanResult() async throws {
         let (dara, me) = await twoPhones()
-        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        let qr = try #require(dara.model.myLastysQR())
 
         await me.model.scan(qr.payload)
 
@@ -30,7 +30,7 @@ struct ScanTests {
 
     @Test func withoutInternetAScanFailsClearlyAndNeverShowsAnEarlierResult() async throws {
         let (dara, me) = await twoPhones()
-        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        let qr = try #require(dara.model.myLastysQR())
         await me.model.scan(qr.payload)
         let requestsBefore = me.trusteeRequests
 
@@ -42,20 +42,21 @@ struct ScanTests {
         #expect(me.trusteeRequests == requestsBefore)
     }
 
-    @Test func anExpiredLastysQRIsRejected() async throws {
+    @Test func aRevokedLastysQRIsRejected() async throws {
         let (dara, me) = await twoPhones()
-        let screenshot = try #require(dara.model.myLastysQR(at: Date().addingTimeInterval(-10 * 60)))
+        let screenshot = try #require(dara.model.myLastysQR())
+        await dara.model.revokeMyLastysQR()
 
         await me.model.scan(screenshot.payload)
 
         #expect(me.model.scanResult == nil)
-        #expect(me.model.scanProblem == .expiredQR)
+        #expect(me.model.scanProblem == .revokedQR)
     }
 
     @Test func aForgedLastysQRIsRejected() async throws {
         let (dara, me) = await twoPhones()
         let daraID = try #require(dara.model.lastysID?.personalID)
-        let forged = try LastysQRToken(personalID: daraID, at: Date(), signedBy: SoftwarePhoneKey())
+        let forged = try LastysQRToken(personalID: daraID, signedBy: SoftwarePhoneKey())
 
         await me.model.scan(forged.text)
 
@@ -74,7 +75,7 @@ struct ScanTests {
 
     @Test func closingTheScanResultForgetsIt() async throws {
         let (dara, me) = await twoPhones()
-        await me.model.scan(try #require(dara.model.myLastysQR(at: Date())).payload)
+        await me.model.scan(try #require(dara.model.myLastysQR()).payload)
 
         me.model.clearScan()
 
@@ -93,7 +94,7 @@ struct ScanTests {
             store: FilePhoneStore(url: me.phoneFile), connectivity: SwitchableConnectivity(),
             reminders: RecordingReminderScheduler(), authenticator: SwitchableAuthenticator()
         )
-        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        let qr = try #require(dara.model.myLastysQR())
 
         let scanning = Task { await model.scan(qr.payload) }
         while held.heldScans == 0 { await Task.yield() }
@@ -110,7 +111,7 @@ struct ScanTests {
 
     @Test func aPhotoOfAFreshLastysQRGivesTheSameScanResultAsTheCamera() async throws {
         let (dara, me) = await twoPhones()
-        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        let qr = try #require(dara.model.myLastysQR())
 
         await me.model.scan(photoCodes: [qr.payload])
 
@@ -135,11 +136,11 @@ struct ScanTests {
 
     @Test func aPhotoWithSeveralQRsScansTheFirstLastysQR() async throws {
         let (dara, me) = await twoPhones()
-        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        let qr = try #require(dara.model.myLastysQR())
 
         let sara = TestPhone(nearby: dara)
         await sara.onboard(as: "Sara")
-        let saraQR = try #require(sara.model.myLastysQR(at: Date()))
+        let saraQR = try #require(sara.model.myLastysQR())
 
         await me.model.scan(photoCodes: ["https://example.com/pay/123", qr.payload, saraQR.payload])
 
@@ -149,7 +150,7 @@ struct ScanTests {
 
     @Test func aScanFromAPhotoShowsUpInWhoScannedMeAsATimeOnly() async throws {
         let (dara, me) = await twoPhones()
-        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        let qr = try #require(dara.model.myLastysQR())
 
         await me.model.scan(photoCodes: [qr.payload])
         await dara.model.refreshMe()
@@ -167,19 +168,20 @@ struct ScanTests {
         #expect(me.model.photoProblem == nil)
     }
 
-    @Test func anOldScreenshotFromThePhotosIsRejectedAsExpired() async throws {
+    @Test func aScreenshotOfARevokedQRFromThePhotosIsRejected() async throws {
         let (dara, me) = await twoPhones()
-        let screenshot = try #require(dara.model.myLastysQR(at: Date().addingTimeInterval(-10 * 60)))
+        let screenshot = try #require(dara.model.myLastysQR())
+        await dara.model.revokeMyLastysQR()
 
         await me.model.scan(photoCodes: [screenshot.payload])
 
         #expect(me.model.scanResult == nil)
-        #expect(me.model.scanProblem == .expiredQR)
+        #expect(me.model.scanProblem == .revokedQR)
     }
 
     @Test func aGoodPhotoClearsAnEarlierNoQRProblem() async throws {
         let (dara, me) = await twoPhones()
-        let qr = try #require(dara.model.myLastysQR(at: Date()))
+        let qr = try #require(dara.model.myLastysQR())
         await me.model.scan(photoCodes: [])
 
         await me.model.scan(photoCodes: [qr.payload])

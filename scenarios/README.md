@@ -47,7 +47,7 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 | `create-lastys-id`        |            | `personalID`, `recoveryCode`; errors `phone-already-has-lastys-id`, `phone-made-a-lastys-id-recently` |
 | `update-profile`          | `nickname` | nothing; error `no-lastys-id` |
 | `get-relationship-status` |            | `status`: `none`, `active` or `cooling-off`. When active: `partner` (nickname), `stage` (`together`, `ending` or `team-review`); while ending, `endRequestFrom` (`me` or `partner`) and `declined` (`true`/`false`); in Team review, `reviewReason` (`end-request` or `safety-concern`). When cooling off: `until` (UTC day, `yyyy-MM-dd`) |
-| `scan`                    | see below  | `status` (`single` or `taken`), `nickname`, `idAgeDays`, `phoneTransfers`, `history` (`hidden`, or the number of past Relationships), `requestBlocked` (`none`, `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `that-is-you`); errors `no-lastys-id`, `not-a-lastys-qr`, `expired-qr`, `forged-qr` |
+| `scan`                    | see below  | `status` (`single` or `taken`), `nickname`, `idAgeDays`, `phoneTransfers`, `history` (`hidden`, or the number of past Relationships), `requestBlocked` (`none`, `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `that-is-you`); errors `no-lastys-id`, `not-a-lastys-qr`, `revoked-qr`, `forged-qr` |
 | `wait`                    | `minutes`, `days` | nothing. Moves the clock; it is not a request to Trustee. |
 | `turn-on-quick-hide`, `turn-off-quick-hide` | | nothing. Phone-only, like `wait`: Quick hide never reaches Trustee, so a runner sends nothing. The steps record in the scenario that Scans have nothing to honour; the Swift model tests prove the phone never sends Quick hide anywhere. |
 | `set-my-shared-moments` | `titles` (joined with `\|`) | nothing. Replaces what this Partner shares into the Relationship; each title stands for a whole Shared Moment, which the runner completes with a new ID, type Custom and the scenario's start date. Errors `no-lastys-id`, `no-relationship` |
@@ -57,6 +57,7 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 | `set-share-level` | `level` (`status-only` or `status-and-history`) | nothing. Trustee applies it to the next Scan. Error `no-lastys-id` |
 | `get-my-lastys-id` | | `shareLevel`, `idAgeDays`, `phoneTransfers`, `recoveryPending` and `hasRecoveryCode` (`true`/`false`). Error `no-lastys-id` |
 | `get-who-scanned-me` | | `count`. Trustee returns only times; nothing says who scanned. Error `no-lastys-id` |
+| `revoke-qr` | | nothing; the runner remembers the phone's new QR number, which `scan` uses for `qrOf` unless `qrNumber` names an older one. The previous Lastys QR stops scanning at once. Error `no-lastys-id` |
 | `new-recovery-code` | | nothing a scenario names; the runner remembers the code. The previous code stops working, and so does a Recovery already started with it. Error `no-lastys-id` |
 | `start-recovery` | `codeOf` (a phone), `which` (`current` or `previous`) | `completesInDays` (`7`). Sent from a phone that holds no Lastys ID. Errors `wrong-recovery-code`, `phone-already-has-lastys-id` |
 | `delete-my-data` | | nothing. Removes the Lastys ID and everything about it. Errors `no-lastys-id`, `relationship-not-over` |
@@ -81,10 +82,10 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 
 - `payload`: any text, as the camera read it.
 - `qrOf`: the Lastys QR shown by that phone. It can be qualified with:
-  - `madeMinutesAgo` (default `0`): how long ago the code was made.
+  - `qrNumber` (default: the phone's current one): an older QR number, as a screenshot from before a `revoke-qr` would carry.
   - `signedBy` (default: the showing phone itself): another phone's key, which forges it.
 
-A Lastys QR is accepted from 2 minutes before the current minute up to 1 minute after it. Its text form is documented in `LastysCore/Sources/LastysCore/LastysQR.swift`.
+A Lastys QR is accepted for as long as its QR number is the owner's latest, and only `revoke-qr` raises it. Its text form is documented in `LastysCore/Sources/LastysCore/LastysQR.swift`.
 
 ## Error codes
 
@@ -93,7 +94,7 @@ A Lastys QR is accepted from 2 minutes before the current minute up to 1 minute 
 | `no-lastys-id` | The phone has no Lastys ID yet. |
 | `phone-already-has-lastys-id` | The phone already holds a Lastys ID (ADR 0001). |
 | `not-a-lastys-qr` | The scanned text isn't a Lastys QR in its exact text form. |
-| `expired-qr` | The Lastys QR's minute is outside the accepted window. |
+| `revoked-qr` | The Lastys QR carries an older QR number than the owner's latest: it was revoked. |
 | `forged-qr` | The Lastys QR wasn't signed by the key of the phone holding that Lastys ID, or names no Lastys ID. |
 | `scan-required` | A Relationship request must name a Scan this phone made. |
 | `scan-too-old` | The Scan was more than 10 minutes ago. |

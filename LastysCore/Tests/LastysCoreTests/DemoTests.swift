@@ -1,4 +1,4 @@
-#if DEBUG
+﻿#if DEBUG
 import Foundation
 import Testing
 import LastysCore
@@ -14,7 +14,7 @@ struct DemoTests {
     @Test func demoDaraIsSingleAndSharesHerRelationshipHistoryAsMonthsOnly() async throws {
         let me = await me()
 
-        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara, at: Date()))
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara))
 
         let result = try #require(me.model.scanResult)
         #expect(result.nickname == "Dara")
@@ -30,7 +30,7 @@ struct DemoTests {
     @Test func demoVannaHasABrandNewLastysIDAndSharesStatusOnly() async throws {
         let me = await me()
 
-        await me.model.scan(try await me.trustee.demoLastysQR(of: .vanna, at: Date()))
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .vanna))
 
         let result = try #require(me.model.scanResult)
         #expect(result.nickname == "Vanna")
@@ -41,7 +41,7 @@ struct DemoTests {
     @Test func demoSokhaIsTaken() async throws {
         let me = await me()
 
-        await me.model.scan(try await me.trustee.demoLastysQR(of: .sokha, at: Date()))
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .sokha))
 
         #expect(me.model.scanResult?.status == .taken)
     }
@@ -49,8 +49,8 @@ struct DemoTests {
     @Test func demoPeopleAreTheSamePeopleEveryTime() async throws {
         let me = await me()
 
-        let first = try await me.trustee.demoLastysQR(of: .dara, at: Date())
-        let second = try await me.trustee.demoLastysQR(of: .dara, at: Date())
+        let first = try await me.trustee.demoLastysQR(of: .dara)
+        let second = try await me.trustee.demoLastysQR(of: .dara)
 
         #expect(LastysQRToken(parsing: first)?.personalID == LastysQRToken(parsing: second)?.personalID)
     }
@@ -58,14 +58,14 @@ struct DemoTests {
     @Test func demoSokhaCannotReceiveARelationshipRequest() async throws {
         let me = await me()
 
-        await me.model.scan(try await me.trustee.demoLastysQR(of: .sokha, at: Date()))
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .sokha))
 
         #expect(me.model.scanResult?.requestBlock == .theyAreTaken)
     }
 
     @Test func demoDaraAcceptsMyRelationshipRequest() async throws {
         let me = await me()
-        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara, at: Date()))
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara))
         await me.model.sendRelationshipRequest()
 
         try await me.trustee.demoRespondToRelationshipRequest(id: try #require(me.model.outgoingRequest?.id), accept: true)
@@ -77,7 +77,7 @@ struct DemoTests {
 
     @Test func demoVannaDeclinesMyRelationshipRequest() async throws {
         let me = await me()
-        await me.model.scan(try await me.trustee.demoLastysQR(of: .vanna, at: Date()))
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .vanna))
         await me.model.sendRelationshipRequest()
 
         try await me.trustee.demoRespondToRelationshipRequest(id: try #require(me.model.outgoingRequest?.id), accept: false)
@@ -90,7 +90,7 @@ struct DemoTests {
     /// Me, in a Relationship with demo Dara.
     private func meWithDara() async throws -> TestPhone {
         let me = await me()
-        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara, at: Date()))
+        await me.model.scan(try await me.trustee.demoLastysQR(of: .dara))
         await me.model.sendRelationshipRequest()
         try await me.trustee.demoRespondToRelationshipRequest(id: try #require(me.model.outgoingRequest?.id), accept: true)
         await me.model.refreshOutgoingRequest()

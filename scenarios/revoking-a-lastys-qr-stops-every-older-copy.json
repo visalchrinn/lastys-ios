@@ -1,0 +1,13 @@
+{
+  "name": "A Lastys QR keeps working until its owner revokes it, then only the new QR scans",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "wait", "with": { "days": "30" } },
+    { "phone": "bob", "do": "scan", "with": { "qrOf": "alice" }, "expect": { "status": "single" } },
+    { "phone": "alice", "do": "revoke-qr" },
+    { "phone": "bob", "do": "scan", "with": { "qrOf": "alice", "qrNumber": "0" }, "expect": { "error": "revoked-qr" } },
+    { "phone": "bob", "do": "scan", "with": { "qrOf": "alice" }, "expect": { "status": "single" } }
+  ]
+}

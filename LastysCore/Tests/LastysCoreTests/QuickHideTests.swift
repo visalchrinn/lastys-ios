@@ -56,7 +56,7 @@ struct QuickHideTests {
         let vanna = TestPhone(nearby: dara)
         await vanna.onboard(as: "Vanna")
 
-        await vanna.model.scan(try #require(me.model.myLastysQR(at: Date())).payload)
+        await vanna.model.scan(try #require(me.model.myLastysQR()).payload)
 
         #expect(vanna.model.scanResult?.status == .taken)
     }

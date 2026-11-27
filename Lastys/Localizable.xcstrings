@@ -2305,22 +2305,6 @@
         }
       }
     },
-    "New code in %llds" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New code in %llds"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "កូដថ្មីក្នុង %lld វិនាទី"
-          }
-        }
-      }
-    },
     "New Moment" : {
       "localizations" : {
         "en" : {
@@ -3103,22 +3087,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ព្រះរាជពិធីបុណ្យចម្រើនព្រះជន្មព្រះវររាជមាតា"
-          }
-        }
-      }
-    },
-    "QR valid until %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "QR valid until %@"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "QR មានសុពលភាពរហូតដល់ %@"
           }
         }
       }
@@ -4515,20 +4483,10 @@
         }
       }
     },
-    "This Lastys QR has expired. It may be a screenshot. Ask them to show their QR again." : {
+    "This Lastys QR was revoked by its owner. It may be an old screenshot. Ask them to show their QR again." : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This Lastys QR has expired. It may be a screenshot. Ask them to show their QR again."
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "QR Lastys នេះបានផុតកំណត់ហើយ។ វាអាចជារូបថតអេក្រង់។ សូមឱ្យគាត់បង្ហាញ QR របស់គាត់ម្តងទៀត។"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This Lastys QR was revoked by its owner. It may be an old screenshot. Ask them to show their QR again." } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "QR Lastys នេះត្រូវបានម្ចាស់ដកហូតហើយ។ វាអាចជារូបថតអេក្រង់ចាស់។ សូមឱ្យគាត់បង្ហាញ QR របស់គាត់ម្តងទៀត។" } }
       }
     },
     "This needs an internet connection." : {
@@ -4963,20 +4921,40 @@
         }
       }
     },
-    "Works without internet. Each code is good for a minute, so a screenshot can't be reused." : {
+    "Revoke and get a new QR" : {
       "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Works without internet. Each code is good for a minute, so a screenshot can't be reused."
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ដំណើរការដោយគ្មានអ៊ីនធឺណិត។ កូដនីមួយៗមានសុពលភាពមួយនាទី ដូច្នេះរូបថតអេក្រង់មិនអាចប្រើឡើងវិញបានទេ។"
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Revoke and get a new QR" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ដកហូត ហើយយក QR ថ្មី" } }
+      }
+    },
+    "Revoke this QR?" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Revoke this QR?" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ដកហូត QR នេះឬ?" } }
+      }
+    },
+    "The QR you are showing now, and any screenshot or shared card that has it, will stop working. Share the new one instead." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The QR you are showing now, and any screenshot or shared card that has it, will stop working. Share the new one instead." } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "QR ដែលអ្នកកំពុងបង្ហាញឥឡូវនេះ ព្រមទាំងរូបថតអេក្រង់ ឬកាតដែលបានចែករំលែកដែលមាន QR នេះ នឹងឈប់ដំណើរការ។ សូមចែករំលែក QR ថ្មីជំនួសវិញ។" } }
+      }
+    },
+    "Revoking needs an internet connection. Your current QR still works." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Revoking needs an internet connection. Your current QR still works." } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ការដកហូតត្រូវការអ៊ីនធឺណិត។ QR បច្ចុប្បន្នរបស់អ្នកនៅតែដំណើរការ។" } }
+      }
+    },
+    "Couldn't reach Lastys. Your current QR still works. Try again." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't reach Lastys. Your current QR still works. Try again." } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "មិនអាចទាក់ទង Lastys បានទេ។ QR បច្ចុប្បន្នរបស់អ្នកនៅតែដំណើរការ។ សូមព្យាយាមម្តងទៀត។" } }
+      }
+    },
+    "Your QR stays the same until you revoke it, and works without internet. If someone has a screenshot of it, revoke it: the old QR stops working at once." : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your QR stays the same until you revoke it, and works without internet. If someone has a screenshot of it, revoke it: the old QR stops working at once." } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "QR របស់អ្នកនៅដដែលរហូតដល់អ្នកដកហូតវា ហើយដំណើរការដោយគ្មានអ៊ីនធឺណិត។ ប្រសិនបើនរណាម្នាក់មានរូបថតអេក្រង់របស់វា សូមដកហូត៖ QR ចាស់នឹងឈប់ដំណើរការភ្លាមៗ។" } }
       }
     },
     "You and %@ are Taken" : {

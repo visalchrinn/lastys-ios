@@ -49,6 +49,8 @@ final class HeldTrustee: TrusteeClient, @unchecked Sendable {
     func relationshipRequest(id: String) async throws -> RelationshipRequest { try await wrapped.relationshipRequest(id: id) }
     func respondToRelationshipRequest(id: String, accept: Bool) async throws { try await wrapped.respondToRelationshipRequest(id: id, accept: accept) }
 
+    func revokeLastysQR() async throws -> Int { try await wrapped.revokeLastysQR() }
+
     func scan(_ payload: String) async throws -> ScanResult {
         await withCheckedContinuation { continuation in
             lock.withLock { held.append(continuation) }

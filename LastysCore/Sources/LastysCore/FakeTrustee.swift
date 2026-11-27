@@ -10,9 +10,6 @@ public actor FakeTrustee {
     /// Stands in for DeviceCheck's per-device bits (ADR 0001); the real window is Trustee's to set (#18).
     public static let daysBetweenNewLastysIDsOnOnePhone = 30
 
-    /// How many minutes back a Lastys QR is still accepted, so a code that just changed still scans.
-    public static let qrMinutesAccepted = 2
-
     struct Person: Codable {
         var lastysID: LastysID
         var createdAt: Date
@@ -31,6 +28,8 @@ public actor FakeTrustee {
         var recoveryCodeHash: String?
         /// When this Lastys ID last moved phone by a Phone transfer.
         var lastTransferAt: Date?
+        /// The only QR number Trustee accepts in this Lastys ID's Lastys QR. Revoke raises it by one.
+        var qrNumber = 0
 
         init(lastysID: LastysID, createdAt: Date, nickname: String = "", photo: Data? = nil) {
             self.lastysID = lastysID
@@ -54,6 +53,7 @@ public actor FakeTrustee {
             phoneTransferCount = try c.decodeIfPresent(Int.self, forKey: .phoneTransferCount) ?? 0
             recoveryCodeHash = try c.decodeIfPresent(String.self, forKey: .recoveryCodeHash)
             lastTransferAt = try c.decodeIfPresent(Date.self, forKey: .lastTransferAt)
+            qrNumber = try c.decodeIfPresent(Int.self, forKey: .qrNumber) ?? 0
         }
     }
 
@@ -208,6 +208,16 @@ public actor FakeTrustee {
         return .active(partnerNickname: partner.nickname, since: since, stage: stage(of: me))
     }
 
+    // MARK: Lastys QR
+
+    /// Retires the Lastys QR this Lastys ID has been showing: only the next QR number scans from now on.
+    func revokeLastysQR(phone: String) throws -> Int {
+        let id = try lastysID(of: phone).personalID
+        state.people[id]?.qrNumber += 1
+        save()
+        return state.people[id]?.qrNumber ?? 0
+    }
+
     // MARK: Scan
 
     func scan(phone: String, payload: String) throws -> ScanResult {
@@ -217,11 +227,8 @@ public actor FakeTrustee {
               let key = publicKey(ofPhoneHolding: scanned.lastysID),
               token.isSigned(by: key)
         else { throw TrusteeError.forgedQR }
-        let currentMinute = LastysQRToken.minute(containing: now())
-        // A minute ahead is allowed too, for a showing phone whose clock runs slightly fast.
-        guard (currentMinute - Int64(Self.qrMinutesAccepted)...currentMinute + 1).contains(token.minute) else {
-            throw TrusteeError.expiredQR
-        }
+        // A QR older than the last Revoke is a revoked one, such as a screenshot.
+        guard token.number == scanned.qrNumber else { throw TrusteeError.revokedQR }
         let scanID = UUID().uuidString
         state.scans[scanID] = ScanRecord(scanner: scanner.lastysID.personalID, scanned: token.personalID, at: now())
         save()
@@ -294,6 +301,10 @@ public actor FakeTrustee {
 
         func relationshipStatus() async throws -> RelationshipStatus {
             try await trustee.relationshipStatus(phone: phone)
+        }
+
+        func revokeLastysQR() async throws -> Int {
+            try await trustee.revokeLastysQR(phone: phone)
         }
 
         func scan(_ payload: String) async throws -> ScanResult {

@@ -33,7 +33,7 @@ struct UpgradeTests {
         let trustee = FakeTrustee(savingTo: file)
         let scanner = trustee.client(forPhone: "scanner")
         _ = try await scanner.createLastysID()
-        let qr = try LastysQRToken(personalID: "LT-8K2F-91QA", at: Date(), signedBy: key)
+        let qr = try LastysQRToken(personalID: "LT-8K2F-91QA", signedBy: key)
 
         let result = try await scanner.scan(qr.text)
 
@@ -56,7 +56,7 @@ struct UpgradeTests {
         let trustee = FakeTrustee(savingTo: file, now: { tenDaysLater })
         let scanner = trustee.client(forPhone: "scanner")
         _ = try await scanner.createLastysID()
-        let result = try await scanner.scan(LastysQRToken(personalID: "LT-8K2F-91QA", at: tenDaysLater, signedBy: key).text)
+        let result = try await scanner.scan(LastysQRToken(personalID: "LT-8K2F-91QA", signedBy: key).text)
 
         #expect(result.idAgeDays == 10)
     }
@@ -76,7 +76,7 @@ struct UpgradeTests {
         #expect(try await trustee.client(forPhone: key.trusteeID).relationshipStatus() == .none)
         let scanner = trustee.client(forPhone: "scanner")
         _ = try await scanner.createLastysID()
-        let result = try await scanner.scan(LastysQRToken(personalID: "LT-8K2F-91QA", at: Date(), signedBy: key).text)
+        let result = try await scanner.scan(LastysQRToken(personalID: "LT-8K2F-91QA", signedBy: key).text)
         #expect(result.nickname == "Srey Pich")
     }
 

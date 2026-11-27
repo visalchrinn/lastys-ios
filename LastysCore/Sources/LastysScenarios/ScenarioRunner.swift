@@ -57,6 +57,8 @@ private final class Run: @unchecked Sendable {
     private var lastScan: [String: (scanID: String, of: String?)] = [:]
     /// Relationship requests sent, by sender phone then receiver phone.
     private var requestIDs: [String: [String: String]] = [:]
+    /// The QR number each phone is on, raised by every `revoke-qr`.
+    private var qrNumbers: [String: Int] = [:]
 
     private func key(of phone: String) -> SoftwarePhoneKey {
         if let key = keys[phone] { return key }
@@ -129,6 +131,9 @@ private final class Run: @unchecked Sendable {
             ]
         case "get-who-scanned-me":
             return ["count": String(try await client.whoScannedMe().count)]
+        case "revoke-qr":
+            qrNumbers[step.phone] = try await client.revokeLastysQR()
+            return [:]
         case "new-recovery-code":
             recoveryCodes[step.phone, default: []].append(try await client.newRecoveryCode())
             return [:]
@@ -239,16 +244,15 @@ private final class Run: @unchecked Sendable {
     }
 
     /// What the scanner's camera reads: a raw `payload`, or the Lastys QR of phone `qrOf`,
-    /// made `madeMinutesAgo` and signed by `signedBy` (that phone itself unless forging).
+    /// with QR number `qrNumber` (the phone's current one unless named) and signed by `signedBy` (that phone itself unless forging).
     private func scannedPayload(_ arguments: [String: String]) throws -> String {
         if let payload = arguments["payload"] { return payload }
         guard let shower = arguments["qrOf"], let personalID = personalIDs[shower] else {
             throw ScenarioError(message: "scan needs a payload, or qrOf a phone that has created a Lastys ID")
         }
-        let minutesAgo = Double(arguments["madeMinutesAgo"] ?? "0") ?? 0
-        let made = lock.withLock { now }.addingTimeInterval(-minutesAgo * 60)
+        let number = arguments["qrNumber"].flatMap { Int($0) } ?? qrNumbers[shower] ?? 0
         let signer = key(of: arguments["signedBy"] ?? shower)
-        return try LastysQRToken(personalID: personalID, at: made, signedBy: signer).text
+        return try LastysQRToken(personalID: personalID, number: number, signedBy: signer).text
     }
 }
 
@@ -273,7 +277,7 @@ extension TrusteeError {
         case .noLastysID: return "no-lastys-id"
         case .phoneAlreadyHasLastysID: return "phone-already-has-lastys-id"
         case .notALastysQR: return "not-a-lastys-qr"
-        case .expiredQR: return "expired-qr"
+        case .revokedQR: return "revoked-qr"
         case .forgedQR: return "forged-qr"
         case .scanRequired: return "scan-required"
         case .scanTooOld: return "scan-too-old"

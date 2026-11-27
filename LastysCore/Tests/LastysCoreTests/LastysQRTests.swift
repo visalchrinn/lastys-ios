@@ -5,60 +5,38 @@ import Testing
 
 @MainActor
 struct LastysQRTests {
-    /// 2026-11-29 05:00:15 UTC.
-    private static let fifteenSecondsPastTheMinute = Date(timeIntervalSince1970: 1_795_928_415)
-
-    @Test func myLastysQRIsSignedByThePhonesKeyAndCarriesTheLastysIDAndTheMinute() async throws {
+    @Test func myLastysQRIsSignedByThePhonesKeyAndCarriesTheLastysIDAndTheQRNumber() async throws {
         let phone = TestPhone()
         await phone.onboard()
 
-        let qr = try #require(phone.model.myLastysQR(at: Self.fifteenSecondsPastTheMinute))
+        let qr = try #require(phone.model.myLastysQR())
         let token = try #require(LastysQRToken(parsing: qr.payload))
 
         #expect(token.personalID == phone.model.lastysID?.personalID)
-        #expect(token.minute == 29_932_140) // whole minutes since 1970
+        #expect(token.number == 0)
         #expect(token.isSigned(by: phone.key.publicKey))
         #expect(!token.isSigned(by: SoftwarePhoneKey().publicKey))
     }
 
-    @Test func aTokenWithAChangedMinuteNoLongerMatchesItsSignature() async throws {
+    @Test func aTokenWithAChangedQRNumberNoLongerMatchesItsSignature() async throws {
         let phone = TestPhone()
         await phone.onboard()
-        let qr = try #require(phone.model.myLastysQR(at: Self.fifteenSecondsPastTheMinute))
+        let qr = try #require(phone.model.myLastysQR())
 
-        let forged = qr.payload.replacingOccurrences(of: ".29932140.", with: ".29932150.")
+        let forged = qr.payload.replacingOccurrences(of: ".0.", with: ".1.")
 
         let token = try #require(LastysQRToken(parsing: forged))
         #expect(!token.isSigned(by: phone.key.publicKey))
     }
 
-    @Test func myLastysQRStaysTheSameWithinAMinuteAndCountsDownToTheNext() async throws {
+    @Test func myLastysQRNeverChangesOnItsOwn() async throws {
         let phone = TestPhone()
         await phone.onboard()
-        let start = Self.fifteenSecondsPastTheMinute
+        let first = try #require(phone.model.myLastysQR())
 
-        let at15 = try #require(phone.model.myLastysQR(at: start))
-        let at59 = try #require(phone.model.myLastysQR(at: start.addingTimeInterval(44.9)))
+        phone.clock.advance(days: 30)
 
-        #expect(at15.secondsUntilNextCode == 45)
-        #expect(at59.secondsUntilNextCode == 1)
-        #expect(at59.payload == at15.payload)
-    }
-
-    @Test func myLastysQRChangesAtTheMinuteBoundary() async throws {
-        let phone = TestPhone()
-        await phone.onboard()
-        let lastMoment = Self.fifteenSecondsPastTheMinute.addingTimeInterval(44.9)
-        let nextMinute = Self.fifteenSecondsPastTheMinute.addingTimeInterval(45)
-
-        let before = try #require(phone.model.myLastysQR(at: lastMoment))
-        let after = try #require(phone.model.myLastysQR(at: nextMinute))
-
-        #expect(after.payload != before.payload)
-        #expect(after.secondsUntilNextCode == 60)
-        let token = try #require(LastysQRToken(parsing: after.payload))
-        #expect(token.minute == 29_932_141)
-        #expect(token.isSigned(by: phone.key.publicKey))
+        #expect(try #require(phone.model.myLastysQR()) == first)
     }
 
     @Test func showingMyLastysQRMakesNoRequestToTrustee() async throws {
@@ -66,9 +44,7 @@ struct LastysQRTests {
         await phone.onboard()
         let requestsBefore = phone.trusteeRequests
 
-        for second in 0..<120 {
-            _ = try #require(phone.model.myLastysQR(at: Self.fifteenSecondsPastTheMinute.addingTimeInterval(Double(second))))
-        }
+        for _ in 0..<120 { _ = try #require(phone.model.myLastysQR()) }
 
         #expect(phone.trusteeRequests == requestsBefore)
     }
@@ -76,7 +52,64 @@ struct LastysQRTests {
     @Test func thereIsNoLastysQRBeforeTheLastysIDExists() {
         let phone = TestPhone()
 
-        #expect(phone.model.myLastysQR(at: Self.fifteenSecondsPastTheMinute) == nil)
+        #expect(phone.model.myLastysQR() == nil)
+    }
+
+    @Test func revokingMakesANewQRAndTheOldOneStopsScanning() async throws {
+        let dara = TestPhone()
+        await dara.onboard(as: "Dara")
+        let me = TestPhone(nearby: dara)
+        await me.onboard()
+        let old = try #require(dara.model.myLastysQR())
+        await me.model.scan(old.payload)
+        #expect(me.model.scanResult?.nickname == "Dara")
+
+        await dara.model.revokeMyLastysQR()
+        let new = try #require(dara.model.myLastysQR())
+        await me.model.scan(old.payload)
+
+        #expect(new.payload != old.payload)
+        #expect(LastysQRToken(parsing: new.payload)?.number == 1)
+        #expect(me.model.scanResult == nil)
+        #expect(me.model.scanProblem == .revokedQR)
+
+        await me.model.scan(new.payload)
+        #expect(me.model.scanResult?.nickname == "Dara")
+    }
+
+    @Test func eachRevokeRetiresTheLastOne() async throws {
+        let phone = TestPhone()
+        await phone.onboard()
+
+        await phone.model.revokeMyLastysQR()
+        await phone.model.revokeMyLastysQR()
+
+        #expect(LastysQRToken(parsing: try #require(phone.model.myLastysQR()).payload)?.number == 2)
+    }
+
+    @Test func revokingNeedsInternetAndKeepsTheCurrentQR() async throws {
+        let phone = TestPhone()
+        await phone.onboard()
+        let before = try #require(phone.model.myLastysQR())
+        phone.isOnline = false
+
+        await phone.model.revokeMyLastysQR()
+
+        #expect(phone.model.qrProblem == .needsInternet)
+        #expect(try #require(phone.model.myLastysQR()) == before)
+    }
+
+    @Test func theNewQRSurvivesRestartingTheApp() async throws {
+        let phone = TestPhone()
+        await phone.onboard()
+        await phone.model.revokeMyLastysQR()
+
+        phone.relaunch()
+
+        let qr = try #require(phone.model.myLastysQR())
+        let token = try #require(LastysQRToken(parsing: qr.payload))
+        #expect(token.number == 1)
+        #expect(token.isSigned(by: phone.key.publicKey))
     }
 
     @Test func scannersSeeStatusOnlyByDefault() async {
@@ -89,10 +122,10 @@ struct LastysQRTests {
     @Test func aTokenIsReadOnlyInItsExactTextForm() async throws {
         let phone = TestPhone()
         await phone.onboard()
-        let qr = try #require(phone.model.myLastysQR(at: Self.fifteenSecondsPastTheMinute))
+        let qr = try #require(phone.model.myLastysQR())
 
-        // The same minute written with a leading zero: the fake must refuse what the real Trustee refuses.
-        let padded = qr.payload.replacingOccurrences(of: ".29932140.", with: ".029932140.")
+        // The QR number written with a leading zero: the fake must refuse what the real Trustee refuses.
+        let padded = qr.payload.replacingOccurrences(of: ".0.", with: ".00.")
 
         #expect(LastysQRToken(parsing: padded) == nil)
         #expect(LastysQRToken(parsing: qr.payload)?.text == qr.payload)

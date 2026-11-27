@@ -164,7 +164,7 @@ private struct DemoPeoplePicker: View {
                 ForEach(DemoPerson.allCases, id: \.self) { person in
                     Button {
                         Task {
-                            guard let payload = try? await trustee.demoLastysQR(of: person, at: Date()) else { return }
+                            guard let payload = try? await trustee.demoLastysQR(of: person) else { return }
                             await model.scan(payload)
                         }
                     } label: {
@@ -350,7 +350,7 @@ private struct ScanProblemCard: View {
     private var icon: String {
         switch problem {
         case .needsInternet: return "wifi.slash"
-        case .expiredQR: return "clock.badge.exclamationmark"
+        case .revokedQR: return "clock.badge.exclamationmark"
         case .forgedQR: return "exclamationmark.shield"
         case .notALastysQR, .noLastysID: return "qrcode"
         case .couldNotReachLastys: return "exclamationmark.icloud"
@@ -361,8 +361,8 @@ private struct ScanProblemCard: View {
         switch problem {
         case .needsInternet:
             return "A Scan needs an internet connection, so you always see their status as it is right now."
-        case .expiredQR:
-            return "This Lastys QR has expired. It may be a screenshot. Ask them to show their QR again."
+        case .revokedQR:
+            return "This Lastys QR was revoked by its owner. It may be an old screenshot. Ask them to show their QR again."
         case .forgedQR:
             return "This isn't a genuine Lastys QR. Don't trust what it claims."
         case .notALastysQR:

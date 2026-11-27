@@ -30,11 +30,11 @@ public enum DemoPerson: String, CaseIterable, Sendable {
 }
 
 extension FakeTrustee {
-    /// Demo: the live Lastys QR of a sample person nearby, as their phone would show it at `date`.
+    /// Demo: the live Lastys QR of a sample person nearby, as their phone would show it.
     /// Adds the person to Trustee the first time.
-    public func demoLastysQR(of person: DemoPerson, at date: Date) throws -> String {
+    public func demoLastysQR(of person: DemoPerson) throws -> String {
         addIfMissing(person)
-        return try LastysQRToken(personalID: person.personalID, at: date, signedBy: person.key).text
+        return try LastysQRToken(personalID: person.personalID, number: state.people[person.personalID]?.qrNumber ?? 0, signedBy: person.key).text
     }
 
     /// Demo: the sample person a Relationship request went to accepts or declines it, as their phone would.

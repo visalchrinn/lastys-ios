@@ -36,7 +36,7 @@ struct VerifiedSingleCardTests {
         let dara = TestPhone(nearby: me)
         await dara.onboard(as: "Dara")
         // Dara accepts my request on her phone; my phone hasn't heard yet.
-        await me.model.scan(try #require(dara.model.myLastysQR(at: me.clock.now)).payload)
+        await me.model.scan(try #require(dara.model.myLastysQR()).payload)
         await me.model.sendRelationshipRequest()
         try await dara.trustee.client(forPhone: dara.key.trusteeID)
             .respondToRelationshipRequest(id: try #require(me.model.outgoingRequest?.id), accept: true)
@@ -89,7 +89,7 @@ struct VerifiedSingleCardTests {
         await dara.onboard(as: "Dara")
         await me.model.prepareVerifiedSingleCard()
 
-        let qr = try #require(me.model.verifiedSingleCardQR(at: me.clock.now))
+        let qr = try #require(me.model.verifiedSingleCardQR())
         await dara.model.scan(qr.payload)
 
         let result = try #require(dara.model.scanResult)
@@ -106,7 +106,7 @@ struct VerifiedSingleCardTests {
         await dara.onboard(as: "Dara")
         await me.model.prepareVerifiedSingleCard()
 
-        await dara.model.scan(try #require(me.model.verifiedSingleCardQR(at: me.clock.now)).payload)
+        await dara.model.scan(try #require(me.model.verifiedSingleCardQR()).payload)
         await me.model.refreshMe()
 
         #expect(dara.model.scanResult?.relationshipHistory == [])
@@ -117,7 +117,7 @@ struct VerifiedSingleCardTests {
         let me = TestPhone()
         await me.onboard()
 
-        #expect(me.model.verifiedSingleCardQR(at: me.clock.now) == nil)
+        #expect(me.model.verifiedSingleCardQR() == nil)
     }
 
     @Test func aCardMadeWhileTakenHasNoQR() async throws {
@@ -129,39 +129,26 @@ struct VerifiedSingleCardTests {
 
         await me.model.prepareVerifiedSingleCard()
 
-        #expect(me.model.verifiedSingleCardQR(at: me.clock.now) == nil)
+        #expect(me.model.verifiedSingleCardQR() == nil)
     }
 
-    @Test func theQRRefreshesEveryMinuteAndCountsDownToTheNextCode() async throws {
-        let me = TestPhone()
-        await me.onboard()
-        await me.model.prepareVerifiedSingleCard()
-        let start = LastysQRToken.startOfMinute(containing: me.clock.now)
-
-        let first = try #require(me.model.verifiedSingleCardQR(at: start.addingTimeInterval(10)))
-        let sameMinute = try #require(me.model.verifiedSingleCardQR(at: start.addingTimeInterval(50)))
-        let next = try #require(me.model.verifiedSingleCardQR(at: start.addingTimeInterval(61)))
-
-        #expect(first.payload == sameMinute.payload)
-        #expect(first.payload != next.payload)
-        #expect(first.secondsUntilNextCode == 50)
-        #expect(next.secondsUntilNextCode == 59)
-    }
-
-    @Test func theValidUntilTimeIsNeverLaterThanWhenTrusteeStopsAcceptingTheCode() async throws {
+    @Test func aSharedCardsQRKeepsWorkingUntilIRevokeMyLastysQR() async throws {
         let me = TestPhone()
         await me.onboard()
         let dara = TestPhone(nearby: me)
         await dara.onboard(as: "Dara")
         await me.model.prepareVerifiedSingleCard()
-        let qr = try #require(me.model.verifiedSingleCardQR(at: me.clock.now))
-        #expect(qr.validUntil > me.clock.now)
+        let qr = try #require(me.model.verifiedSingleCardQR())
 
-        // The very last second the card promises: Trustee must still accept the code.
-        me.clock.advance(days: (qr.validUntil.timeIntervalSince(me.clock.now) - 1) / 86_400)
+        me.clock.advance(days: 30)
+        await dara.model.scan(qr.payload)
+        #expect(dara.model.scanResult?.nickname == "Srey Pich")
+
+        await me.model.revokeMyLastysQR()
         await dara.model.scan(qr.payload)
 
-        #expect(dara.model.scanResult?.nickname == "Srey Pich")
-        #expect(dara.model.scanProblem == nil)
+        #expect(dara.model.scanResult == nil)
+        #expect(dara.model.scanProblem == .revokedQR)
+        #expect(me.model.verifiedSingleCardQR()?.payload != qr.payload)
     }
 }

@@ -11,6 +11,8 @@ public protocol TrusteeClient: Sendable {
     /// Sets what a Scan of this Lastys ID shows: its nickname and optional photo.
     func updateProfile(nickname: String, photo: Data?) async throws
     func relationshipStatus() async throws -> RelationshipStatus
+    /// Retires this Lastys ID's current Lastys QR, so every copy of it stops working. Returns the new QR number.
+    func revokeLastysQR() async throws -> Int
     /// Resolves a scanned Lastys QR into what that Lastys ID shows right now.
     func scan(_ payload: String) async throws -> ScanResult
     /// Offers a Relationship to the person this phone just Scanned. There is no way to name anyone else:
@@ -82,8 +84,8 @@ public enum TrusteeError: Error, Equatable, Sendable {
     case phoneAlreadyHasLastysID
     /// The scanned code isn't a Lastys QR at all.
     case notALastysQR
-    /// The Lastys QR was made too long ago; it may be a screenshot.
-    case expiredQR
+    /// The Lastys QR was revoked by its owner, so this is an old copy, such as a screenshot.
+    case revokedQR
     /// The Lastys QR wasn't signed by that Lastys ID's own phone.
     case forgedQR
     /// A Relationship request must follow a Scan this phone made.

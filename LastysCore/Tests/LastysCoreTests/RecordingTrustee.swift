@@ -27,6 +27,11 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         try await wrapped.updateProfile(nickname: nickname, photo: photo)
     }
 
+    func revokeLastysQR() async throws -> Int {
+        record("revokeLastysQR()")
+        return try await wrapped.revokeLastysQR()
+    }
+
     func scan(_ payload: String) async throws -> ScanResult {
         record("scan(\(payload))")
         return try await wrapped.scan(payload)

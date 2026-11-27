@@ -217,9 +217,13 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 |---|---|
 | My Lastys QR | QR Lastys របស់ខ្ញុំ |
 | Close | បិទ |
-| New code in %@s | កូដថ្មីក្នុង %lld វិនាទី |
 | Scanners will see | អ្នកស្កេននឹងឃើញ |
-| Works without internet. Each code is good for a minute, so a screenshot can't be reused. | ដំណើរការដោយគ្មានអ៊ីនធឺណិត។ កូដនីមួយៗមានសុពលភាពមួយនាទី ដូច្នេះរូបថតអេក្រង់មិនអាចប្រើឡើងវិញបានទេ។ |
+| Revoke and get a new QR | ដកហូត ហើយយក QR ថ្មី |
+| Revoke this QR? | ដកហូត QR នេះឬ? |
+| The QR you are showing now, and any screenshot or shared card that has it, will stop working. Share the new one instead. | QR ដែលអ្នកកំពុងបង្ហាញឥឡូវនេះ ព្រមទាំងរូបថតអេក្រង់ ឬកាតដែលបានចែករំលែកដែលមាន QR នេះ នឹងឈប់ដំណើរការ។ សូមចែករំលែក QR ថ្មីជំនួសវិញ។ |
+| Revoking needs an internet connection. Your current QR still works. | ការដកហូតត្រូវការអ៊ីនធឺណិត។ QR បច្ចុប្បន្នរបស់អ្នកនៅតែដំណើរការ។ |
+| Couldn't reach Lastys. Your current QR still works. Try again. | មិនអាចទាក់ទង Lastys បានទេ។ QR បច្ចុប្បន្នរបស់អ្នកនៅតែដំណើរការ។ សូមព្យាយាមម្តងទៀត។ |
+| Your QR stays the same until you revoke it, and works without internet. If someone has a screenshot of it, revoke it: the old QR stops working at once. | QR របស់អ្នកនៅដដែលរហូតដល់អ្នកដកហូតវា ហើយដំណើរការដោយគ្មានអ៊ីនធឺណិត។ ប្រសិនបើនរណាម្នាក់មានរូបថតអេក្រង់របស់វា សូមដកហូត៖ QR ចាស់នឹងឈប់ដំណើរការភ្លាមៗ។ |
 
 ## Notifications and reminders
 
@@ -354,7 +358,7 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | %@ past relationships | ទំនាក់ទំនងកន្លងមក %lld |
 | Hidden by owner | លាក់ដោយម្ចាស់ |
 | A Scan needs an internet connection, so you always see their status as it is right now. | ការស្កេនត្រូវការអ៊ីនធឺណិត ដូច្នេះអ្នកតែងតែឃើញស្ថានភាពរបស់គាត់ដូចពេលបច្ចុប្បន្ន។ |
-| This Lastys QR has expired. It may be a screenshot. Ask them to show their QR again. | QR Lastys នេះបានផុតកំណត់ហើយ។ វាអាចជារូបថតអេក្រង់។ សូមឱ្យគាត់បង្ហាញ QR របស់គាត់ម្តងទៀត។ |
+| This Lastys QR was revoked by its owner. It may be an old screenshot. Ask them to show their QR again. | QR Lastys នេះត្រូវបានម្ចាស់ដកហូតហើយ។ វាអាចជារូបថតអេក្រង់ចាស់។ សូមឱ្យគាត់បង្ហាញ QR របស់គាត់ម្តងទៀត។ |
 | This isn't a genuine Lastys QR. Don't trust what it claims. | នេះមិនមែនជា QR Lastys ពិតប្រាកដទេ។ កុំជឿអ្វីដែលវាអះអាង។ |
 | That's not a Lastys QR. | នោះមិនមែនជា QR Lastys ទេ។ |
 | You need your own Lastys ID to Scan. | អ្នកត្រូវការអត្តសញ្ញាណ Lastys ផ្ទាល់ខ្លួន ដើម្បីស្កេន។ |
@@ -407,7 +411,6 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Not linked to anyone on Lastys | មិនបានភ្ជាប់ជាមួយនរណាលើ Lastys ទេ |
 | Checked %@ | បានពិនិត្យ %@ |
 | Scan my QR to confirm | ស្កេន QR របស់ខ្ញុំដើម្បីបញ្ជាក់ |
-| QR valid until %@ | QR មានសុពលភាពរហូតដល់ %@ |
 | Create your Lastys ID first. | សូមបង្កើតអត្តសញ្ញាណ Lastys របស់អ្នកជាមុនសិន។ |
 | You're in a Relationship, so there's no Verified Single card to share. | អ្នកស្ថិតក្នុងទំនាក់ទំនង ដូច្នេះគ្មានប័ណ្ណនៅលីវដែលបានផ្ទៀងផ្ទាត់ត្រូវចែករំលែកទេ។ |
 | Your status is checked with Lastys before every card, so this needs an internet connection. | ស្ថានភាពរបស់អ្នកត្រូវបានពិនិត្យជាមួយ Lastys មុនប័ណ្ណនីមួយៗ ដូច្នេះត្រូវការអ៊ីនធឺណិត។ |
