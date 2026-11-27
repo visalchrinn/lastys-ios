@@ -35,10 +35,12 @@ struct CalendarView: View {
         Button {
             showingPlanner = true
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 20, weight: .semibold))
+            HStack(spacing: 14) {
+                Image(systemName: "star")
+                    .font(.system(size: 22, weight: .regular))
                     .foregroundStyle(Theme.rose)
+                    .frame(width: 48, height: 48)
+                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.roseTint))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Lucky Day Planner")
                         .font(.jakarta(15, .bold))
