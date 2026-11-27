@@ -38,6 +38,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
     /// The Relationship request this phone sent and hasn't yet seen answered. Kept across launches so the
     /// sender still gets the Moments added on linking if they only learn of the acceptance later.
     public var sentRelationshipRequestID: String?
+    /// The code of my Invite link once I've copied or shared it, so Home says it's waiting.
+    public var sentInviteCode: String?
 
     public init() {}
 
@@ -68,6 +70,7 @@ public struct PhoneState: Codable, Equatable, Sendable {
         recoveryInProgress = (try? c.decodeIfPresent(Bool.self, forKey: .recoveryInProgress)) ?? nil ?? false
         qrNumber = (try? c.decodeIfPresent(Int.self, forKey: .qrNumber)) ?? nil ?? 0
         sentRelationshipRequestID = (try? c.decodeIfPresent(String.self, forKey: .sentRelationshipRequestID)) ?? nil
+        sentInviteCode = (try? c.decodeIfPresent(String.self, forKey: .sentInviteCode)) ?? nil
     }
 }
 

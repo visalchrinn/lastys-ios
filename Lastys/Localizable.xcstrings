@@ -705,6 +705,22 @@
         }
       }
     },
+    "Cancel invite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel invite"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បោះបង់ការអញ្ជើញ"
+          }
+        }
+      }
+    },
     "Cancel this Recovery" : {
       "localizations" : {
         "en" : {
@@ -1569,6 +1585,22 @@
         }
       }
     },
+    "Expires %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expires %@"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ផុតកំណត់ %@"
+          }
+        }
+      }
+    },
     "Export as a calendar file" : {
       "localizations" : {
         "en" : {
@@ -2033,6 +2065,54 @@
         }
       }
     },
+    "Invite links need an internet connection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite links need an internet connection."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "តំណអញ្ជើញត្រូវការអ៊ីនធឺណិត។"
+          }
+        }
+      }
+    },
+    "Invite sent · view" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite sent · view"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បានផ្ញើការអញ្ជើញ · មើល"
+          }
+        }
+      }
+    },
+    "Invite your partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite your partner"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "អញ្ជើញដៃគូរបស់អ្នក"
+          }
+        }
+      }
+    },
     "It's today" : {
       "localizations" : {
         "en" : {
@@ -2193,6 +2273,38 @@
         }
       }
     },
+    "Link with me on Lastys: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link with me on Lastys: %@"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ភ្ជាប់ជាមួយខ្ញុំនៅលើ Lastys៖ %@"
+          }
+        }
+      }
+    },
+    "Link with your partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link with your partner"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ភ្ជាប់ជាមួយដៃគូរបស់អ្នក"
+          }
+        }
+      }
+    },
     "Love you can trust." : {
       "localizations" : {
         "en" : {
@@ -2321,6 +2433,38 @@
         }
       }
     },
+    "Messages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messages"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "សារ"
+          }
+        }
+      }
+    },
+    "Messenger" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messenger"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Messenger"
+          }
+        }
+      }
+    },
     "Moment" : {
       "localizations" : {
         "en" : {
@@ -2349,6 +2493,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "កាតពេលវេលាពិសេស"
+          }
+        }
+      }
+    },
+    "More" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ច្រើនទៀត"
           }
         }
       }
@@ -2903,6 +3063,22 @@
         }
       }
     },
+    "Partner not on Lastys yet? Send an invite link" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partner not on Lastys yet? Send an invite link"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ដៃគូមិនទាន់មាន Lastys មែនទេ? ផ្ញើតំណអញ្ជើញ"
+          }
+        }
+      }
+    },
     "Photo added" : {
       "localizations" : {
         "en" : {
@@ -2973,6 +3149,22 @@
         }
       }
     },
+    "Send your link. When they open it and accept, you're linked." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send your link. When they open it and accept, you're linked."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ផ្ញើតំណរបស់អ្នក។ ពេលគេបើកវា ហើយយល់ព្រម អ្នកទាំងពីរនឹងភ្ជាប់គ្នា។"
+          }
+        }
+      }
+    },
     "Share card" : {
       "localizations" : {
         "en" : {
@@ -3005,6 +3197,22 @@
         }
       }
     },
+    "Telegram" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telegram"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Telegram"
+          }
+        }
+      }
+    },
     "The day we linked" : {
       "localizations" : {
         "en" : {
@@ -3021,6 +3229,22 @@
         }
       }
     },
+    "Waiting for your partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for your partner"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "កំពុងរង់ចាំដៃគូរបស់អ្នក"
+          }
+        }
+      }
+    },
     "Welcome" : {
       "localizations" : {
         "en" : {
@@ -3033,6 +3257,38 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "សូមស្វាគមន៍"
+          }
+        }
+      }
+    },
+    "Works for one person only. Expires after 7 days." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Works for one person only. Expires after 7 days."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ប្រើបានសម្រាប់មនុស្សម្នាក់ប៉ុណ្ណោះ។ ផុតកំណត់ក្រោយ 7 ថ្ងៃ។"
+          }
+        }
+      }
+    },
+    "You can invite a partner only while you're Verified Single and not in a Cooling-off period." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can invite a partner only while you're Verified Single and not in a Cooling-off period."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "អ្នកអាចអញ្ជើញដៃគូបានតែពេលអ្នកនៅលីវដែលបានផ្ទៀងផ្ទាត់ ហើយមិនស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត។"
           }
         }
       }

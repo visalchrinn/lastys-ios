@@ -306,6 +306,88 @@ public final class AppModel {
     /// How often to ask Trustee about a request still waiting. Phase A has no push.
     public static let pendingRequestCheckInterval: Duration = .seconds(3)
 
+    // MARK: Invite link
+
+    /// My Invite link that can still be used, as Trustee last said. At most one at a time.
+    public private(set) var inviteLink: InviteLink?
+    /// Why the last attempt to make or cancel an Invite link didn't work.
+    public private(set) var inviteProblem: InviteProblem?
+    /// True while Trustee is making or cancelling an Invite link.
+    public private(set) var isWorkingOnInvite = false
+
+    /// Offered only while Verified Single and not in a Cooling-off period, as any Relationship request is.
+    public var canInvite: Bool {
+        phone.lastysID != nil && relationship == .none
+    }
+
+    /// The link has been copied or shared, so it's waiting for my partner.
+    public var isInviteSent: Bool {
+        guard let code = inviteLink?.code else { return false }
+        return phone.sentInviteCode == code
+    }
+
+    /// Shows my waiting Invite link, or makes one if none is waiting.
+    public func openInvite() async {
+        guard canInvite, !isWorkingOnInvite else { return }
+        guard connectivity.isOnline else {
+            inviteProblem = .needsInternet
+            return
+        }
+        isWorkingOnInvite = true
+        defer { isWorkingOnInvite = false }
+        do {
+            if let waiting = try await trustee.myInviteLink() {
+                inviteLink = waiting
+            } else {
+                inviteLink = try await trustee.createInviteLink()
+            }
+            inviteProblem = nil
+        } catch {
+            inviteProblem = InviteProblem(error)
+        }
+    }
+
+    /// The person copied the link or shared it somewhere: from now on it's waiting for my partner.
+    public func inviteWasSent() {
+        guard let code = inviteLink?.code else { return }
+        phone.sentInviteCode = code
+    }
+
+    /// Stops the link at Trustee, so nobody can use it, and frees me to make a new one.
+    public func cancelInvite() async {
+        guard inviteLink != nil, !isWorkingOnInvite else { return }
+        guard connectivity.isOnline else {
+            inviteProblem = .needsInternet
+            return
+        }
+        isWorkingOnInvite = true
+        defer { isWorkingOnInvite = false }
+        do {
+            try await trustee.cancelInviteLink()
+        } catch TrusteeError.noInviteWaiting {
+            // Already gone (expired or used): the same outcome.
+        } catch {
+            inviteProblem = InviteProblem(error)
+            return
+        }
+        inviteProblem = nil
+        inviteLink = nil
+        phone.sentInviteCode = nil
+    }
+
+    /// Picks up my waiting Invite link after a launch, and lets go of one that expired.
+    private func refreshInvite() async {
+        guard phone.lastysID != nil, connectivity.isOnline else { return }
+        let waiting: InviteLink?
+        do {
+            waiting = try await trustee.myInviteLink()
+        } catch {
+            return // Trustee unreachable: keep what the phone knew.
+        }
+        inviteLink = waiting
+        if phone.sentInviteCode != nil, waiting?.code != phone.sentInviteCode { phone.sentInviteCode = nil }
+    }
+
     /// The Partner's nickname while in a Relationship, otherwise empty.
     public var partnerNickname: String {
         guard case .active(let partner, _, _) = relationship else { return "" }
@@ -394,6 +476,7 @@ public final class AppModel {
         }
         forgetFormerPartnersBirthDate()
         await followUpSentRequest()
+        await refreshInvite()
         await syncSharedMoments()
         await deliverNotices()
     }
@@ -960,6 +1043,23 @@ public enum RelationshipRequestProblem: Equatable, Sendable {
         switch error as? TrusteeError {
         case .scanTooOld, .scanRequired, .youAreTaken, .youAreCoolingOff, .theyAreTaken, .theyAreCoolingOff, .thatIsYou:
             self = .scanAgain
+        default:
+            self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+        }
+    }
+}
+
+public enum InviteProblem: Equatable, Sendable {
+    /// Invite links live at Trustee, so making or cancelling one needs internet.
+    case needsInternet
+    /// This Lastys ID became Taken or entered a Cooling-off period since the screen opened.
+    case notSingleNow
+    case couldNotReachLastys
+
+    init(_ error: Error) {
+        switch error as? TrusteeError {
+        case .youAreTaken, .youAreCoolingOff:
+            self = .notSingleNow
         default:
             self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
         }

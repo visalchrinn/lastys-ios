@@ -89,6 +89,23 @@ public struct RelationshipRequest: Equatable, Sendable {
     }
 }
 
+/// A link that carries a Relationship request to someone the sender hasn't Scanned (see GLOSSARY.md, ADR 0004).
+public struct InviteLink: Equatable, Sendable {
+    /// How long an Invite link works.
+    public static let daysValid = 7
+
+    public let code: String
+    public let expiresAt: Date
+
+    /// What the sender shares. Phase A: real links that open the app come with #20.
+    public var url: String { "lastys.app/i/\(code)" }
+
+    public init(code: String, expiresAt: Date) {
+        self.code = code
+        self.expiresAt = expiresAt
+    }
+}
+
 /// Why a Scan can't lead to a Relationship request.
 public enum RelationshipRequestBlock: Equatable, Sendable {
     /// The scanner already has an active Relationship.

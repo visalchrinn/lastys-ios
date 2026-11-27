@@ -288,6 +288,8 @@ extension TrusteeError {
         case .thatIsYou: return "that-is-you"
         case .requestNotFound: return "request-not-found"
         case .requestNotPending: return "request-not-pending"
+        case .inviteAlreadyWaiting: return "invite-already-waiting"
+        case .noInviteWaiting: return "no-invite-waiting"
         case .noRelationship: return "no-relationship"
         case .notAllowedNow: return "not-allowed-now"
         case .cannotEscalateYet: return "cannot-escalate-yet"

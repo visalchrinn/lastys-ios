@@ -82,6 +82,27 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Shared Moment | ពេលវេលាសំខាន់ដែលបានចែករំលែក |
 | Dismiss | បិទ |
 
+## Invite link
+
+| English | Khmer |
+|---|---|
+| Invite your partner | អញ្ជើញដៃគូរបស់អ្នក |
+| Invite sent · view | បានផ្ញើការអញ្ជើញ · មើល |
+| Partner not on Lastys yet? Send an invite link | ដៃគូមិនទាន់មាន Lastys មែនទេ? ផ្ញើតំណអញ្ជើញ |
+| Link with your partner | ភ្ជាប់ជាមួយដៃគូរបស់អ្នក |
+| Send your link. When they open it and accept, you're linked. | ផ្ញើតំណរបស់អ្នក។ ពេលគេបើកវា ហើយយល់ព្រម អ្នកទាំងពីរនឹងភ្ជាប់គ្នា។ |
+| Telegram | Telegram |
+| Messenger | Messenger |
+| Messages | សារ |
+| More | ច្រើនទៀត |
+| Waiting for your partner | កំពុងរង់ចាំដៃគូរបស់អ្នក |
+| Cancel invite | បោះបង់ការអញ្ជើញ |
+| Expires %@ | ផុតកំណត់ %@ |
+| Works for one person only. Expires after 7 days. | ប្រើបានសម្រាប់មនុស្សម្នាក់ប៉ុណ្ណោះ។ ផុតកំណត់ក្រោយ 7 ថ្ងៃ។ |
+| Link with me on Lastys: %@ | ភ្ជាប់ជាមួយខ្ញុំនៅលើ Lastys៖ %@ |
+| Invite links need an internet connection. | តំណអញ្ជើញត្រូវការអ៊ីនធឺណិត។ |
+| You can invite a partner only while you're Verified Single and not in a Cooling-off period. | អ្នកអាចអញ្ជើញដៃគូបានតែពេលអ្នកនៅលីវដែលបានផ្ទៀងផ្ទាត់ ហើយមិនស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត។ |
+
 ## Lucky Day Planner
 
 | English | Khmer |

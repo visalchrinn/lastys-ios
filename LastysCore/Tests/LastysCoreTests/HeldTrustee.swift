@@ -48,6 +48,9 @@ final class HeldTrustee: TrusteeClient, @unchecked Sendable {
     func sendRelationshipRequest(scanID: String) async throws -> RelationshipRequest { try await wrapped.sendRelationshipRequest(scanID: scanID) }
     func relationshipRequest(id: String) async throws -> RelationshipRequest { try await wrapped.relationshipRequest(id: id) }
     func respondToRelationshipRequest(id: String, accept: Bool) async throws { try await wrapped.respondToRelationshipRequest(id: id, accept: accept) }
+    func createInviteLink() async throws -> InviteLink { try await wrapped.createInviteLink() }
+    func myInviteLink() async throws -> InviteLink? { try await wrapped.myInviteLink() }
+    func cancelInviteLink() async throws { try await wrapped.cancelInviteLink() }
 
     func revokeLastysQR() async throws -> Int { try await wrapped.revokeLastysQR() }
 

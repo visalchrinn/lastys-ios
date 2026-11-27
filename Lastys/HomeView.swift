@@ -10,6 +10,7 @@ struct HomeView: View {
     @State private var showingScan = false
     @State private var showingRelationship = false
     @State private var showingVerifiedSingleCard = false
+    @State private var showingInvite = false
     @State private var editing: MomentEditorView.Target?
     @State private var viewing: Moment?
     /// A Moment just added, whose details open once the editor has closed.
@@ -58,6 +59,11 @@ struct HomeView: View {
         .sheet(isPresented: $showingVerifiedSingleCard) {
             VerifiedSingleCardSheet()
                 .environment(model)
+        }
+        .sheet(isPresented: $showingInvite) {
+            InvitePartnerSheet()
+                .environment(model)
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingRelationship) {
             RelationshipView()
@@ -221,6 +227,17 @@ struct HomeView: View {
                         .font(.jakarta(13))
                         .foregroundStyle(Theme.muted)
                 }
+            }
+            if model.canInvite {
+                Button {
+                    showingInvite = true
+                } label: {
+                    Label(
+                        model.isInviteSent ? LocalizedStringKey("Invite sent · view") : LocalizedStringKey("Invite your partner"),
+                        systemImage: "link"
+                    )
+                }
+                .buttonStyle(PrimaryButtonStyle())
             }
             if model.canShareVerifiedSingleCard {
                 Button("Share my Verified Single card") {

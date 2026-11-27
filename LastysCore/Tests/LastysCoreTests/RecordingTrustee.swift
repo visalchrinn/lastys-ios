@@ -52,6 +52,21 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         try await wrapped.respondToRelationshipRequest(id: id, accept: accept)
     }
 
+    func createInviteLink() async throws -> InviteLink {
+        record("createInviteLink()")
+        return try await wrapped.createInviteLink()
+    }
+
+    func myInviteLink() async throws -> InviteLink? {
+        record("myInviteLink()")
+        return try await wrapped.myInviteLink()
+    }
+
+    func cancelInviteLink() async throws {
+        record("cancelInviteLink()")
+        try await wrapped.cancelInviteLink()
+    }
+
     func sendEndRequest() async throws {
         record("sendEndRequest()")
         try await wrapped.sendEndRequest()

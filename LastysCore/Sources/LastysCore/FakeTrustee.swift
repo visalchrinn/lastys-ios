@@ -88,6 +88,8 @@ public actor FakeTrustee {
         var lastCreatedByPhone: [String: Date] = [:]
         /// Phone transfers on offer, by code.
         var transfers: [String: TransferRecord] = [:]
+        /// Invite links, by code.
+        var invites: [String: InviteRecord] = [:]
         /// What Trustee has to tell each Lastys ID, by Personal ID.
         var notices: [String: [Notice]] = [:]
 
@@ -110,6 +112,7 @@ public actor FakeTrustee {
             recoveries = try c.decodeIfPresent([String: RecoveryRecord].self, forKey: .recoveries) ?? [:]
             lastCreatedByPhone = try c.decodeIfPresent([String: Date].self, forKey: .lastCreatedByPhone) ?? [:]
             transfers = try c.decodeIfPresent([String: TransferRecord].self, forKey: .transfers) ?? [:]
+            invites = try c.decodeIfPresent([String: InviteRecord].self, forKey: .invites) ?? [:]
             notices = try c.decodeIfPresent([String: [Notice]].self, forKey: .notices) ?? [:]
             let earlierProfiles = try c.decodeIfPresent([String: EarlierProfile].self, forKey: .profileByLastysID) ?? [:]
             for id in lastysIDByPhone.values where people[id.personalID] == nil {
@@ -132,11 +135,12 @@ public actor FakeTrustee {
             try c.encode(recoveries, forKey: .recoveries)
             try c.encode(lastCreatedByPhone, forKey: .lastCreatedByPhone)
             try c.encode(transfers, forKey: .transfers)
+            try c.encode(invites, forKey: .invites)
             try c.encode(notices, forKey: .notices)
         }
 
         private enum CodingKeys: String, CodingKey {
-            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments, recoveries, lastCreatedByPhone, transfers, notices
+            case lastysIDByPhone, people, scans, requests, endings, sharedMoments, formerSharedMoments, recoveries, lastCreatedByPhone, transfers, invites, notices
             case profileByLastysID // written by the build from ticket #3
         }
 
@@ -321,6 +325,18 @@ public actor FakeTrustee {
 
         func respondToRelationshipRequest(id: String, accept: Bool) async throws {
             try await trustee.respondToRelationshipRequest(phone: phone, id: id, accept: accept)
+        }
+
+        func createInviteLink() async throws -> InviteLink {
+            try await trustee.createInviteLink(phone: phone)
+        }
+
+        func myInviteLink() async throws -> InviteLink? {
+            try await trustee.myInviteLink(phone: phone)
+        }
+
+        func cancelInviteLink() async throws {
+            try await trustee.cancelInviteLink(phone: phone)
         }
 
         func sendEndRequest() async throws {
