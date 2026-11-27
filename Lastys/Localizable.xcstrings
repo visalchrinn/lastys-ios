@@ -97,6 +97,38 @@
         }
       }
     },
+    "%lld days ago" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld days ago"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lld ថ្ងៃមុន"
+          }
+        }
+      }
+    },
+    "%lld days to go" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld days to go"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "នៅសល់ %lld ថ្ងៃ"
+          }
+        }
+      }
+    },
     "%lld Kaeut, %@ (sample lunar date)" : {
       "localizations" : {
         "en" : {
@@ -157,6 +189,38 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "+ បន្ថែម"
+          }
+        }
+      }
+    },
+    "1 day ago" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 day ago"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "១ ថ្ងៃមុន"
+          }
+        }
+      }
+    },
+    "1 day to go" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 day to go"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "នៅសល់ ១ ថ្ងៃ"
           }
         }
       }
@@ -657,6 +721,38 @@
         }
       }
     },
+    "Card preview" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Card preview"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មើលកាតជាមុន"
+          }
+        }
+      }
+    },
+    "Card style" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Card style"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "រចនាប័ទ្មកាត"
+          }
+        }
+      }
+    },
     "Change the photo" : {
       "localizations" : {
         "en" : {
@@ -929,6 +1025,22 @@
         }
       }
     },
+    "Couldn't make the card image. Try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't make the card image. Try again."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មិនអាចបង្កើតរូបភាពកាតបានទេ។ សូមព្យាយាមម្តងទៀត។"
+          }
+        }
+      }
+    },
     "Couldn't reach Lastys to check your status. Try again." : {
       "localizations" : {
         "en" : {
@@ -993,6 +1105,38 @@
         }
       }
     },
+    "Couldn't save the card. Try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save the card. Try again."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មិនអាចរក្សាទុកកាតបានទេ។ សូមព្យាយាមម្តងទៀត។"
+          }
+        }
+      }
+    },
+    "Countdown" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Countdown"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "រាប់ថយក្រោយ"
+          }
+        }
+      }
+    },
     "Create your Lastys ID first." : {
       "localizations" : {
         "en" : {
@@ -1037,6 +1181,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ផ្ទាល់ខ្លួន"
+          }
+        }
+      }
+    },
+    "Dark" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ងងឹត"
           }
         }
       }
@@ -1873,6 +2033,22 @@
         }
       }
     },
+    "It's today" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's today"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "គឺថ្ងៃនេះ"
+          }
+        }
+      }
+    },
     "Keep Lastys installed. You can close it; it checks again when you open it." : {
       "localizations" : {
         "en" : {
@@ -1965,6 +2141,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ព្រះរាជពិធីបុណ្យគ្រងរាជសម្បត្តិ"
+          }
+        }
+      }
+    },
+    "Lastys can't save to Photos. Allow it in Settings." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lastys can't save to Photos. Allow it in Settings."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Lastys មិនអាចរក្សាទុកក្នុងរូបថតបានទេ។ សូមអនុញ្ញាតនៅក្នុងការកំណត់។"
           }
         }
       }
@@ -2141,6 +2333,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ពេលវេលាសំខាន់"
+          }
+        }
+      }
+    },
+    "Moment card" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moment card"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "កាតពេលវេលាពិសេស"
           }
         }
       }
@@ -2679,6 +2887,22 @@
         }
       }
     },
+    "Our names" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Our names"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ឈ្មោះរបស់យើង"
+          }
+        }
+      }
+    },
     "Photo added" : {
       "localizations" : {
         "en" : {
@@ -2699,6 +2923,86 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photos" } },
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "រូបថត" } }
+      }
+    },
+    "Rose" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rose"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ផ្កាឈូក"
+          }
+        }
+      }
+    },
+    "Save image" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save image"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "រក្សាទុករូបភាព"
+          }
+        }
+      }
+    },
+    "Saved to Photos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to Photos"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បានរក្សាទុកក្នុងរូបថត"
+          }
+        }
+      }
+    },
+    "Share card" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share card"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ចែករំលែកកាត"
+          }
+        }
+      }
+    },
+    "Sharing is always your choice." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sharing is always your choice."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ការចែករំលែកគឺជាជម្រើសរបស់អ្នកជានិច្ច។"
+          }
+        }
       }
     },
     "The day we linked" : {
@@ -2729,6 +3033,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "សូមស្វាគមន៍"
+          }
+        }
+      }
+    },
+    "Your note never goes on the card. The card has no QR and doesn't show whether you're single or taken." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your note never goes on the card. The card has no QR and doesn't show whether you're single or taken."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "កំណត់ចំណាំរបស់អ្នកមិនដែលនៅលើកាតទេ។ កាតគ្មាន QR ហើយមិនបង្ហាញថាអ្នកនៅលីវ ឬមានគូទេ។"
           }
         }
       }

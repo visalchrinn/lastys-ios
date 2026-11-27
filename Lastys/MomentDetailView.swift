@@ -18,6 +18,7 @@ struct MomentDetailView: View {
     @State private var isAddingMedia = false
     @State private var showsMediaAdded = false
     @State private var hideMediaAdded: Task<Void, Never>?
+    @State private var makingCard = false
 
     private var moment: Moment { model.currentMoment(id: opened.id) ?? opened }
     private var isGone: Bool { model.currentMoment(id: opened.id) == nil }
@@ -45,6 +46,11 @@ struct MomentDetailView: View {
         .background(Theme.background.ignoresSafeArea())
         .sheet(isPresented: $editing) {
             MomentEditorView(editing: .existing(moment))
+                .environment(model)
+        }
+        .sheet(isPresented: $makingCard) {
+            // The card uses the photo open in the gallery.
+            MomentCardSheet(momentID: moment.id, photoIndex: selectedMedia)
                 .environment(model)
         }
         .confirmationDialog("Delete this Moment?", isPresented: $confirmingDelete, titleVisibility: .visible) {
@@ -344,6 +350,12 @@ struct MomentDetailView: View {
                     }
                     .buttonStyle(GhostButtonStyle())
                 }
+            }
+            if model.canMakeMomentCard(for: moment) {
+                Button { makingCard = true } label: {
+                    Label("Share card", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(GhostButtonStyle())
             }
             Button("Delete this Moment", role: .destructive) { confirmingDelete = true }
                 .font(.jakarta(14, .semibold))

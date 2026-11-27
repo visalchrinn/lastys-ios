@@ -170,14 +170,14 @@ extension VerifiedSingleCardProblem {
     }
 }
 
-/// The card image made at the moment of sharing, so the share sheet can be shown for it.
-private struct SharedCardImage: Identifiable {
+/// A card image made at the moment of sharing, so the share sheet can be shown for it.
+struct SharedCardImage: Identifiable {
     let id = UUID()
     let image: UIImage
 }
 
 /// The system share sheet for one image. For an image it offers Save Image, which saves it to Photos.
-private struct ActivityView: UIViewControllerRepresentable {
+struct ActivityView: UIViewControllerRepresentable {
     let image: UIImage
 
     func makeUIViewController(context: Context) -> UIActivityViewController {

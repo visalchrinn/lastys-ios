@@ -211,6 +211,31 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Birthday | ថ្ងៃកំណើត |
 | Custom | ផ្ទាល់ខ្លួន |
 
+## Moment card
+
+| English | Khmer |
+|---|---|
+| Share card | ចែករំលែកកាត |
+| Moment card | កាតពេលវេលាពិសេស |
+| Card preview | មើលកាតជាមុន |
+| Card style | រចនាប័ទ្មកាត |
+| Rose | ផ្កាឈូក |
+| Dark | ងងឹត |
+| Countdown | រាប់ថយក្រោយ |
+| Our names | ឈ្មោះរបស់យើង |
+| Your note never goes on the card. The card has no QR and doesn't show whether you're single or taken. | កំណត់ចំណាំរបស់អ្នកមិនដែលនៅលើកាតទេ។ កាតគ្មាន QR ហើយមិនបង្ហាញថាអ្នកនៅលីវ ឬមានគូទេ។ |
+| Save image | រក្សាទុករូបភាព |
+| Sharing is always your choice. | ការចែករំលែកគឺជាជម្រើសរបស់អ្នកជានិច្ច។ |
+| Couldn't make the card image. Try again. | មិនអាចបង្កើតរូបភាពកាតបានទេ។ សូមព្យាយាមម្តងទៀត។ |
+| Lastys can't save to Photos. Allow it in Settings. | Lastys មិនអាចរក្សាទុកក្នុងរូបថតបានទេ។ សូមអនុញ្ញាតនៅក្នុងការកំណត់។ |
+| Saved to Photos | បានរក្សាទុកក្នុងរូបថត |
+| Couldn't save the card. Try again. | មិនអាចរក្សាទុកកាតបានទេ។ សូមព្យាយាមម្តងទៀត។ |
+| It's today | គឺថ្ងៃនេះ |
+| 1 day to go | នៅសល់ ១ ថ្ងៃ |
+| %lld days to go | នៅសល់ %lld ថ្ងៃ |
+| 1 day ago | ១ ថ្ងៃមុន |
+| %lld days ago | %lld ថ្ងៃមុន |
+
 ## My Lastys QR
 
 | English | Khmer |

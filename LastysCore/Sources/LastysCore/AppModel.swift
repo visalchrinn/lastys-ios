@@ -807,6 +807,39 @@ public final class AppModel {
         Set(phone.moments.flatMap(\.media).map(\.fileName))
     }
 
+    // MARK: Moment card
+
+    /// Only a Moment's owner decides whether it leaves the app, so a Partner's Shared Moment has no card.
+    public func canMakeMomentCard(for moment: Moment) -> Bool {
+        phone.moments.contains { $0.id == moment.id }
+    }
+
+    /// The Moment card for one of my Moments, showing the photo at `photoIndex` (the one open in the gallery).
+    /// Nil for a Moment that isn't mine.
+    public func momentCard(for id: UUID, photoIndex: Int = 0, options: MomentCardOptions) -> MomentCard? {
+        guard let moment = phone.moments.first(where: { $0.id == id }) else { return nil }
+        let days = calendar.dateComponents([.day], from: today, to: calendar.startOfDay(for: moment.date)).day ?? 0
+        let countdown: MomentCard.Countdown = days > 0 ? .daysToGo(days) : days == 0 ? .today : .daysAgo(-days)
+        let names: MomentCard.Names? = {
+            guard case .active(let partner, _, _) = relationship else { return nil }
+            return MomentCard.Names(mine: nickname, partner: partner)
+        }()
+        let photo = moment.media.isEmpty ? nil : moment.media[min(max(photoIndex, 0), moment.media.count - 1)]
+        return MomentCard(
+            style: options.style,
+            type: moment.type,
+            title: moment.title,
+            date: moment.date,
+            photo: options.showsPhoto ? photo : nil,
+            place: options.showsPlace && !moment.place.isEmpty ? moment.place : nil,
+            countdown: options.showsCountdown ? countdown : nil,
+            names: options.showsNames ? names : nil,
+            offersPhoto: photo != nil,
+            offersPlace: !moment.place.isEmpty,
+            offersNames: names != nil
+        )
+    }
+
     // MARK: Reminders
 
     /// The Moment as it is now, mine or my Partner's; nil once it has been deleted.
