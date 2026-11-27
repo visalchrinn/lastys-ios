@@ -687,7 +687,8 @@ public final class AppModel {
         guard canSave(draft) else { return nil }
         let moment = Moment(
             type: draft.type, title: Self.trimmed(draft.title), date: draft.date,
-            repeatsOnKhmerLunarDate: draft.repeatsOnKhmerLunarDate, media: draft.media
+            repeatsOnKhmerLunarDate: draft.repeatsOnKhmerLunarDate, media: Array(draft.media.prefix(Moment.maxMedia)),
+            place: Self.trimmed(draft.place), note: Self.trimmed(draft.note)
         )
         phone.moments.append(moment)
         scheduleReminders()
@@ -701,7 +702,9 @@ public final class AppModel {
         moment.title = Self.trimmed(draft.title)
         moment.date = draft.date
         moment.repeatsOnKhmerLunarDate = draft.repeatsOnKhmerLunarDate
-        moment.media = draft.media
+        moment.media = Array(draft.media.prefix(Moment.maxMedia))
+        moment.place = Self.trimmed(draft.place)
+        moment.note = Self.trimmed(draft.note)
         phone.moments[index] = moment
         scheduleReminders()
         if moment.isShared { Task { await syncSharedMoments() } }
@@ -716,10 +719,20 @@ public final class AppModel {
 
     /// The media files Moments still use, so the phone can remove the rest.
     public var mediaFileNamesInUse: Set<String> {
-        Set(phone.moments.compactMap(\.media?.fileName))
+        Set(phone.moments.flatMap(\.media).map(\.fileName))
     }
 
     // MARK: Reminders
+
+    /// The Moment as it is now, mine or my Partner's; nil once it has been deleted.
+    public func currentMoment(id: UUID) -> Moment? {
+        allMoments.first { $0.id == id }
+    }
+
+    /// When this Moment next falls, for its details screen.
+    public func nextTime(for moment: Moment) -> UpcomingMoment {
+        upcoming(moment)
+    }
 
     private func upcoming(_ moment: Moment) -> UpcomingMoment {
         let date = nextOccurrence(of: moment, onOrAfter: today)
@@ -1333,7 +1346,7 @@ extension AppModel {
         let key = SymmetricKey(size: .bits256)
         do {
             var bundle = phone
-            for index in bundle.moments.indices { bundle.moments[index].media = nil }
+            for index in bundle.moments.indices { bundle.moments[index].media = [] }
             guard let sealed = try AES.GCM.seal(JSONEncoder().encode(bundle), using: key).combined else {
                 phoneMoveProblem = .couldNotReachLastys
                 return

@@ -109,14 +109,21 @@ public struct Moment: Identifiable, Codable, Equatable, Sendable {
     public var title: String
     public var date: Date
     public var repeatsOnKhmerLunarDate: Bool
-    /// An optional photo or video, kept as a file on this phone.
-    public var media: MomentMedia?
+    /// Up to `maxMedia` photos or videos, kept as files on this phone.
+    public var media: [MomentMedia]
+    /// Where it happened. Personal: never shared with a Partner.
+    public var place: String
+    /// What made it special. Personal: never shared with a Partner.
+    public var note: String
     /// Shared into the Relationship, so the Partner sees it too (#10). Quick hide hides these.
     public var isShared: Bool
 
+    public static let maxMedia = 6
+
     public init(
         id: UUID = UUID(), type: MomentType, title: String, date: Date,
-        repeatsOnKhmerLunarDate: Bool = false, media: MomentMedia? = nil, isShared: Bool = false
+        repeatsOnKhmerLunarDate: Bool = false, media: [MomentMedia] = [], place: String = "", note: String = "",
+        isShared: Bool = false
     ) {
         self.id = id
         self.type = type
@@ -124,7 +131,33 @@ public struct Moment: Identifiable, Codable, Equatable, Sendable {
         self.date = date
         self.repeatsOnKhmerLunarDate = repeatsOnKhmerLunarDate
         self.media = media
+        self.place = place
+        self.note = note
         self.isShared = isShared
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, type, title, date, repeatsOnKhmerLunarDate, media, place, note, isShared
+    }
+
+    /// Reads saves from earlier builds: `media` was one optional file, and there was no place or note.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        type = try c.decode(MomentType.self, forKey: .type)
+        title = try c.decode(String.self, forKey: .title)
+        date = try c.decode(Date.self, forKey: .date)
+        repeatsOnKhmerLunarDate = try c.decodeIfPresent(Bool.self, forKey: .repeatsOnKhmerLunarDate) ?? false
+        if let many = try? c.decodeIfPresent([MomentMedia].self, forKey: .media) {
+            media = many
+        } else if let one = try? c.decodeIfPresent(MomentMedia.self, forKey: .media) {
+            media = [one]
+        } else {
+            media = []
+        }
+        place = try c.decodeIfPresent(String.self, forKey: .place) ?? ""
+        note = try c.decodeIfPresent(String.self, forKey: .note) ?? ""
+        isShared = try c.decodeIfPresent(Bool.self, forKey: .isShared) ?? false
     }
 }
 
@@ -163,14 +196,21 @@ public struct MomentDraft: Equatable, Sendable {
     public var title: String
     public var date: Date
     public var repeatsOnKhmerLunarDate: Bool
-    public var media: MomentMedia?
+    public var media: [MomentMedia]
+    public var place: String
+    public var note: String
 
-    public init(type: MomentType, title: String, date: Date, repeatsOnKhmerLunarDate: Bool, media: MomentMedia? = nil) {
+    public init(
+        type: MomentType, title: String, date: Date, repeatsOnKhmerLunarDate: Bool,
+        media: [MomentMedia] = [], place: String = "", note: String = ""
+    ) {
         self.type = type
         self.title = title
         self.date = date
         self.repeatsOnKhmerLunarDate = repeatsOnKhmerLunarDate
         self.media = media
+        self.place = place
+        self.note = note
     }
 }
 

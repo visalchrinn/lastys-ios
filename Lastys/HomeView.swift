@@ -11,6 +11,7 @@ struct HomeView: View {
     @State private var showingRelationship = false
     @State private var showingVerifiedSingleCard = false
     @State private var editing: MomentEditorView.Target?
+    @State private var viewing: Moment?
     #if DEBUG
     @Environment(\.demoTrustee) private var demoTrustee
     #else
@@ -318,7 +319,7 @@ struct HomeView: View {
                 } else {
                     ForEach(model.upcomingMoments) { upcoming in
                         Button {
-                            editing = .existing(upcoming.moment)
+                            viewing = upcoming.moment
                         } label: {
                             UpcomingRow(upcoming: upcoming)
                         }
@@ -336,7 +337,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(model.timeline) { moment in
                         Button {
-                            editing = .existing(moment)
+                            viewing = moment
                         } label: {
                             TimelineRow(moment: moment, isUpcoming: model.isUpcoming(moment))
                         }
@@ -352,6 +353,10 @@ struct HomeView: View {
         }
         .sheet(item: $editing) { target in
             MomentEditorView(editing: target)
+                .environment(model)
+        }
+        .sheet(item: $viewing) { moment in
+            MomentDetailView(opened: moment)
                 .environment(model)
         }
     }
@@ -461,10 +466,10 @@ private struct SharedBadge: View {
 
 /// A small mark when a Moment carries a photo or video.
 private struct MomentMediaBadge: View {
-    let media: MomentMedia?
+    let media: [MomentMedia]
 
     var body: some View {
-        if let media {
+        if let media = media.first {
             Image(systemName: media.kind == .video ? "video.fill" : "photo.fill")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Theme.muted)

@@ -269,6 +269,25 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Choose a photo | ជ្រើសរើសរូបថត |
 | Photo | រូបថត |
 | Optional | ស្រេចចិត្ត |
+| Add | បន្ថែម |
+| Photos | រូបថត |
+| · optional, up to 6 | · ស្រេចចិត្ត ច្រើនបំផុត 6 |
+| Place | ទីកន្លែង |
+| e.g. Riverside, Phnom Penh | ឧ. ច្រាំងទន្លេ ភ្នំពេញ |
+| Note | កំណត់ចំណាំ |
+| What made it special? | តើអ្វីធ្វើឱ្យវាពិសេស? |
+| No photo yet | មិនទាន់មានរូបថត |
+| Personal | ផ្ទាល់ខ្លួន |
+| Shared | បានចែករំលែក |
+| Repeats | ធ្វើម្ដងទៀត |
+| Reminders | ការរំលឹក |
+| Added by | បន្ថែមដោយ |
+| You | អ្នក |
+| Every year | រៀងរាល់ឆ្នាំ |
+| Every year, on the Khmer lunar date | រៀងរាល់ឆ្នាំ តាមកាលបរិច្ឆេទចន្ទគតិខ្មែរ |
+| 7 days before, 1 day before and on the day | 7 ថ្ងៃមុន 1 ថ្ងៃមុន និងនៅថ្ងៃនោះ |
+| days to go | ថ្ងៃទៀត |
+| day to go | ថ្ងៃទៀត |
 | Remove photo | លុបរូបថត |
 | e.g. Srey Pich | ឧ. ស្រីពេជ្រ |
 | Add your birth date | បន្ថែមថ្ងៃខែឆ្នាំកំណើតរបស់អ្នក |

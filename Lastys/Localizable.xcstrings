@@ -2737,6 +2737,120 @@
         }
       }
     },
+    "Add" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "បន្ថែម" } }
+      }
+    },
+    "Photos" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photos" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "រូបថត" } }
+      }
+    },
+    "· optional, up to 6" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "· optional, up to 6" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "· ស្រេចចិត្ត ច្រើនបំផុត 6" } }
+      }
+    },
+    "Place" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Place" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ទីកន្លែង" } }
+      }
+    },
+    "e.g. Riverside, Phnom Penh" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "e.g. Riverside, Phnom Penh" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ឧ. ច្រាំងទន្លេ ភ្នំពេញ" } }
+      }
+    },
+    "Note" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Note" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "កំណត់ចំណាំ" } }
+      }
+    },
+    "What made it special?" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "What made it special?" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "តើអ្វីធ្វើឱ្យវាពិសេស?" } }
+      }
+    },
+    "No photo yet" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No photo yet" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "មិនទាន់មានរូបថត" } }
+      }
+    },
+    "Personal" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Personal" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ផ្ទាល់ខ្លួន" } }
+      }
+    },
+    "Shared" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shared" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "បានចែករំលែក" } }
+      }
+    },
+    "Repeats" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Repeats" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ធ្វើម្ដងទៀត" } }
+      }
+    },
+    "Reminders" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reminders" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ការរំលឹក" } }
+      }
+    },
+    "Added by" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Added by" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "បន្ថែមដោយ" } }
+      }
+    },
+    "You" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "អ្នក" } }
+      }
+    },
+    "Every year" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Every year" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "រៀងរាល់ឆ្នាំ" } }
+      }
+    },
+    "Every year, on the Khmer lunar date" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Every year, on the Khmer lunar date" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "រៀងរាល់ឆ្នាំ តាមកាលបរិច្ឆេទចន្ទគតិខ្មែរ" } }
+      }
+    },
+    "7 days before, 1 day before and on the day" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "7 days before, 1 day before and on the day" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "7 ថ្ងៃមុន 1 ថ្ងៃមុន និងនៅថ្ងៃនោះ" } }
+      }
+    },
+    "days to go" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "days to go" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ថ្ងៃទៀត" } }
+      }
+    },
+    "day to go" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "day to go" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ថ្ងៃទៀត" } }
+      }
+    },
     "Optional" : {
       "localizations" : {
         "en" : {

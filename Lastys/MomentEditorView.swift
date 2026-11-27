@@ -22,7 +22,7 @@ struct MomentEditorView: View {
     let editing: Target
 
     @State private var draft: MomentDraft
-    @State private var mediaItem: PhotosPickerItem?
+    @State private var pickedItems: [PhotosPickerItem] = []
     @State private var isLoadingMedia = false
     @State private var confirmingDelete = false
 
@@ -34,7 +34,8 @@ struct MomentEditorView: View {
         case .existing(let moment):
             _draft = State(initialValue: MomentDraft(
                 type: moment.type, title: moment.title, date: moment.date,
-                repeatsOnKhmerLunarDate: moment.repeatsOnKhmerLunarDate, media: moment.media
+                repeatsOnKhmerLunarDate: moment.repeatsOnKhmerLunarDate, media: moment.media,
+                place: moment.place, note: moment.note
             ))
         }
     }
@@ -50,114 +51,249 @@ struct MomentEditorView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let existing, isPartners {
-                    Section {
-                        LabeledContent("Type") { Text(existing.type.title) }
-                        LabeledContent("Title") { Text(verbatim: existing.title) }
-                        LabeledContent("Date") { Text(existing.date, format: .dateTime.day().month().year()) }
-                        if existing.repeatsOnKhmerLunarDate {
-                            Text("Repeats every year on its Khmer lunar date (sample)")
-                        }
-                    } footer: {
-                        Text("Shared by \(model.partnerNickname). Only they can change it.")
-                    }
-                } else {
-                    editableSections
+        VStack(spacing: 0) {
+            header
+            if let existing, isPartners {
+                partnerForm(existing)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) { editableSections }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                        .padding(.bottom, 32)
                 }
+                .scrollDismissesKeyboard(.interactively)
             }
-            .navigationTitle(existing == nil ? LocalizedStringKey("New Moment") : LocalizedStringKey("Moment"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(isPartners ? LocalizedStringKey("Done") : LocalizedStringKey("Cancel")) { dismiss() }
-                }
-                if !isPartners {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            if let existing {
-                                model.updateMoment(id: existing.id, to: draft)
-                            } else {
-                                model.addMoment(draft)
-                            }
-                            dismiss()
-                        }
-                        .disabled(!model.canSave(draft) || isLoadingMedia)
-                    }
-                }
+        }
+        .background(Theme.background.ignoresSafeArea())
+        .confirmationDialog("Delete this Moment?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                if let existing { model.deleteMoment(id: existing.id) }
+                dismiss()
             }
-            .confirmationDialog("Delete this Moment?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-                Button("Delete", role: .destructive) {
-                    if let existing { model.deleteMoment(id: existing.id) }
-                    dismiss()
+        }
+        .onChange(of: pickedItems) { _, items in
+            guard !items.isEmpty else { return }
+            pickedItems = []
+            isLoadingMedia = true
+            Task {
+                for item in items where draft.media.count < Moment.maxMedia {
+                    if let saved = try? await MomentMediaFiles.save(item) { draft.media.append(saved) }
                 }
-            }
-            .onChange(of: mediaItem) { _, item in
-                guard let item else { return }
-                isLoadingMedia = true
-                Task {
-                    draft.media = (try? await MomentMediaFiles.save(item)) ?? draft.media
-                    isLoadingMedia = false
-                }
+                isLoadingMedia = false
             }
         }
     }
 
+    private var header: some View {
+        HStack {
+            Text(existing == nil ? LocalizedStringKey("New Moment") : LocalizedStringKey("Moment"))
+                .font(.jakarta(20, .bold))
+                .tracking(-0.2)
+                .foregroundStyle(Theme.ink)
+                .accessibilityAddTraits(.isHeader)
+            Spacer()
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.ink)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel(isPartners ? LocalizedStringKey("Done") : LocalizedStringKey("Cancel"))
+        }
+        .padding(.leading, 20)
+        .padding(.trailing, 12)
+        .padding(.top, 12)
+        .padding(.bottom, 4)
+    }
+
+    private func partnerForm(_ existing: Moment) -> some View {
+        Form {
+            Section {
+                LabeledContent("Type") { Text(existing.type.title) }
+                LabeledContent("Title") { Text(verbatim: existing.title) }
+                LabeledContent("Date") { Text(existing.date, format: .dateTime.day().month().year()) }
+                if existing.repeatsOnKhmerLunarDate {
+                    Text("Repeats every year on its Khmer lunar date (sample)")
+                }
+            } footer: {
+                Text("Shared by \(model.partnerNickname). Only they can change it.")
+            }
+        }
+        .scrollContentBackground(.hidden)
+    }
+
+    private func fieldLabel(_ key: LocalizedStringKey) -> some View {
+        Text(key).font(.jakarta(14, .semibold)).foregroundStyle(Theme.ink)
+    }
+
+    private func optionalLabel(_ key: LocalizedStringKey) -> some View {
+        (Text(key) + Text(verbatim: " ") + Text("Optional").foregroundColor(Theme.muted).font(.jakarta(12, .medium)))
+            .font(.jakarta(14, .semibold))
+            .foregroundStyle(Theme.ink)
+    }
+
+    private var fieldBackground: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(Theme.surface)
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Theme.fieldBorder, lineWidth: 1))
+    }
+
     @ViewBuilder
     private var editableSections: some View {
-                Section {
-                    Picker("Type", selection: $draft.type) {
-                        ForEach(MomentType.allCases, id: \.self) { type in
-                            Text(type.title).tag(type)
-                        }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(MomentType.allCases, id: \.self) { type in
+                    let selected = draft.type == type
+                    Button { draft.type = type } label: {
+                        Text(type.title)
+                            .font(.jakarta(14, .semibold))
+                            .foregroundStyle(selected ? Color.white : Theme.ink)
+                            .padding(.horizontal, 14)
+                            .frame(height: 40)
+                            .background(Capsule().fill(selected ? Theme.ink : Theme.surface))
+                            .overlay(Capsule().strokeBorder(selected ? Theme.ink : Theme.fieldBorder, lineWidth: 1))
                     }
-                    TextField("Title, e.g. Mom's birthday", text: $draft.title)
-                    DatePicker("Date", selection: $draft.date, displayedComponents: .date)
+                    .buttonStyle(.plain)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
+            }
+        }
 
-                Section {
-                    Toggle("Repeat every year on its Khmer lunar date", isOn: $draft.repeatsOnKhmerLunarDate)
-                        .tint(Theme.rose)
-                } footer: {
-                    Text("Otherwise it comes back on the same date every year. Khmer lunar dates are samples until the cultural advisor's rules arrive.")
+        VStack(alignment: .leading, spacing: 6) {
+            fieldLabel("Title")
+            TextField("Title, e.g. Mom's birthday", text: $draft.title)
+                .font(.jakarta(15, .medium))
+                .padding(.horizontal, 14)
+                .frame(height: 48)
+                .background(fieldBackground)
+        }
+
+        VStack(alignment: .leading, spacing: 6) {
+            fieldLabel("Date")
+            HStack {
+                DatePicker("Date", selection: $draft.date, displayedComponents: .date)
+                    .labelsHidden()
+                    .tint(Theme.rose)
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 48)
+            .background(fieldBackground)
+        }
+
+        VStack(alignment: .leading, spacing: 8) {
+            (Text("Photos") + Text(verbatim: " ") + Text("· optional, up to 6").foregroundColor(Theme.muted).fontWeight(.medium))
+                .font(.jakarta(14, .semibold))
+                .foregroundStyle(Theme.ink)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 4), spacing: 8) {
+                ForEach(Array(draft.media.enumerated()), id: \.element) { index, media in
+                    MediaThumbnail(media: media) { draft.media.remove(at: index) }
                 }
-
-                Section {
-                    PhotosPicker(selection: $mediaItem, matching: .any(of: [.images, .videos])) {
-                        Label(draft.media == nil ? LocalizedStringKey("Add a photo or video") : LocalizedStringKey("Change the photo or video"), systemImage: "photo.on.rectangle")
-                    }
-                    if isLoadingMedia {
-                        ProgressView()
-                    } else if let media = draft.media {
-                        Label(media.kind == .video ? LocalizedStringKey("Video attached") : LocalizedStringKey("Photo attached"), systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(Theme.green)
-                        Button("Remove it", role: .destructive) { draft.media = nil }
-                    }
-                } footer: {
-                    Text("Reminders come 7 days before, the day before and on the day, every year. Personal Moments never leave this phone.")
-                }
-
-                if let existing, !isPartners {
-                    Section {
-                        if model.canShare(existing) {
-                            Button("Share with \(model.partnerNickname)") {
-                                Task { await model.share(existing.id); dismiss() }
+                if draft.media.count < Moment.maxMedia {
+                    PhotosPicker(
+                        selection: $pickedItems,
+                        maxSelectionCount: Moment.maxMedia - draft.media.count,
+                        matching: .any(of: [.images, .videos])
+                    ) {
+                        VStack(spacing: 4) {
+                            if isLoadingMedia {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "photo.on.rectangle").font(.system(size: 20))
+                                Text("Add").font(.jakarta(12, .semibold))
                             }
-                        } else if model.canStopSharing(existing) {
-                            Button("Stop sharing") {
-                                Task { await model.stopSharing(existing.id); dismiss() }
-                            }
                         }
-                    } footer: {
-                        if model.canShare(existing) || model.canStopSharing(existing) {
-                            Text("A Shared Moment's title, type and date reach your Partner through Lastys. Its photo or video stays on this phone.")
-                        }
+                        .foregroundStyle(Theme.muted)
+                        .frame(maxWidth: .infinity)
+                        .aspectRatio(1, contentMode: .fit)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Theme.surface)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .strokeBorder(Color(hex: 0xD6CFCA), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                                )
+                        )
                     }
-                    Section {
-                        Button("Delete this Moment", role: .destructive) { confirmingDelete = true }
-                    }
+                    .disabled(isLoadingMedia)
                 }
+            }
+        }
+
+        VStack(alignment: .leading, spacing: 6) {
+            optionalLabel("Place")
+            TextField("e.g. Riverside, Phnom Penh", text: $draft.place)
+                .font(.jakarta(15, .medium))
+                .padding(.horizontal, 14)
+                .frame(height: 48)
+                .background(fieldBackground)
+        }
+
+        VStack(alignment: .leading, spacing: 6) {
+            optionalLabel("Note")
+            TextField("What made it special?", text: $draft.note, axis: .vertical)
+                .font(.jakarta(15, .medium))
+                .lineLimit(3...6)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(minHeight: 88, alignment: .topLeading)
+                .background(fieldBackground)
+        }
+
+        Toggle(isOn: $draft.repeatsOnKhmerLunarDate) {
+            Text("Repeat every year on its Khmer lunar date")
+                .font(.jakarta(15, .semibold))
+                .foregroundStyle(Theme.ink)
+        }
+        .tint(Theme.rose)
+        .card()
+
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Otherwise it comes back on the same date every year. Khmer lunar dates are samples until the cultural advisor's rules arrive.")
+            Text("Reminders come 7 days before, the day before and on the day, every year. Personal Moments never leave this phone.")
+        }
+        .font(.jakarta(13))
+        .foregroundStyle(Theme.ink)
+        .lineSpacing(3)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color(hex: 0xF6F1EE)))
+
+        Button("Save") {
+            if let existing {
+                model.updateMoment(id: existing.id, to: draft)
+            } else {
+                model.addMoment(draft)
+            }
+            dismiss()
+        }
+        .buttonStyle(PrimaryButtonStyle())
+        .disabled(!model.canSave(draft) || isLoadingMedia)
+
+        if let existing {
+            VStack(alignment: .leading, spacing: 10) {
+                if model.canShare(existing) {
+                    Button("Share with \(model.partnerNickname)") {
+                        Task { await model.share(existing.id); dismiss() }
+                    }
+                    .buttonStyle(GhostButtonStyle())
+                } else if model.canStopSharing(existing) {
+                    Button("Stop sharing") {
+                        Task { await model.stopSharing(existing.id); dismiss() }
+                    }
+                    .buttonStyle(GhostButtonStyle())
+                }
+                if model.canShare(existing) || model.canStopSharing(existing) {
+                    Text("A Shared Moment's title, type and date reach your Partner through Lastys. Its photo or video stays on this phone.")
+                        .font(.jakarta(12))
+                        .foregroundStyle(Theme.muted)
+                }
+                Button("Delete this Moment", role: .destructive) { confirmingDelete = true }
+                    .font(.jakarta(14, .semibold))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+        }
     }
 }
 
@@ -170,6 +306,39 @@ extension MomentType {
         case .birthday: return "Birthday"
         case .custom: return "Custom"
         }
+    }
+}
+
+/// One attached photo or video in the editor's grid, with a remove button.
+private struct MediaThumbnail: View {
+    let media: MomentMedia
+    let remove: () -> Void
+
+    var body: some View {
+        Color.clear
+            .aspectRatio(1, contentMode: .fit)
+            .overlay {
+                if media.kind == .photo, let image = UIImage(contentsOfFile: MomentMediaFiles.url(for: media).path) {
+                    Image(uiImage: image).resizable().scaledToFill()
+                } else {
+                    ZStack {
+                        Theme.roseTint
+                        Image(systemName: media.kind == .video ? "video.fill" : "photo.fill").foregroundStyle(Theme.rose)
+                    }
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(alignment: .topTrailing) {
+                Button(action: remove) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(Theme.ink.opacity(0.75)))
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Remove it")
+            }
     }
 }
 

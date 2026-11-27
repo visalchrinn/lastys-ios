@@ -25,6 +25,41 @@ struct MomentsTests {
         MomentDraft(type: type, title: title, date: date, repeatsOnKhmerLunarDate: lunar)
     }
 
+    @Test func aMomentKeepsItsPlaceNoteAndAtMostSixPhotos() throws {
+        let phone = phone()
+        let photos = (0..<8).map { MomentMedia(kind: .photo, fileName: "\($0).jpg") }
+        let moment = try #require(phone.model.addMoment(MomentDraft(
+            type: .firstDate, title: "Coffee", date: Self.date(2026, 12, 2), repeatsOnKhmerLunarDate: false,
+            media: photos, place: "  Riverside ", note: " Sunny day "
+        )))
+        #expect(moment.media.count == Moment.maxMedia)
+        #expect(moment.place == "Riverside")
+        #expect(moment.note == "Sunny day")
+        #expect(phone.model.mediaFileNamesInUse == Set(photos.prefix(6).map(\.fileName)))
+    }
+
+    @Test func aMomentsDetailsShowItsNextOccurrenceAndFollowEdits() throws {
+        let phone = phone()
+        let moment = try #require(phone.model.addMoment(draft("Mom's birthday", Self.date(1970, 11, 29), type: .birthday)))
+        #expect(phone.model.nextTime(for: moment).daysUntil == 5)
+        phone.model.updateMoment(id: moment.id, to: draft("Mum's birthday", Self.date(1970, 11, 29), type: .birthday))
+        #expect(phone.model.currentMoment(id: moment.id)?.title == "Mum's birthday")
+        phone.model.deleteMoment(id: moment.id)
+        #expect(phone.model.currentMoment(id: moment.id) == nil)
+    }
+
+    @Test func aMomentSavedWithOnePhotoStillLoads() throws {
+        let id = UUID()
+        let json = """
+        {"id":"\(id.uuidString)","type":"birthday","title":"Mom","date":0,"repeatsOnKhmerLunarDate":false,
+         "media":{"kind":"photo","fileName":"a.jpg"},"isShared":false}
+        """
+        let moment = try JSONDecoder().decode(Moment.self, from: Data(json.utf8))
+        #expect(moment.media == [MomentMedia(kind: .photo, fileName: "a.jpg")])
+        #expect(moment.place == "")
+        #expect(moment.note == "")
+    }
+
     @Test func aMomentNeedsATitle() {
         let phone = phone()
 
