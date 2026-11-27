@@ -731,6 +731,25 @@ public final class AppModel {
         if moment.isShared { Task { await syncSharedMoments() } }
     }
 
+    /// One of my own Moments with room for another photo or video.
+    public func canAddMedia(to moment: Moment) -> Bool {
+        guard let mine = phone.moments.first(where: { $0.id == moment.id }) else { return false }
+        return mine.media.count < Moment.maxMedia
+    }
+
+    /// Adds photos or videos to one of my Moments straight from its details, after the ones it has,
+    /// up to `Moment.maxMedia` in all. Media stays on this phone, so nothing is synced.
+    /// - Returns: how many were added.
+    @discardableResult
+    public func addMedia(_ media: [MomentMedia], to id: UUID) -> Int {
+        guard let index = phone.moments.firstIndex(where: { $0.id == id }) else { return 0 }
+        let room = max(0, Moment.maxMedia - phone.moments[index].media.count)
+        let added = Array(media.prefix(room))
+        guard !added.isEmpty else { return 0 }
+        phone.moments[index].media += added
+        return added.count
+    }
+
     public func deleteMoment(id: UUID) {
         let wasShared = phone.moments.first { $0.id == id }?.isShared ?? false
         phone.moments.removeAll { $0.id == id }

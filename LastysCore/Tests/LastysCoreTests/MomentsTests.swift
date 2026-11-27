@@ -126,6 +126,51 @@ struct MomentsTests {
         #expect(phone.model.timeline.isEmpty)
     }
 
+    @Test func photosAddedFromDetailsGoAfterTheOnesAlreadyThereInOrder() throws {
+        let phone = phone()
+        let moment = try #require(phone.model.addMoment(MomentDraft(
+            type: .birthday, title: "Mom's birthday", date: Self.date(2026, 12, 2), repeatsOnKhmerLunarDate: false,
+            media: [MomentMedia(kind: .photo, fileName: "cake.jpg")]
+        )))
+        #expect(phone.model.canAddMedia(to: moment))
+
+        let added = phone.model.addMedia(
+            [MomentMedia(kind: .photo, fileName: "candles.jpg"), MomentMedia(kind: .video, fileName: "song.mov")],
+            to: moment.id
+        )
+
+        #expect(added == 2)
+        #expect(phone.model.currentMoment(id: moment.id)?.media.map(\.fileName) == ["cake.jpg", "candles.jpg", "song.mov"])
+        #expect(phone.model.mediaFileNamesInUse.contains("song.mov"))
+    }
+
+    @Test func addingMorePhotosFromDetailsThanFitKeepsSixInAll() throws {
+        let phone = phone()
+        let five = (0..<5).map { MomentMedia(kind: .photo, fileName: "\($0).jpg") }
+        let moment = try #require(phone.model.addMoment(MomentDraft(
+            type: .custom, title: "Trip", date: Self.date(2026, 12, 2), repeatsOnKhmerLunarDate: false, media: five
+        )))
+
+        let added = phone.model.addMedia([MomentMedia(kind: .photo, fileName: "a.jpg"), MomentMedia(kind: .photo, fileName: "b.jpg")], to: moment.id)
+
+        #expect(added == 1)
+        let media = try #require(phone.model.currentMoment(id: moment.id)?.media)
+        #expect(media.count == Moment.maxMedia)
+        #expect(media.last?.fileName == "a.jpg")
+        #expect(!phone.model.canAddMedia(to: try #require(phone.model.currentMoment(id: moment.id))))
+        #expect(phone.model.addMedia([MomentMedia(kind: .photo, fileName: "c.jpg")], to: moment.id) == 0)
+    }
+
+    @Test func photosAddedFromDetailsAreKeptAcrossALaunch() throws {
+        let phone = phone()
+        let moment = try #require(phone.model.addMoment(draft("Coffee", Self.date(2026, 12, 2))))
+
+        phone.model.addMedia([MomentMedia(kind: .photo, fileName: "latte.jpg")], to: moment.id)
+        phone.relaunch()
+
+        #expect(phone.model.currentMoment(id: moment.id)?.media == [MomentMedia(kind: .photo, fileName: "latte.jpg")])
+    }
+
     @Test func personalMomentsStayOnThePhoneAcrossALaunchAndNeverReachTrustee() async {
         let phone = phone()
         await phone.onboard()

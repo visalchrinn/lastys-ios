@@ -20,14 +20,17 @@ struct MomentEditorView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     let editing: Target
+    /// Called with a new Moment once it's saved, so the screen behind can open its details.
+    let onAdded: (Moment) -> Void
 
     @State private var draft: MomentDraft
     @State private var pickedItems: [PhotosPickerItem] = []
     @State private var isLoadingMedia = false
     @State private var confirmingDelete = false
 
-    init(editing: Target) {
+    init(editing: Target, onAdded: @escaping (Moment) -> Void = { _ in }) {
         self.editing = editing
+        self.onAdded = onAdded
         switch editing {
         case .new:
             _draft = State(initialValue: MomentDraft(type: .birthday, title: "", date: Date(), repeatsOnKhmerLunarDate: false))
@@ -263,8 +266,8 @@ struct MomentEditorView: View {
         Button("Save") {
             if let existing {
                 model.updateMoment(id: existing.id, to: draft)
-            } else {
-                model.addMoment(draft)
+            } else if let added = model.addMoment(draft) {
+                onAdded(added)
             }
             dismiss()
         }

@@ -153,6 +153,18 @@ struct SharedMomentTests {
         #expect(dara.reminders.scheduled.isEmpty)
     }
 
+    @Test func onlyItsOwnerCanAddPhotosToASharedMoment() async throws {
+        let (dara, me) = try await partners()
+        let shared = try #require(me.model.addMoment(firstDate))
+        await me.model.share(shared.id)
+        await dara.model.start()
+        let darasCopy = try #require(dara.model.timeline.first)
+
+        #expect(!dara.model.canAddMedia(to: darasCopy))
+        #expect(dara.model.addMedia([MomentMedia(kind: .photo, fileName: "mine.jpg")], to: darasCopy.id) == 0)
+        #expect(dara.model.timeline.first?.media.isEmpty == true)
+    }
+
     @Test func sharingWithoutInternetSaysSoAndSharesNothing() async throws {
         let (dara, me) = try await partners()
         let moment = try #require(me.model.addMoment(firstDate))

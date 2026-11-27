@@ -12,6 +12,8 @@ struct HomeView: View {
     @State private var showingVerifiedSingleCard = false
     @State private var editing: MomentEditorView.Target?
     @State private var viewing: Moment?
+    /// A Moment just added, whose details open once the editor has closed.
+    @State private var justAdded: Moment?
     #if DEBUG
     @Environment(\.demoTrustee) private var demoTrustee
     #else
@@ -351,8 +353,14 @@ struct HomeView: View {
                 .padding(.leading, 6)
             }
         }
-        .sheet(item: $editing) { target in
-            MomentEditorView(editing: target)
+        .sheet(item: $editing, onDismiss: {
+            // One sheet at a time: the details open after the editor has gone.
+            if let added = justAdded {
+                justAdded = nil
+                viewing = added
+            }
+        }) { target in
+            MomentEditorView(editing: target, onAdded: { justAdded = $0 })
                 .environment(model)
         }
         .sheet(item: $viewing) { moment in

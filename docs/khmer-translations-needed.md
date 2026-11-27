@@ -163,6 +163,8 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | You can't delete your data while you're in a Relationship, because that would end it one-sidedly. Ask to end it first: your Partner can agree, or the Lastys team can decide after a Team review. | អ្នកមិនអាចលុបទិន្នន័យរបស់អ្នកបានទេ ខណៈដែលអ្នកស្ថិតក្នុងទំនាក់ទំនង ព្រោះវានឹងបញ្ចប់ទំនាក់ទំនងដោយម្ខាង។ សូមស្នើសុំបញ្ចប់ជាមុនសិន៖ ដៃគូរបស់អ្នកអាចយល់ព្រម ឬក្រុមការងារ Lastys អាចសម្រេចក្រោយការត្រួតពិនិត្យដោយក្រុមការងារ។ |
 | Nickname | ឈ្មោះហៅក្រៅ |
 | Add a photo | បន្ថែមរូបថត |
+| Add photos or videos | បន្ថែមរូបថត ឬវីដេអូ |
+| Photo added | បានបន្ថែមរូបថត |
 | Change the photo | ប្តូររូបថត |
 | Remove the photo | លុបរូបថត |
 | Your nickname and photo show when someone Scans you. | ឈ្មោះហៅក្រៅ និងរូបថតរបស់អ្នកនឹងបង្ហាញនៅពេលមាននរណាស្កេនអ្នក។ |

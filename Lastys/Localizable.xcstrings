@@ -353,6 +353,22 @@
         }
       }
     },
+    "Add photos or videos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add photos or videos"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បន្ថែមរូបថត ឬវីដេអូ"
+          }
+        }
+      }
+    },
     "Add your birth date" : {
       "localizations" : {
         "en" : {
@@ -2645,6 +2661,22 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } },
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "បន្ថែម" } }
+      }
+    },
+    "Photo added" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo added"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បានបន្ថែមរូបថត"
+          }
+        }
       }
     },
     "Photos" : {
