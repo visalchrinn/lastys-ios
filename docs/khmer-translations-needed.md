@@ -80,8 +80,6 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Khmer lunar date (sample) | ថ្ងៃខែចន្ទគតិខ្មែរ (គំរូ) |
 | repeats on Khmer lunar date (sample) | ធ្វើម្តងទៀតតាមថ្ងៃខែចន្ទគតិខ្មែរ (គំរូ) |
 | Shared Moment | ពេលវេលាសំខាន់ដែលបានចែករំលែក |
-| Has a photo | មានរូបថត |
-| Has a video | មានវីដេអូ |
 | Dismiss | បិទ |
 
 ## Lucky Day Planner

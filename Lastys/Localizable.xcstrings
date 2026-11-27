@@ -1521,38 +1521,6 @@
         }
       }
     },
-    "Has a photo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Has a photo"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "មានរូបថត"
-          }
-        }
-      }
-    },
-    "Has a video" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Has a video"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "មានវីដេអូ"
-          }
-        }
-      }
-    },
     "Help and support" : {
       "localizations" : {
         "en" : {

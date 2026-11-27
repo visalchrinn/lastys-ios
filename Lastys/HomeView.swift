@@ -397,7 +397,9 @@ private struct UpcomingRow: View {
             }
             Spacer(minLength: 0)
             SharedBadge(isShared: moment.isShared)
-            MomentMediaBadge(media: moment.media)
+            if let first = moment.media.first {
+                MomentThumbnail(media: first, width: 52, height: 52)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -430,11 +432,14 @@ private struct TimelineRow: View {
             HStack(spacing: 6) {
                 Text(verbatim: moment.title).font(.jakarta(15, .bold))
                 SharedBadge(isShared: moment.isShared)
-                MomentMediaBadge(media: moment.media)
             }
             meta
                 .font(.jakarta(13))
                 .foregroundStyle(Theme.muted)
+            if let first = moment.media.first {
+                MomentThumbnail(media: first, width: 220, height: 130, cornerRadius: 14)
+                    .padding(.top, 8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .topLeading) {
@@ -460,20 +465,6 @@ private struct SharedBadge: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Theme.rose)
                 .accessibilityLabel(Text("Shared Moment"))
-        }
-    }
-}
-
-/// A small mark when a Moment carries a photo or video.
-private struct MomentMediaBadge: View {
-    let media: [MomentMedia]
-
-    var body: some View {
-        if let media = media.first {
-            Image(systemName: media.kind == .video ? "video.fill" : "photo.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Theme.muted)
-                .accessibilityLabel(Text(media.kind == .video ? LocalizedStringKey("Has a video") : LocalizedStringKey("Has a photo")))
         }
     }
 }
