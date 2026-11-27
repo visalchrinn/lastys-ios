@@ -35,8 +35,12 @@ Hides the status card and Shared Moments on your own phone's screen. It never ch
 _Avoid_: Privacy mode, hide status
 
 **Relationship request**:
-An offer to form a Relationship, sent by one Lastys ID to another straight after a Scan. It becomes a Relationship only when the receiver accepts.
+An offer to form a Relationship, sent by one Lastys ID to another straight after a Scan or through an Invite link. It becomes a Relationship only when the receiver accepts.
 _Avoid_: Link request, invite
+
+**Invite link**:
+A link that carries a Relationship request to someone you haven't Scanned, who may not have Lastys yet. Only one person can use it, and it stops working after 7 days or when its sender cancels it.
+_Avoid_: Invite code, referral
 
 **End request**:
 A Partner's request to end the Relationship, which the other Partner can agree to or decline.
@@ -78,6 +82,10 @@ _Avoid_: Event, memory, anniversary (an anniversary is one type of Moment)
 
 **Shared Moment**:
 A Moment its owner has shared into their Relationship so the Partner sees it too. When the Relationship ends, each former Partner keeps or deletes their own copy.
+
+**Moment card**:
+A shareable image of one Moment, made by its owner. It never shows the Moment's note, a Lastys QR, or whether anyone is single or taken.
+_Avoid_: Moment post, memory card
 
 ### Phones
 
