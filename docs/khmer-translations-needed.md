@@ -255,14 +255,11 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Get started | ចាប់ផ្តើម |
 | Move my ID from another phone | ផ្ទេរអត្តសញ្ញាណរបស់ខ្ញុំពីទូរសព្ទផ្សេង |
 | I lost my phone | ខ្ញុំបាត់ទូរសព្ទ |
-| You can change it later in Me. | អ្នកអាចប្តូរវាបានពេលក្រោយនៅក្នុង "ខ្ញុំ"។ |
-| Choose your language | ជ្រើសរើសភាសារបស់អ្នក |
+| Welcome | សូមស្វាគមន៍ |
+| Love you can trust. | ស្នេហាដែលអ្នកអាចទុកចិត្តបាន។ |
+| I'm 18 or older and agree to the Terms and Privacy Policy | ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ ហើយយល់ព្រមលើលក្ខខណ្ឌ និងគោលការណ៍ឯកជនភាព |
+| No sign-up. No password. | មិនចាំបាច់ចុះឈ្មោះ។ មិនចាំបាច់ពាក្យសម្ងាត់។ |
 | Continue | បន្ត |
-| Before you start | មុនពេលអ្នកចាប់ផ្តើម |
-| Lastys is for adults, and works only if everyone plays by the same rules. | Lastys សម្រាប់មនុស្សពេញវ័យ ហើយដំណើរការបានលុះត្រាតែគ្រប់គ្នាអនុវត្តតាមច្បាប់ដូចគ្នា។ |
-| I'm 18 or older | ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ |
-| I accept the Terms and the Privacy Notice | ខ្ញុំទទួលយកលក្ខខណ្ឌ និងសេចក្តីជូនដំណឹងអំពីឯកជនភាព |
-| Create my Lastys ID | បង្កើតអត្តសញ្ញាណ Lastys របស់ខ្ញុំ |
 | Save your Recovery code | រក្សាទុកកូដសង្គ្រោះរបស់អ្នក |
 | If you lose this phone, this code gets your Lastys ID back. Anyone who has it can try to move your Lastys ID, so keep it private. | បើអ្នកបាត់ទូរសព្ទនេះ កូដនេះនឹងយកអត្តសញ្ញាណ Lastys របស់អ្នកមកវិញ។ អ្នកណាមានវាអាចព្យាយាមផ្ទេរអត្តសញ្ញាណ Lastys របស់អ្នកបាន ដូច្នេះសូមរក្សាវាជាសម្ងាត់។ |
 | Copied | បានចម្លង |

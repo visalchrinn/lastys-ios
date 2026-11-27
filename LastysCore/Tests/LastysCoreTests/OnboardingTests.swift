@@ -10,20 +10,20 @@ struct OnboardingTests {
         #expect(phone.model.screen == .onboarding(.intro(page: 0)))
     }
 
-    @Test func skippingTheIntroGoesToChoosingALanguage() {
+    @Test func skippingTheIntroGoesToWelcome() {
         let phone = TestPhone()
 
         phone.model.skipIntro()
 
-        #expect(phone.model.screen == .onboarding(.language))
+        #expect(phone.model.screen == .onboarding(.welcome))
     }
 
-    @Test func readingEveryIntroPageGoesToChoosingALanguage() {
+    @Test func readingEveryIntroPageGoesToWelcome() {
         let phone = TestPhone()
 
         for _ in 0..<AppModel.introPageCount { phone.model.nextIntroPage() }
 
-        #expect(phone.model.screen == .onboarding(.language))
+        #expect(phone.model.screen == .onboarding(.welcome))
     }
 
     @Test func khmerIsTheDefaultLanguage() {
@@ -32,40 +32,46 @@ struct OnboardingTests {
         #expect(phone.model.language == .khmer)
     }
 
-    @Test func theChosenLanguageIsUsedFromThenOn() {
+    @Test func switchingLanguageOnWelcomeAppliesAtOnceAndStaysOnWelcome() {
         let phone = TestPhone()
         phone.model.skipIntro()
 
         phone.model.chooseLanguage(.english)
-        phone.model.confirmLanguage()
 
         #expect(phone.model.language == .english)
-        #expect(phone.model.screen == .onboarding(.consent))
+        #expect(phone.model.screen == .onboarding(.welcome))
     }
 
-    @Test(arguments: [(false, false), (true, false), (false, true)])
-    func cannotContinueWithoutConfirming18PlusAndAcceptingTheTerms(isOver18: Bool, acceptsTerms: Bool) async {
+    @Test func theLanguageChosenOnWelcomeIsKeptAfterTheLastysIDIsCreated() async {
         let phone = TestPhone()
         phone.model.skipIntro()
-        phone.model.confirmLanguage()
+        phone.model.chooseLanguage(.english)
 
-        phone.model.isOver18 = isOver18
-        phone.model.acceptsTerms = acceptsTerms
-        await phone.model.continueFromConsent()
+        phone.model.acceptsTerms = true
+        await phone.model.getStarted()
+        phone.relaunch()
 
-        #expect(!phone.model.canContinueFromConsent)
-        #expect(phone.model.screen == .onboarding(.consent))
+        #expect(phone.model.language == .english)
+    }
+
+    @Test func cannotGetStartedWithoutTickingTheConsentLine() async {
+        let phone = TestPhone()
+        phone.model.skipIntro()
+
+        await phone.model.getStarted()
+
+        #expect(!phone.model.canGetStarted)
+        #expect(phone.model.screen == .onboarding(.welcome))
         #expect(phone.model.lastysID == nil)
     }
 
-    @Test func confirming18PlusAndTheTermsCreatesALastysIDWithAPersonalIDAndRecoveryCode() async throws {
+    @Test func tickingTheConsentLineAndGettingStartedCreatesALastysIDWithAPersonalIDAndRecoveryCode() async throws {
         let phone = TestPhone()
         phone.model.skipIntro()
-        phone.model.confirmLanguage()
 
-        phone.model.isOver18 = true
         phone.model.acceptsTerms = true
-        await phone.model.continueFromConsent()
+        #expect(phone.model.canGetStarted)
+        await phone.model.getStarted()
 
         #expect(phone.model.screen == .onboarding(.recoveryCode))
         let personalID = try #require(phone.model.lastysID?.personalID)

@@ -529,22 +529,6 @@
         }
       }
     },
-    "Before you start" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Before you start"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "មុនពេលអ្នកចាប់ផ្តើម"
-          }
-        }
-      }
-    },
     "Birth date" : {
       "localizations" : {
         "en" : {
@@ -785,22 +769,6 @@
         }
       }
     },
-    "Choose your language" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose your language"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ជ្រើសរើសភាសារបស់អ្នក"
-          }
-        }
-      }
-    },
     "Close" : {
       "localizations" : {
         "en" : {
@@ -1005,22 +973,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "មិនអាចទាក់ទង Lastys បានទេ។ សូមព្យាយាមម្តងទៀត។"
-          }
-        }
-      }
-    },
-    "Create my Lastys ID" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create my Lastys ID"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "បង្កើតអត្តសញ្ញាណ Lastys របស់ខ្ញុំ"
           }
         }
       }
@@ -1745,22 +1697,6 @@
         }
       }
     },
-    "I accept the Terms and the Privacy Notice" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I accept the Terms and the Privacy Notice"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ខ្ញុំទទួលយកលក្ខខណ្ឌ និងសេចក្តីជូនដំណឹងអំពីឯកជនភាព"
-          }
-        }
-      }
-    },
     "I lost my phone" : {
       "localizations" : {
         "en" : {
@@ -1773,6 +1709,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ខ្ញុំបាត់ទូរសព្ទ"
+          }
+        }
+      }
+    },
+    "I'm 18 or older and agree to the Terms and Privacy Policy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm 18 or older and agree to the Terms and Privacy Policy"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ ហើយយល់ព្រមលើលក្ខខណ្ឌ និងគោលការណ៍ឯកជនភាព"
           }
         }
       }
@@ -1805,22 +1757,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "បើអ្នកបាត់ទូរសព្ទនេះ កូដនេះនឹងយកអត្តសញ្ញាណ Lastys របស់អ្នកមកវិញ។ អ្នកណាមានវាអាចព្យាយាមផ្ទេរអត្តសញ្ញាណ Lastys របស់អ្នកបាន ដូច្នេះសូមរក្សាវាជាសម្ងាត់។"
-          }
-        }
-      }
-    },
-    "I'm 18 or older" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I'm 18 or older"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ"
           }
         }
       }
@@ -2049,22 +1985,6 @@
         }
       }
     },
-    "Lastys is for adults, and works only if everyone plays by the same rules." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lastys is for adults, and works only if everyone plays by the same rules."
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Lastys សម្រាប់មនុស្សពេញវ័យ ហើយដំណើរការបានលុះត្រាតែគ្រប់គ្នាអនុវត្តតាមច្បាប់ដូចគ្នា។"
-          }
-        }
-      }
-    },
     "Lastys needs the camera to Scan. Allow it in Settings." : {
       "localizations" : {
         "en" : {
@@ -2093,6 +2013,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Lastys បញ្ជាក់ថាអ្នកនៅលីវ ហើយរក្សាទំនាក់ទំនងតែមួយក្នុងពេលតែមួយ ដែលបានបញ្ជាក់ដោយអ្នកទាំងពីរ។"
+          }
+        }
+      }
+    },
+    "Love you can trust." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Love you can trust."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ស្នេហាដែលអ្នកអាចទុកចិត្តបាន។"
           }
         }
       }
@@ -2465,6 +2401,22 @@
         }
       }
     },
+    "No sign-up. No password." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sign-up. No password."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មិនចាំបាច់ចុះឈ្មោះ។ មិនចាំបាច់ពាក្យសម្ងាត់។"
+          }
+        }
+      }
+    },
     "No upcoming moments yet. Tap + Add." : {
       "localizations" : {
         "en" : {
@@ -2731,6 +2683,22 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photos" } },
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "រូបថត" } }
+      }
+    },
+    "Welcome" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "សូមស្វាគមន៍"
+          }
+        }
       }
     },
     "· optional, up to 6" : {
@@ -5021,22 +4989,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "អ្នកបានស្នើសុំបញ្ចប់ទំនាក់ទំនងរបស់អ្នក"
-          }
-        }
-      }
-    },
-    "You can change it later in Me." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can change it later in Me."
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "អ្នកអាចប្តូរវាបានពេលក្រោយនៅក្នុង \"ខ្ញុំ\"។"
           }
         }
       }

@@ -74,7 +74,7 @@ struct DeleteMyDataTests {
 
         await me.createLastysID()
 
-        #expect(me.model.screen == .onboarding(.consent))
+        #expect(me.model.screen == .onboarding(.welcome))
         #expect(me.model.onboardingProblem == .phoneMadeALastysIDRecently)
         #expect(me.model.lastysID == nil)
     }

@@ -125,7 +125,7 @@ struct OnboardingCompletionTests {
 
         await phone.createLastysID()
 
-        #expect(phone.model.screen == .onboarding(.consent))
+        #expect(phone.model.screen == .onboarding(.welcome))
         #expect(phone.model.onboardingProblem == .phoneAlreadyHasLastysID)
         #expect(phone.model.lastysID == nil)
     }

@@ -10,8 +10,8 @@ public enum Screen: Equatable, Sendable {
 
 public enum OnboardingStep: Equatable, Sendable {
     case intro(page: Int)
-    case language
-    case consent
+    /// Language switch, the one consent line, and Get started.
+    case welcome
     case recoveryCode
     case profile
     /// A new phone scanning the old phone's transfer QR.
@@ -503,41 +503,35 @@ public final class AppModel {
 
     public func nextIntroPage() {
         guard case .onboarding(.intro(let page)) = screen else { return }
-        screen = page + 1 < Self.introPageCount ? .onboarding(.intro(page: page + 1)) : .onboarding(.language)
+        screen = page + 1 < Self.introPageCount ? .onboarding(.intro(page: page + 1)) : .onboarding(.welcome)
     }
 
     public func skipIntro() {
         guard case .onboarding(.intro) = screen else { return }
-        screen = .onboarding(.language)
+        screen = .onboarding(.welcome)
     }
 
     public var language: Language { phone.language }
 
+    /// Applies at once, on Welcome or later in Me.
     public func chooseLanguage(_ language: Language) {
         phone.language = language
     }
 
-    public func confirmLanguage() {
-        guard screen == .onboarding(.language) else { return }
-        screen = .onboarding(.consent)
-    }
-
-    /// The person confirms they are 18 or older.
-    public var isOver18 = false
-    /// The person accepts the Terms and the Privacy Notice.
+    /// The person's one consent: they are 18 or older and accept the Terms and the Privacy Policy.
     public var acceptsTerms = false
     /// Why the last onboarding step couldn't go ahead, if it couldn't.
     public private(set) var onboardingProblem: OnboardingProblem?
     /// True while Trustee is creating the Lastys ID.
     public private(set) var isCreatingLastysID = false
 
-    public var canContinueFromConsent: Bool {
-        isOver18 && acceptsTerms && !isCreatingLastysID
+    public var canGetStarted: Bool {
+        acceptsTerms && !isCreatingLastysID
     }
 
-    /// Creates the Lastys ID, then shows its Recovery code.
-    public func continueFromConsent() async {
-        guard screen == .onboarding(.consent), canContinueFromConsent else { return }
+    /// Welcome's Get started: creates the Lastys ID, then shows its Recovery code.
+    public func getStarted() async {
+        guard screen == .onboarding(.welcome), canGetStarted else { return }
         isCreatingLastysID = true
         defer { isCreatingLastysID = false }
         do {
@@ -1302,7 +1296,6 @@ extension AppModel {
         myDetails = nil
         whoScannedMe = []
         revealedRecoveryCode = nil
-        isOver18 = false
         acceptsTerms = false
         hasSavedRecoveryCode = false
         profileNickname = ""
