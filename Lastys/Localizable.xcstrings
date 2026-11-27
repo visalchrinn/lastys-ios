@@ -2835,6 +2835,42 @@
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ថ្ងៃទៀត" } }
       }
     },
+    "Single" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Single" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "នៅលីវ" } }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Language" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ភាសា" } }
+      }
+    },
+    "Change phone" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change phone" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ប្តូរទូរសព្ទ" } }
+      }
+    },
+    "Revoke my QR" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Revoke my QR" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ដកហូត QR របស់ខ្ញុំ" } }
+      }
+    },
+    "Get a new one" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Get a new one" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "យកមួយថ្មី" } }
+      }
+    },
+    "Coming soon" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Coming soon" } },
+        "km" : { "stringUnit" : { "state" : "needs_review", "value" : "ឆាប់ៗនេះ" } }
+      }
+    },
     "Optional" : {
       "localizations" : {
         "en" : {

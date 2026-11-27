@@ -214,7 +214,7 @@ private struct LanguageStep: View {
     }
 }
 
-private extension Language {
+extension Language {
     /// Each language's name in itself, so anyone can find their own.
     var nativeName: String {
         switch self {

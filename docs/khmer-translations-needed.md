@@ -273,6 +273,12 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Choose a photo | ជ្រើសរើសរូបថត |
 | Photo | រូបថត |
 | Optional | ស្រេចចិត្ត |
+| Single | នៅលីវ |
+| Language | ភាសា |
+| Change phone | ប្តូរទូរសព្ទ |
+| Revoke my QR | ដកហូត QR របស់ខ្ញុំ |
+| Get a new one | យកមួយថ្មី |
+| Coming soon | ឆាប់ៗនេះ |
 | Add | បន្ថែម |
 | Photos | រូបថត |
 | · optional, up to 6 | · ស្រេចចិត្ត ច្រើនបំផុត 6 |
