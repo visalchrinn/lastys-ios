@@ -3,13 +3,19 @@ import SwiftUI
 import UIKit
 
 /// Invite your partner: one Invite link to copy or share, waiting until it's used, cancelled or 7 days old.
-/// Phase A: the link doesn't open the app yet (#20), and accepting it comes with #39.
+/// Phase A: the link doesn't open the app yet (#20), so a demo shows what the partner sees.
 struct InvitePartnerSheet: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @State private var copied = false
     @State private var sharing: ShareItems?
+    #if DEBUG
+    @Environment(\.demoTrustee) private var demoTrustee
+    @State private var previewingPartner = false
+    @State private var demoProblem: LocalizedStringKey?
+    @State private var isDemoAnswering = false
+    #endif
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,7 +23,9 @@ struct InvitePartnerSheet: View {
             ScrollView {
                 VStack(spacing: 18) {
                     intro
-                    if let link = model.inviteLink {
+                    if model.inviteDeclined && model.inviteLink == nil {
+                        declinedCard
+                    } else if let link = model.inviteLink {
                         linkBox(link)
                         shareTiles(link)
                         if model.isInviteSent { waitingCard(link) }
@@ -46,12 +54,72 @@ struct InvitePartnerSheet: View {
         }
         .foregroundStyle(Theme.ink)
         .background(Theme.background.ignoresSafeArea())
-        .task { await model.openInvite() }
+        .task {
+            // After a Not now, the person chooses to send a new invite; don't make one behind their back.
+            if !model.inviteDeclined { await model.openInvite() }
+        }
+        .task(id: model.isInviteSent) {
+            // Phase A has no push: while the link waits, ask Trustee every few seconds.
+            while model.isInviteSent, !Task.isCancelled {
+                try? await Task.sleep(for: AppModel.pendingRequestCheckInterval)
+                await model.checkInvite()
+            }
+        }
+        .onChange(of: model.partnerNickname) { _, partner in
+            // Accepted: Home now shows Taken.
+            if !partner.isEmpty { dismiss() }
+        }
         .sheet(item: $sharing) { items in
             ShareSheet(items: items.items)
                 .presentationDetents([.medium, .large])
         }
+        #if DEBUG
+        .fullScreenCover(isPresented: $previewingPartner) {
+            InviteAnswerView(
+                senderNickname: model.nickname,
+                isPreview: true,
+                isWorking: isDemoAnswering,
+                problem: demoProblem,
+                accept: { demoAnswer(accept: true) },
+                decline: { demoAnswer(accept: false) },
+                close: { previewingPartner = false }
+            )
+        }
+        #endif
     }
+
+    private var declinedCard: some View {
+        VStack(spacing: 12) {
+            Text("Your partner declined. You can send a new invite.")
+                .font(.jakarta(15, .semibold))
+                .multilineTextAlignment(.center)
+            Button("Send a new invite") { Task { await model.openInvite() } }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(model.isWorkingOnInvite)
+        }
+        .frame(maxWidth: .infinity)
+        .card()
+    }
+
+    #if DEBUG
+    /// Demo: Vanna answers the link on "her phone", then this phone hears the answer from Trustee.
+    private func demoAnswer(accept: Bool) {
+        guard let demoTrustee, let code = model.inviteLink?.code else { return }
+        isDemoAnswering = true
+        demoProblem = nil
+        Task {
+            defer { isDemoAnswering = false }
+            do {
+                try await demoTrustee.demoRespondToInvite(code: code, accept: accept)
+            } catch {
+                demoProblem = ReceivedInviteProblem(error).message
+                return
+            }
+            previewingPartner = false
+            await model.checkInvite()
+        }
+    }
+    #endif
 
     private var header: some View {
         HStack {
@@ -203,6 +271,15 @@ struct InvitePartnerSheet: View {
             Text("Expires \(link.expiresAt, format: .dateTime.weekday(.abbreviated).day().month(.abbreviated).hour().minute())")
                 .font(.jakarta(13))
                 .foregroundStyle(Theme.muted)
+            #if DEBUG
+            if demoTrustee != nil {
+                Button("Demo: see what your partner sees") {
+                    demoProblem = nil
+                    previewingPartner = true
+                }
+                .buttonStyle(GhostButtonStyle())
+            }
+            #endif
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .card()

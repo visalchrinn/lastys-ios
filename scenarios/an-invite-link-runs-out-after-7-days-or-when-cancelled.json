@@ -1,0 +1,21 @@
+{
+  "name": "An Invite link runs out after 7 days, or when its sender cancels it",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "create-invite-link" },
+    { "phone": "alice", "do": "wait", "with": { "days": "7" } },
+    { "phone": "alice", "do": "get-my-invite-link", "expect": { "waiting": "false" } },
+    { "phone": "bob", "do": "accept-invite", "with": { "from": "alice" }, "expect": { "error": "invite-not-valid" } },
+    { "phone": "alice", "do": "create-invite-link" },
+    { "phone": "alice", "do": "cancel-invite-link" },
+    { "phone": "alice", "do": "cancel-invite-link", "expect": { "error": "no-invite-waiting" } },
+    { "phone": "bob", "do": "open-invite", "with": { "from": "alice" }, "expect": { "error": "invite-not-valid" } },
+    { "phone": "alice", "do": "create-invite-link" },
+    { "phone": "bob", "do": "decline-invite", "with": { "from": "alice" } },
+    { "phone": "bob", "do": "accept-invite", "with": { "from": "alice" }, "expect": { "error": "invite-not-valid" } },
+    { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "none" } },
+    { "phone": "alice", "do": "create-invite-link", "expect": { "expiresInDays": "7" } }
+  ]
+}

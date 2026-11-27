@@ -248,7 +248,7 @@ public final class AppModel {
             if request.status == .accepted {
                 phone.relationship = try await trustee.relationshipStatus()
             }
-            await followUpSentRequest(knownAs: request)
+            await followUpSentRequests(knownAs: request)
         } catch {
             requestProblem = RelationshipRequestProblem(error)
         }
@@ -260,29 +260,45 @@ public final class AppModel {
         (dayWeLinked: "The day we linked", firstAnniversary: "Our 1st anniversary")
     }
 
-    /// Once the request this phone sent is answered, stops following it. If it was accepted, the sender gets
+    /// Follows up the requests this phone sent: one after a Scan, and the one an Invite link carries.
+    private func followUpSentRequests(knownAs known: RelationshipRequest? = nil) async {
+        if let id = phone.sentRelationshipRequestID, let status = await status(ofSentRequest: id, knownAs: known) {
+            await settle(status, forgetting: \.sentRelationshipRequestID)
+        }
+        if let id = phone.sentInviteRequestID, let status = await status(ofSentRequest: id, knownAs: known) {
+            if status == .pending { return }
+            // Answered, cancelled, run out, or void because a Relationship formed another way.
+            inviteDeclined = status == .declined
+            inviteLink = nil
+            phone.sentInviteCode = nil
+            await settle(status, forgetting: \.sentInviteRequestID)
+        }
+    }
+
+    private func status(ofSentRequest id: String, knownAs known: RelationshipRequest?) async -> RelationshipRequest.Status? {
+        if let known, known.id == id { return known.status }
+        guard connectivity.isOnline else { return nil }
+        return try? await trustee.relationshipRequest(id: id).status
+    }
+
+    /// Once a sent request is answered, stops following it. If it was accepted, the sender gets
     /// "The day we linked" and "Our 1st anniversary", shared so each Partner sees one copy. The Moments and
     /// the forgotten request are saved together, so they are never added twice.
-    private func followUpSentRequest(knownAs known: RelationshipRequest? = nil) async {
-        guard let id = phone.sentRelationshipRequestID else { return }
-        let request: RelationshipRequest
-        if let known, known.id == id {
-            request = known
-        } else {
-            guard connectivity.isOnline, let fetched = try? await trustee.relationshipRequest(id: id) else { return }
-            request = fetched
-        }
-        switch request.status {
+    private func settle(_ status: RelationshipRequest.Status, forgetting request: WritableKeyPath<PhoneState, String?>) async {
+        switch status {
         case .pending:
             return
         case .declined, .expired:
-            phone.sentRelationshipRequestID = nil
+            phone[keyPath: request] = nil
         case .accepted:
+            if case .active = relationship {} else if let fresh = try? await trustee.relationshipStatus() {
+                phone.relationship = fresh
+            }
             guard case .active(_, let since, _) = relationship else { return }
             let day = calendar.startOfDay(for: since)
             let titles = linkingMomentTitles()
             var linked = phone
-            linked.sentRelationshipRequestID = nil
+            linked[keyPath: request] = nil
             linked.moments += [
                 Moment(type: .firstDate, title: titles.dayWeLinked, date: day, isShared: true),
                 Moment(
@@ -314,6 +330,8 @@ public final class AppModel {
     public private(set) var inviteProblem: InviteProblem?
     /// True while Trustee is making or cancelling an Invite link.
     public private(set) var isWorkingOnInvite = false
+    /// My partner said Not now to my last Invite link. Cleared when I make a new one.
+    public private(set) var inviteDeclined = false
 
     /// Offered only while Verified Single and not in a Cooling-off period, as any Relationship request is.
     public var canInvite: Bool {
@@ -336,11 +354,16 @@ public final class AppModel {
         isWorkingOnInvite = true
         defer { isWorkingOnInvite = false }
         do {
+            let link: InviteLink
             if let waiting = try await trustee.myInviteLink() {
-                inviteLink = waiting
+                link = waiting
             } else {
-                inviteLink = try await trustee.createInviteLink()
+                link = try await trustee.createInviteLink()
+                inviteDeclined = false
             }
+            inviteLink = link
+            // Followed like any request I send, so I hear when it's answered.
+            phone.sentInviteRequestID = link.requestID
             inviteProblem = nil
         } catch {
             inviteProblem = InviteProblem(error)
@@ -372,7 +395,18 @@ public final class AppModel {
         }
         inviteProblem = nil
         inviteLink = nil
-        phone.sentInviteCode = nil
+        var cancelled = phone
+        cancelled.sentInviteCode = nil
+        cancelled.sentInviteRequestID = nil
+        phone = cancelled
+    }
+
+    /// Asks Trustee where my Invite link stands: still waiting, or answered (Taken, or told Not now).
+    /// Phase A has no push, so the Invite screen asks every few seconds, and the app at every start.
+    public func checkInvite() async {
+        guard phone.lastysID != nil, connectivity.isOnline else { return }
+        await followUpSentRequests()
+        await refreshInvite()
     }
 
     /// Picks up my waiting Invite link after a launch, and lets go of one that expired.
@@ -385,7 +419,73 @@ public final class AppModel {
             return // Trustee unreachable: keep what the phone knew.
         }
         inviteLink = waiting
+        if let waiting, phone.sentInviteRequestID != waiting.requestID { phone.sentInviteRequestID = waiting.requestID }
         if phone.sentInviteCode != nil, waiting?.code != phone.sentInviteCode { phone.sentInviteCode = nil }
+    }
+
+    // MARK: Invite link, as the person who opens it
+
+    /// The Invite link this phone opened, while it can still be answered.
+    public private(set) var receivedInvite: ReceivedInvite?
+    /// Why the opened Invite link can't be answered, or why answering it didn't work.
+    public private(set) var receivedInviteProblem: ReceivedInviteProblem?
+    /// True while Trustee is looking up or taking the answer.
+    public private(set) var isAnsweringInvite = false
+
+    /// Opens an Invite link: who sent it, if it can still be used.
+    public func lookUpInvite(code: String) async {
+        guard phone.lastysID != nil else { return }
+        guard connectivity.isOnline else {
+            receivedInviteProblem = .needsInternet
+            return
+        }
+        isAnsweringInvite = true
+        defer { isAnsweringInvite = false }
+        do {
+            receivedInvite = try await trustee.invite(code: code)
+            receivedInviteProblem = nil
+        } catch {
+            receivedInvite = nil
+            receivedInviteProblem = ReceivedInviteProblem(error)
+        }
+    }
+
+    /// Accept & link: under every Relationship request rule, both become Taken.
+    public func acceptInvite() async {
+        guard let invite = receivedInvite, !isAnsweringInvite else { return }
+        guard connectivity.isOnline else {
+            receivedInviteProblem = .needsInternet
+            return
+        }
+        isAnsweringInvite = true
+        defer { isAnsweringInvite = false }
+        do {
+            try await trustee.acceptInvite(code: invite.code)
+            receivedInvite = nil
+            receivedInviteProblem = nil
+            if let status = try? await trustee.relationshipStatus() { phone.relationship = status }
+            await syncSharedMoments()
+        } catch {
+            receivedInviteProblem = ReceivedInviteProblem(error)
+        }
+    }
+
+    /// Not now: the sender is told, and the link is used up.
+    public func declineInvite() async {
+        guard let invite = receivedInvite, !isAnsweringInvite else { return }
+        guard connectivity.isOnline else {
+            receivedInviteProblem = .needsInternet
+            return
+        }
+        isAnsweringInvite = true
+        defer { isAnsweringInvite = false }
+        do {
+            try await trustee.declineInvite(code: invite.code)
+            receivedInvite = nil
+            receivedInviteProblem = nil
+        } catch {
+            receivedInviteProblem = ReceivedInviteProblem(error)
+        }
     }
 
     /// The Partner's nickname while in a Relationship, otherwise empty.
@@ -475,7 +575,7 @@ public final class AppModel {
             // Errors surface in later slices; for now the last known state stays on screen.
         }
         forgetFormerPartnersBirthDate()
-        await followUpSentRequest()
+        await followUpSentRequests()
         await refreshInvite()
         await syncSharedMoments()
         await deliverNotices()
@@ -1060,6 +1160,33 @@ public enum InviteProblem: Equatable, Sendable {
         switch error as? TrusteeError {
         case .youAreTaken, .youAreCoolingOff:
             self = .notSingleNow
+        default:
+            self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+        }
+    }
+}
+
+public enum ReceivedInviteProblem: Equatable, Sendable {
+    case needsInternet
+    /// Used, cancelled, more than 7 days old, or its sender is now Taken.
+    case noLongerValid
+    /// It's my own Invite link.
+    case thatIsYou
+    case youAreTaken
+    case youAreCoolingOff
+    case couldNotReachLastys
+
+    /// Public so the app's demo of the partner's phone can say why an answer didn't go through.
+    public init(_ error: Error) {
+        switch error as? TrusteeError {
+        case .inviteNotValid, .theyAreTaken, .theyAreCoolingOff, .requestNotPending, .requestNotFound:
+            self = .noLongerValid
+        case .thatIsYou:
+            self = .thatIsYou
+        case .youAreTaken:
+            self = .youAreTaken
+        case .youAreCoolingOff:
+            self = .youAreCoolingOff
         default:
             self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
         }

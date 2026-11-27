@@ -102,6 +102,20 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Link with me on Lastys: %@ | ភ្ជាប់ជាមួយខ្ញុំនៅលើ Lastys៖ %@ |
 | Invite links need an internet connection. | តំណអញ្ជើញត្រូវការអ៊ីនធឺណិត។ |
 | You can invite a partner only while you're Verified Single and not in a Cooling-off period. | អ្នកអាចអញ្ជើញដៃគូបានតែពេលអ្នកនៅលីវដែលបានផ្ទៀងផ្ទាត់ ហើយមិនស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត។ |
+| PREVIEW · YOUR PARTNER'S PHONE | មើលជាមុន · ទូរសព្ទរបស់ដៃគូអ្នក |
+| Close preview | បិទការមើលជាមុន |
+| %@ wants to link with you | %@ ចង់ភ្ជាប់ជាមួយអ្នក |
+| Accept to show you're together on Lastys. Either of you can end it later. | យល់ព្រម ដើម្បីបង្ហាញថាអ្នកនៅជាមួយគ្នានៅលើ Lastys។ អ្នកណាម្នាក់អាចបញ្ចប់វាបាននៅពេលក្រោយ។ |
+| Accept & link | យល់ព្រម និងភ្ជាប់ |
+| Not now | មិនមែនពេលនេះទេ |
+| New to Lastys? Your ID is created in seconds. No sign-up. | ទើបមកដល់ Lastys? អត្តសញ្ញាណរបស់អ្នកត្រូវបានបង្កើតក្នុងរយៈពេលប៉ុន្មានវិនាទី។ មិនចាំបាច់ចុះឈ្មោះ។ |
+| Answering an invite needs an internet connection. | ការឆ្លើយតបការអញ្ជើញត្រូវការអ៊ីនធឺណិត។ |
+| This invite is no longer valid. | ការអញ្ជើញនេះលែងមានសុពលភាពហើយ។ |
+| This is your own invite. | នេះជាការអញ្ជើញរបស់អ្នកផ្ទាល់។ |
+| You're already in a Relationship, so you can't accept this invite. | អ្នកមានទំនាក់ទំនងរួចហើយ ដូច្នេះអ្នកមិនអាចទទួលយកការអញ្ជើញនេះបានទេ។ |
+| You're in a Cooling-off period, so you can't accept an invite yet. | អ្នកកំពុងស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត ដូច្នេះអ្នកមិនទាន់អាចទទួលយកការអញ្ជើញបានទេ។ |
+| Your partner declined. You can send a new invite. | ដៃគូរបស់អ្នកបានបដិសេធ។ អ្នកអាចផ្ញើការអញ្ជើញថ្មីបាន។ |
+| Send a new invite | ផ្ញើការអញ្ជើញថ្មី |
 
 ## Lucky Day Planner
 

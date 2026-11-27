@@ -40,6 +40,8 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var sentRelationshipRequestID: String?
     /// The code of my Invite link once I've copied or shared it, so Home says it's waiting.
     public var sentInviteCode: String?
+    /// The Relationship request my Invite link carries, followed like `sentRelationshipRequestID` until answered.
+    public var sentInviteRequestID: String?
 
     public init() {}
 
@@ -71,6 +73,7 @@ public struct PhoneState: Codable, Equatable, Sendable {
         qrNumber = (try? c.decodeIfPresent(Int.self, forKey: .qrNumber)) ?? nil ?? 0
         sentRelationshipRequestID = (try? c.decodeIfPresent(String.self, forKey: .sentRelationshipRequestID)) ?? nil
         sentInviteCode = (try? c.decodeIfPresent(String.self, forKey: .sentInviteCode)) ?? nil
+        sentInviteRequestID = (try? c.decodeIfPresent(String.self, forKey: .sentInviteRequestID)) ?? nil
     }
 }
 

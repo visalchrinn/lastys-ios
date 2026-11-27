@@ -67,6 +67,21 @@ final class RecordingTrustee: TrusteeClient, @unchecked Sendable {
         try await wrapped.cancelInviteLink()
     }
 
+    func invite(code: String) async throws -> ReceivedInvite {
+        record("invite(code: \(code))")
+        return try await wrapped.invite(code: code)
+    }
+
+    func acceptInvite(code: String) async throws {
+        record("acceptInvite(code: \(code))")
+        try await wrapped.acceptInvite(code: code)
+    }
+
+    func declineInvite(code: String) async throws {
+        record("declineInvite(code: \(code))")
+        try await wrapped.declineInvite(code: code)
+    }
+
     func sendEndRequest() async throws {
         record("sendEndRequest()")
         try await wrapped.sendEndRequest()

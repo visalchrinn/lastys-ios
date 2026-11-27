@@ -122,6 +122,176 @@ struct InviteLinkTests {
         }
     }
 
+    // MARK: The partner accepts or declines (#39)
+
+    /// Me, single, having sent an Invite link; and Dara, who has Lastys, about to open it.
+    private func meHavingInvitedDara() async throws -> (dara: TestPhone, me: TestPhone, code: String) {
+        let me = TestPhone()
+        await me.onboard(as: "Srey Pich")
+        await me.model.openInvite()
+        me.model.inviteWasSent()
+        let code = try #require(me.model.inviteLink?.code)
+        let dara = TestPhone(nearby: me)
+        await dara.onboard(as: "Dara")
+        return (dara, me, code)
+    }
+
+    private func onboarded(_ nickname: String, nearby other: TestPhone) async -> TestPhone {
+        let phone = TestPhone(nearby: other)
+        await phone.onboard(as: nickname)
+        return phone
+    }
+
+    private static let linkingTitles = ["Our 1st anniversary", "The day we linked"]
+
+    @Test func thePartnerSeesWhoIsAskingBeforeAnswering() async throws {
+        let (dara, _, code) = try await meHavingInvitedDara()
+
+        await dara.model.lookUpInvite(code: code)
+
+        #expect(dara.model.receivedInvite == ReceivedInvite(code: code, senderNickname: "Srey Pich"))
+        #expect(dara.model.receivedInviteProblem == nil)
+    }
+
+    @Test func acceptingMakesBothTakenAndGivesTheSenderTheLinkingMoments() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        await dara.model.lookUpInvite(code: code)
+
+        await dara.model.acceptInvite()
+        await me.model.start()
+
+        guard case .active(let mine, _, _) = me.model.relationship, case .active(let darasPartner, _, _) = dara.model.relationship else {
+            Issue.record("expected both Taken, got \(me.model.relationship) and \(dara.model.relationship)")
+            return
+        }
+        #expect(mine == "Dara")
+        #expect(darasPartner == "Srey Pich")
+        #expect(me.model.moments.map(\.title).sorted() == Self.linkingTitles)
+        #expect(me.model.moments.allSatisfy { $0.isShared })
+        #expect(dara.model.moments.isEmpty)
+        #expect(me.model.inviteLink == nil)
+        #expect(!me.model.isInviteSent)
+        #expect(dara.model.receivedInvite == nil)
+    }
+
+    @Test func checkingAgainAfterAcceptanceAddsNoDuplicates() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        await dara.model.lookUpInvite(code: code)
+        await dara.model.acceptInvite()
+
+        await me.model.checkInvite()
+        await me.model.start()
+        me.relaunch()
+        await me.model.start()
+
+        #expect(me.model.moments.map(\.title).sorted() == Self.linkingTitles)
+    }
+
+    @Test func notNowTellsTheSenderAndFreesThemToSendANewInvite() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        await dara.model.lookUpInvite(code: code)
+
+        await dara.model.declineInvite()
+        await me.model.checkInvite()
+
+        #expect(me.model.inviteDeclined)
+        #expect(me.model.inviteLink == nil)
+        #expect(!me.model.isInviteSent)
+        #expect(me.model.relationship == .none)
+        #expect(dara.model.relationship == .none)
+        await me.model.openInvite()
+        #expect(me.model.inviteLink?.code != code)
+        #expect(!me.model.inviteDeclined)
+    }
+
+    @Test func aLinkWorksForOnePersonOnly() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        let vanna = await onboarded("Vanna", nearby: me)
+        await dara.model.lookUpInvite(code: code)
+        await dara.model.acceptInvite()
+
+        await vanna.model.lookUpInvite(code: code)
+
+        #expect(vanna.model.receivedInvite == nil)
+        #expect(vanna.model.receivedInviteProblem == .noLongerValid)
+        await #expect(throws: TrusteeError.inviteNotValid) {
+            try await trustee(of: vanna).acceptInvite(code: code)
+        }
+    }
+
+    @Test func aLinkOlderThanSevenDaysCannotBeAccepted() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        me.clock.advance(days: 7)
+
+        await dara.model.lookUpInvite(code: code)
+
+        #expect(dara.model.receivedInviteProblem == .noLongerValid)
+        await #expect(throws: TrusteeError.inviteNotValid) {
+            try await trustee(of: dara).acceptInvite(code: code)
+        }
+    }
+
+    @Test func aCancelledLinkCannotBeAccepted() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        await me.model.cancelInvite()
+
+        await dara.model.lookUpInvite(code: code)
+
+        #expect(dara.model.receivedInviteProblem == .noLongerValid)
+    }
+
+    @Test func aWaitingLinkStopsWorkingOnceTheSenderIsTakenAnotherWay() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        let vanna = await onboarded("Vanna", nearby: me)
+        try await me.becomePartners(with: vanna)
+        await dara.model.lookUpInvite(code: code)
+
+        #expect(dara.model.receivedInviteProblem == .noLongerValid)
+        await #expect(throws: TrusteeError.inviteNotValid) {
+            try await trustee(of: dara).acceptInvite(code: code)
+        }
+        #expect(me.model.inviteLink == nil)
+        #expect(me.model.moments.count == 2)
+    }
+
+    @Test func aTakenPartnerCannotAccept() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        let vanna = await onboarded("Vanna", nearby: me)
+        try await dara.becomePartners(with: vanna)
+        await dara.model.lookUpInvite(code: code)
+
+        await dara.model.acceptInvite()
+
+        #expect(dara.model.receivedInviteProblem == .youAreTaken)
+        await me.model.start()
+        #expect(me.model.relationship == .none)
+        #expect(me.model.inviteLink?.code == code)
+    }
+
+    @Test func aPartnerInACoolingOffPeriodCannotAccept() async throws {
+        let (dara, me, code) = try await meHavingInvitedDara()
+        let vanna = await onboarded("Vanna", nearby: me)
+        try await dara.becomePartners(with: vanna)
+        await dara.model.perform(.sendEndRequest)
+        await vanna.model.start()
+        await vanna.model.perform(.agreeToEndRequest)
+        await dara.model.start()
+        await dara.model.lookUpInvite(code: code)
+
+        await dara.model.acceptInvite()
+
+        #expect(dara.model.receivedInviteProblem == .youAreCoolingOff)
+        #expect(dara.model.relationship != .none)
+    }
+
+    @Test func nobodyCanAcceptTheirOwnInvite() async throws {
+        let (_, me, code) = try await meHavingInvitedDara()
+
+        await me.model.lookUpInvite(code: code)
+
+        #expect(me.model.receivedInviteProblem == .thatIsYou)
+    }
+
     @Test func makingALinkNeedsInternet() async throws {
         let me = await single()
         me.isOnline = false

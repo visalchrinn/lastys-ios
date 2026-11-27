@@ -43,11 +43,10 @@ extension FakeTrustee {
         guard let request = state.requests[id], request.from == sender.personalID else {
             throw TrusteeError.requestNotFound
         }
-        return RelationshipRequest(
-            id: id,
-            toNickname: state.people[request.to]?.nickname ?? "",
-            status: RelationshipRequest.Status(rawValue: request.status) ?? .expired
-        )
+        var status = RelationshipRequest.Status(rawValue: request.status) ?? .expired
+        // An Invite link's request runs out with the link, after 7 days unanswered.
+        if status == .pending, isExpiredInvite(requestID: id) { status = .expired }
+        return RelationshipRequest(id: id, toNickname: state.people[request.to]?.nickname ?? "", status: status)
     }
 
     /// Accepting checks both sides before anything changes, so a Lastys ID can never end up

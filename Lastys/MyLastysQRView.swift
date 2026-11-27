@@ -8,6 +8,11 @@ struct MyLastysQRView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingRevoke = false
     @State private var inviting = false
+    #if DEBUG
+    @Environment(\.demoTrustee) private var demoTrustee
+    #else
+    private let demoTrustee: FakeTrustee? = nil
+    #endif
 
     var body: some View {
         VStack(spacing: 20) {
@@ -111,6 +116,7 @@ struct MyLastysQRView: View {
         .sheet(isPresented: $inviting) {
             InvitePartnerSheet()
                 .environment(model)
+                .demoTrustee(demoTrustee)
                 .presentationDragIndicator(.visible)
         }
         .foregroundStyle(Theme.ink)

@@ -71,6 +71,12 @@ A runner stops at the first step that fails and reports its 1-based number. An u
 | `get-relationship-request-status` | `to` (receiver phone) | `status`: `pending`, `accepted`, `declined` or `expired`, and `to` |
 | `accept-relationship-request` | `from` (sender phone) | nothing. Errors `you-are-taken`, `you-are-cooling-off`, `they-are-taken`, `they-are-cooling-off`, `request-not-pending`, `request-not-found` |
 | `decline-relationship-request` | `from` (sender phone) | nothing. Errors `request-not-pending`, `request-not-found` |
+| `create-invite-link` |            | `expiresInDays` (`7`). The runner remembers the code for the sending phone. Errors `you-are-taken`, `you-are-cooling-off`, `invite-already-waiting` |
+| `get-my-invite-link` |            | `waiting`: `true` while this phone's Invite link can still be used, else `false` |
+| `cancel-invite-link` |            | nothing. Error `no-invite-waiting` |
+| `open-invite` | `from` (sender phone) | `from` (the sender's nickname). Errors `invite-not-valid`, `that-is-you` |
+| `accept-invite` | `from` (sender phone) | nothing. Starts the Relationship, under the same rules as `accept-relationship-request`. Errors `invite-not-valid`, `that-is-you`, `you-are-taken`, `you-are-cooling-off` |
+| `decline-invite` | `from` (sender phone) | nothing. The link is used up. Errors `invite-not-valid`, `that-is-you` |
 | `send-end-request` |            | nothing. Errors `no-relationship`, `not-allowed-now` |
 | `withdraw-end-request` |            | nothing. Only the requester, while ending. Errors `no-relationship`, `not-allowed-now` |
 | `agree-to-end-request`, `decline-end-request` | | nothing. Only the other Partner, while ending and not yet declined. Agreeing ends the Relationship. Errors `no-relationship`, `not-allowed-now` |
@@ -105,6 +111,9 @@ A Lastys QR is accepted for as long as its QR number is the owner's latest, and 
 | `that-is-you` | Both sides are the same Lastys ID. |
 | `request-not-found` | No such Relationship request for this phone. |
 | `request-not-pending` | The Relationship request was already answered or has expired. |
+| `invite-already-waiting` | This Lastys ID already has an Invite link that can still be used. |
+| `no-invite-waiting` | This Lastys ID has no Invite link that can still be used. |
+| `invite-not-valid` | The Invite link was used, cancelled, is 7 or more days old, or its sender became Taken another way. |
 | `no-relationship` | The acting Lastys ID has no active Relationship. |
 | `not-allowed-now` | The Relationship's stage doesn't allow this, or this Partner can't do it. |
 | `cannot-escalate-yet` | A Team review needs a declined End request, or 7 days without an answer. |
@@ -118,6 +127,8 @@ A Lastys QR is accepted for as long as its QR number is the owner's latest, and 
 | `no-recovery` | No Recovery is waiting: none was started, or it was cancelled. |
 
 When a Relationship starts, every other pending request to or from either Partner becomes `expired`. Accepting checks both Lastys IDs before the request's own status, so a Lastys ID that became Taken gets `you-are-taken`.
+
+An Invite link carries a Relationship request with no receiver until someone opens it (ADR 0004). So the rule above also voids a sender's waiting Invite link, and accepting one checks both Lastys IDs the same way.
 
 When a Relationship ends, both former Partners get a 7-day Cooling-off period, and each keeps it in their Relationship history as start and end months. Each also gets their own copy of what the other shared, and stops sharing their own.
 

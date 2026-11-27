@@ -1,0 +1,20 @@
+{
+  "name": "An accepted Invite link makes both Taken, and works for one person only",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "create-invite-link", "expect": { "expiresInDays": "7" } },
+    { "phone": "alice", "do": "create-invite-link", "expect": { "error": "invite-already-waiting" } },
+    { "phone": "alice", "do": "open-invite", "with": { "from": "alice" }, "expect": { "error": "that-is-you" } },
+    { "phone": "bob", "do": "open-invite", "with": { "from": "alice" }, "expect": { "from": "Alice" } },
+    { "phone": "bob", "do": "accept-invite", "with": { "from": "alice" } },
+    { "phone": "alice", "do": "get-relationship-status", "expect": { "status": "active", "partner": "Bob" } },
+    { "phone": "bob", "do": "get-relationship-status", "expect": { "status": "active", "partner": "Alice" } },
+    { "phone": "alice", "do": "get-my-invite-link", "expect": { "waiting": "false" } },
+    { "phone": "carol", "do": "accept-invite", "with": { "from": "alice" }, "expect": { "error": "invite-not-valid" } },
+    { "phone": "alice", "do": "create-invite-link", "expect": { "error": "you-are-taken" } }
+  ]
+}

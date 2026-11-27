@@ -1,0 +1,19 @@
+{
+  "name": "A waiting Invite link stops working once its sender is Taken another way",
+  "steps": [
+    { "phone": "alice", "do": "create-lastys-id" },
+    { "phone": "alice", "do": "update-profile", "with": { "nickname": "Alice" } },
+    { "phone": "bob", "do": "create-lastys-id" },
+    { "phone": "bob", "do": "update-profile", "with": { "nickname": "Bob" } },
+    { "phone": "carol", "do": "create-lastys-id" },
+    { "phone": "carol", "do": "update-profile", "with": { "nickname": "Carol" } },
+    { "phone": "alice", "do": "create-invite-link" },
+    { "phone": "alice", "do": "scan", "with": { "qrOf": "carol" } },
+    { "phone": "alice", "do": "send-relationship-request" },
+    { "phone": "carol", "do": "accept-relationship-request", "with": { "from": "alice" } },
+    { "phone": "alice", "do": "get-my-invite-link", "expect": { "waiting": "false" } },
+    { "phone": "bob", "do": "open-invite", "with": { "from": "alice" }, "expect": { "error": "invite-not-valid" } },
+    { "phone": "bob", "do": "accept-invite", "with": { "from": "alice" }, "expect": { "error": "invite-not-valid" } },
+    { "phone": "bob", "do": "get-relationship-status", "expect": { "status": "none" } }
+  ]
+}

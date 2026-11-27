@@ -49,6 +49,7 @@ struct HomeView: View {
         .sheet(isPresented: $showingMyLastysQR) {
             MyLastysQRView()
                 .environment(model)
+                .demoTrustee(demoTrustee)
                 .presentationDragIndicator(.visible)
         }
         .fullScreenCover(isPresented: $showingScan) {
@@ -63,6 +64,7 @@ struct HomeView: View {
         .sheet(isPresented: $showingInvite) {
             InvitePartnerSheet()
                 .environment(model)
+                .demoTrustee(demoTrustee)
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingRelationship) {
@@ -238,6 +240,11 @@ struct HomeView: View {
                     )
                 }
                 .buttonStyle(PrimaryButtonStyle())
+                if model.inviteDeclined, model.inviteLink == nil {
+                    Text("Your partner declined. You can send a new invite.")
+                        .font(.jakarta(13))
+                        .foregroundStyle(Theme.muted)
+                }
             }
             if model.canShareVerifiedSingleCard {
                 Button("Share my Verified Single card") {

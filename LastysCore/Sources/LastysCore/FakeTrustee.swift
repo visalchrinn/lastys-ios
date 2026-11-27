@@ -339,6 +339,18 @@ public actor FakeTrustee {
             try await trustee.cancelInviteLink(phone: phone)
         }
 
+        func invite(code: String) async throws -> ReceivedInvite {
+            try await trustee.receivedInvite(phone: phone, code: code)
+        }
+
+        func acceptInvite(code: String) async throws {
+            try await trustee.acceptInvite(phone: phone, code: code)
+        }
+
+        func declineInvite(code: String) async throws {
+            try await trustee.declineInvite(phone: phone, code: code)
+        }
+
         func sendEndRequest() async throws {
             try await trustee.sendEndRequest(phone: phone)
         }
