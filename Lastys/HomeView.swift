@@ -10,8 +10,11 @@ struct HomeView: View {
     @State private var showingScan = false
     @State private var showingRelationship = false
     @State private var showingVerifiedSingleCard = false
+    @State private var showingInvite = false
     @State private var editing: MomentEditorView.Target?
     @State private var viewing: Moment?
+    /// A Moment just added, whose details open once the editor has closed.
+    @State private var justAdded: Moment?
     #if DEBUG
     @Environment(\.demoTrustee) private var demoTrustee
     #else
@@ -46,6 +49,7 @@ struct HomeView: View {
         .sheet(isPresented: $showingMyLastysQR) {
             MyLastysQRView()
                 .environment(model)
+                .demoTrustee(demoTrustee)
                 .presentationDragIndicator(.visible)
         }
         .fullScreenCover(isPresented: $showingScan) {
@@ -56,6 +60,12 @@ struct HomeView: View {
         .sheet(isPresented: $showingVerifiedSingleCard) {
             VerifiedSingleCardSheet()
                 .environment(model)
+        }
+        .sheet(isPresented: $showingInvite) {
+            InvitePartnerSheet()
+                .environment(model)
+                .demoTrustee(demoTrustee)
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingRelationship) {
             RelationshipView()
@@ -220,6 +230,22 @@ struct HomeView: View {
                         .foregroundStyle(Theme.muted)
                 }
             }
+            if model.canInvite {
+                Button {
+                    showingInvite = true
+                } label: {
+                    Label(
+                        model.isInviteSent ? LocalizedStringKey("Invite sent · view") : LocalizedStringKey("Invite your partner"),
+                        systemImage: "link"
+                    )
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                if model.inviteDeclined, model.inviteLink == nil {
+                    Text("Your partner declined. You can send a new invite.")
+                        .font(.jakarta(13))
+                        .foregroundStyle(Theme.muted)
+                }
+            }
             if model.canShareVerifiedSingleCard {
                 Button("Share my Verified Single card") {
                     showingVerifiedSingleCard = true
@@ -351,8 +377,14 @@ struct HomeView: View {
                 .padding(.leading, 6)
             }
         }
-        .sheet(item: $editing) { target in
-            MomentEditorView(editing: target)
+        .sheet(item: $editing, onDismiss: {
+            // One sheet at a time: the details open after the editor has gone.
+            if let added = justAdded {
+                justAdded = nil
+                viewing = added
+            }
+        }) { target in
+            MomentEditorView(editing: target, onAdded: { justAdded = $0 })
                 .environment(model)
         }
         .sheet(item: $viewing) { moment in
@@ -397,7 +429,9 @@ private struct UpcomingRow: View {
             }
             Spacer(minLength: 0)
             SharedBadge(isShared: moment.isShared)
-            MomentMediaBadge(media: moment.media)
+            if let first = moment.media.first {
+                MomentThumbnail(media: first, width: 52, height: 52)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -430,11 +464,14 @@ private struct TimelineRow: View {
             HStack(spacing: 6) {
                 Text(verbatim: moment.title).font(.jakarta(15, .bold))
                 SharedBadge(isShared: moment.isShared)
-                MomentMediaBadge(media: moment.media)
             }
             meta
                 .font(.jakarta(13))
                 .foregroundStyle(Theme.muted)
+            if let first = moment.media.first {
+                MomentThumbnail(media: first, width: 220, height: 130, cornerRadius: 14)
+                    .padding(.top, 8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .topLeading) {
@@ -460,20 +497,6 @@ private struct SharedBadge: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(Theme.rose)
                 .accessibilityLabel(Text("Shared Moment"))
-        }
-    }
-}
-
-/// A small mark when a Moment carries a photo or video.
-private struct MomentMediaBadge: View {
-    let media: [MomentMedia]
-
-    var body: some View {
-        if let media = media.first {
-            Image(systemName: media.kind == .video ? "video.fill" : "photo.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Theme.muted)
-                .accessibilityLabel(Text(media.kind == .video ? LocalizedStringKey("Has a video") : LocalizedStringKey("Has a photo")))
         }
     }
 }

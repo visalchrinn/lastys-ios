@@ -10,8 +10,8 @@ public enum Screen: Equatable, Sendable {
 
 public enum OnboardingStep: Equatable, Sendable {
     case intro(page: Int)
-    case language
-    case consent
+    /// Language switch, the one consent line, and Get started.
+    case welcome
     case recoveryCode
     case profile
     /// A new phone scanning the old phone's transfer QR.
@@ -230,7 +230,9 @@ public final class AppModel {
         isSendingRequest = true
         defer { isSendingRequest = false }
         do {
-            outgoingRequest = try await trustee.sendRelationshipRequest(scanID: scanID)
+            let request = try await trustee.sendRelationshipRequest(scanID: scanID)
+            outgoingRequest = request
+            phone.sentRelationshipRequestID = request.id
             requestProblem = nil
         } catch {
             requestProblem = RelationshipRequestProblem(error)
@@ -246,8 +248,66 @@ public final class AppModel {
             if request.status == .accepted {
                 phone.relationship = try await trustee.relationshipStatus()
             }
+            await followUpSentRequests(knownAs: request)
         } catch {
             requestProblem = RelationshipRequestProblem(error)
+        }
+    }
+
+    /// The titles of the Moments added on linking, in the app's language. The app sets this; LastysCore
+    /// has no translations of its own.
+    public var linkingMomentTitles: () -> (dayWeLinked: String, firstAnniversary: String) = {
+        (dayWeLinked: "The day we linked", firstAnniversary: "Our 1st anniversary")
+    }
+
+    /// Follows up the requests this phone sent: one after a Scan, and the one an Invite link carries.
+    private func followUpSentRequests(knownAs known: RelationshipRequest? = nil) async {
+        if let id = phone.sentRelationshipRequestID, let status = await status(ofSentRequest: id, knownAs: known) {
+            await settle(status, forgetting: \.sentRelationshipRequestID)
+        }
+        if let id = phone.sentInviteRequestID, let status = await status(ofSentRequest: id, knownAs: known) {
+            if status == .pending { return }
+            // Answered, cancelled, run out, or void because a Relationship formed another way.
+            inviteDeclined = status == .declined
+            inviteLink = nil
+            phone.sentInviteCode = nil
+            await settle(status, forgetting: \.sentInviteRequestID)
+        }
+    }
+
+    private func status(ofSentRequest id: String, knownAs known: RelationshipRequest?) async -> RelationshipRequest.Status? {
+        if let known, known.id == id { return known.status }
+        guard connectivity.isOnline else { return nil }
+        return try? await trustee.relationshipRequest(id: id).status
+    }
+
+    /// Once a sent request is answered, stops following it. If it was accepted, the sender gets
+    /// "The day we linked" and "Our 1st anniversary", shared so each Partner sees one copy. The Moments and
+    /// the forgotten request are saved together, so they are never added twice.
+    private func settle(_ status: RelationshipRequest.Status, forgetting request: WritableKeyPath<PhoneState, String?>) async {
+        switch status {
+        case .pending:
+            return
+        case .declined, .expired:
+            phone[keyPath: request] = nil
+        case .accepted:
+            if case .active = relationship {} else if let fresh = try? await trustee.relationshipStatus() {
+                phone.relationship = fresh
+            }
+            guard case .active(_, let since, _) = relationship else { return }
+            let day = calendar.startOfDay(for: since)
+            let titles = linkingMomentTitles()
+            var linked = phone
+            linked[keyPath: request] = nil
+            linked.moments += [
+                Moment(type: .firstDate, title: titles.dayWeLinked, date: day, isShared: true),
+                Moment(
+                    type: .anniversary, title: titles.firstAnniversary,
+                    date: calendar.date(byAdding: .year, value: 1, to: day) ?? day, isShared: true
+                ),
+            ]
+            phone = linked
+            await syncSharedMoments()
         }
     }
 
@@ -261,6 +321,172 @@ public final class AppModel {
 
     /// How often to ask Trustee about a request still waiting. Phase A has no push.
     public static let pendingRequestCheckInterval: Duration = .seconds(3)
+
+    // MARK: Invite link
+
+    /// My Invite link that can still be used, as Trustee last said. At most one at a time.
+    public private(set) var inviteLink: InviteLink?
+    /// Why the last attempt to make or cancel an Invite link didn't work.
+    public private(set) var inviteProblem: InviteProblem?
+    /// True while Trustee is making or cancelling an Invite link.
+    public private(set) var isWorkingOnInvite = false
+    /// My partner said Not now to my last Invite link. Cleared when I make a new one.
+    public private(set) var inviteDeclined = false
+
+    /// Offered only while Verified Single and not in a Cooling-off period, as any Relationship request is.
+    public var canInvite: Bool {
+        phone.lastysID != nil && relationship == .none
+    }
+
+    /// The link has been copied or shared, so it's waiting for my partner.
+    public var isInviteSent: Bool {
+        guard let code = inviteLink?.code else { return false }
+        return phone.sentInviteCode == code
+    }
+
+    /// Shows my waiting Invite link, or makes one if none is waiting.
+    public func openInvite() async {
+        guard canInvite, !isWorkingOnInvite else { return }
+        guard connectivity.isOnline else {
+            inviteProblem = .needsInternet
+            return
+        }
+        isWorkingOnInvite = true
+        defer { isWorkingOnInvite = false }
+        do {
+            let link: InviteLink
+            if let waiting = try await trustee.myInviteLink() {
+                link = waiting
+            } else {
+                link = try await trustee.createInviteLink()
+                inviteDeclined = false
+            }
+            inviteLink = link
+            // Followed like any request I send, so I hear when it's answered.
+            phone.sentInviteRequestID = link.requestID
+            inviteProblem = nil
+        } catch {
+            inviteProblem = InviteProblem(error)
+        }
+    }
+
+    /// The person copied the link or shared it somewhere: from now on it's waiting for my partner.
+    public func inviteWasSent() {
+        guard let code = inviteLink?.code else { return }
+        phone.sentInviteCode = code
+    }
+
+    /// Stops the link at Trustee, so nobody can use it, and frees me to make a new one.
+    public func cancelInvite() async {
+        guard inviteLink != nil, !isWorkingOnInvite else { return }
+        guard connectivity.isOnline else {
+            inviteProblem = .needsInternet
+            return
+        }
+        isWorkingOnInvite = true
+        defer { isWorkingOnInvite = false }
+        do {
+            try await trustee.cancelInviteLink()
+        } catch TrusteeError.noInviteWaiting {
+            // Already gone (expired or used): the same outcome.
+        } catch {
+            inviteProblem = InviteProblem(error)
+            return
+        }
+        inviteProblem = nil
+        inviteLink = nil
+        var cancelled = phone
+        cancelled.sentInviteCode = nil
+        cancelled.sentInviteRequestID = nil
+        phone = cancelled
+    }
+
+    /// Asks Trustee where my Invite link stands: still waiting, or answered (Taken, or told Not now).
+    /// Phase A has no push, so the Invite screen asks every few seconds, and the app at every start.
+    public func checkInvite() async {
+        guard phone.lastysID != nil, connectivity.isOnline else { return }
+        await followUpSentRequests()
+        await refreshInvite()
+    }
+
+    /// Picks up my waiting Invite link after a launch, and lets go of one that expired.
+    private func refreshInvite() async {
+        guard phone.lastysID != nil, connectivity.isOnline else { return }
+        let waiting: InviteLink?
+        do {
+            waiting = try await trustee.myInviteLink()
+        } catch {
+            return // Trustee unreachable: keep what the phone knew.
+        }
+        inviteLink = waiting
+        if let waiting, phone.sentInviteRequestID != waiting.requestID { phone.sentInviteRequestID = waiting.requestID }
+        if phone.sentInviteCode != nil, waiting?.code != phone.sentInviteCode { phone.sentInviteCode = nil }
+    }
+
+    // MARK: Invite link, as the person who opens it
+
+    /// The Invite link this phone opened, while it can still be answered.
+    public private(set) var receivedInvite: ReceivedInvite?
+    /// Why the opened Invite link can't be answered, or why answering it didn't work.
+    public private(set) var receivedInviteProblem: ReceivedInviteProblem?
+    /// True while Trustee is looking up or taking the answer.
+    public private(set) var isAnsweringInvite = false
+
+    /// Opens an Invite link: who sent it, if it can still be used.
+    public func lookUpInvite(code: String) async {
+        guard phone.lastysID != nil else { return }
+        guard connectivity.isOnline else {
+            receivedInviteProblem = .needsInternet
+            return
+        }
+        isAnsweringInvite = true
+        defer { isAnsweringInvite = false }
+        do {
+            receivedInvite = try await trustee.invite(code: code)
+            receivedInviteProblem = nil
+        } catch {
+            receivedInvite = nil
+            receivedInviteProblem = ReceivedInviteProblem(error)
+        }
+    }
+
+    /// Accept & link: under every Relationship request rule, both become Taken.
+    public func acceptInvite() async {
+        guard let invite = receivedInvite, !isAnsweringInvite else { return }
+        guard connectivity.isOnline else {
+            receivedInviteProblem = .needsInternet
+            return
+        }
+        isAnsweringInvite = true
+        defer { isAnsweringInvite = false }
+        do {
+            try await trustee.acceptInvite(code: invite.code)
+            receivedInvite = nil
+            receivedInviteProblem = nil
+            if let status = try? await trustee.relationshipStatus() { phone.relationship = status }
+            await syncSharedMoments()
+        } catch {
+            receivedInviteProblem = ReceivedInviteProblem(error)
+        }
+    }
+
+    /// Not now: the sender is told, and the link is used up.
+    public func declineInvite() async {
+        guard let invite = receivedInvite, !isAnsweringInvite else { return }
+        guard connectivity.isOnline else {
+            receivedInviteProblem = .needsInternet
+            return
+        }
+        isAnsweringInvite = true
+        defer { isAnsweringInvite = false }
+        do {
+            try await trustee.declineInvite(code: invite.code)
+            receivedInvite = nil
+            receivedInviteProblem = nil
+        } catch {
+            receivedInviteProblem = ReceivedInviteProblem(error)
+        }
+    }
 
     /// The Partner's nickname while in a Relationship, otherwise empty.
     public var partnerNickname: String {
@@ -349,6 +575,8 @@ public final class AppModel {
             // Errors surface in later slices; for now the last known state stays on screen.
         }
         forgetFormerPartnersBirthDate()
+        await followUpSentRequests()
+        await refreshInvite()
         await syncSharedMoments()
         await deliverNotices()
     }
@@ -503,41 +731,35 @@ public final class AppModel {
 
     public func nextIntroPage() {
         guard case .onboarding(.intro(let page)) = screen else { return }
-        screen = page + 1 < Self.introPageCount ? .onboarding(.intro(page: page + 1)) : .onboarding(.language)
+        screen = page + 1 < Self.introPageCount ? .onboarding(.intro(page: page + 1)) : .onboarding(.welcome)
     }
 
     public func skipIntro() {
         guard case .onboarding(.intro) = screen else { return }
-        screen = .onboarding(.language)
+        screen = .onboarding(.welcome)
     }
 
     public var language: Language { phone.language }
 
+    /// Applies at once, on Welcome or later in Me.
     public func chooseLanguage(_ language: Language) {
         phone.language = language
     }
 
-    public func confirmLanguage() {
-        guard screen == .onboarding(.language) else { return }
-        screen = .onboarding(.consent)
-    }
-
-    /// The person confirms they are 18 or older.
-    public var isOver18 = false
-    /// The person accepts the Terms and the Privacy Notice.
+    /// The person's one consent: they are 18 or older and accept the Terms and the Privacy Policy.
     public var acceptsTerms = false
     /// Why the last onboarding step couldn't go ahead, if it couldn't.
     public private(set) var onboardingProblem: OnboardingProblem?
     /// True while Trustee is creating the Lastys ID.
     public private(set) var isCreatingLastysID = false
 
-    public var canContinueFromConsent: Bool {
-        isOver18 && acceptsTerms && !isCreatingLastysID
+    public var canGetStarted: Bool {
+        acceptsTerms && !isCreatingLastysID
     }
 
-    /// Creates the Lastys ID, then shows its Recovery code.
-    public func continueFromConsent() async {
-        guard screen == .onboarding(.consent), canContinueFromConsent else { return }
+    /// Welcome's Get started: creates the Lastys ID, then shows its Recovery code.
+    public func getStarted() async {
+        guard screen == .onboarding(.welcome), canGetStarted else { return }
         isCreatingLastysID = true
         defer { isCreatingLastysID = false }
         do {
@@ -737,6 +959,25 @@ public final class AppModel {
         if moment.isShared { Task { await syncSharedMoments() } }
     }
 
+    /// One of my own Moments with room for another photo or video.
+    public func canAddMedia(to moment: Moment) -> Bool {
+        guard let mine = phone.moments.first(where: { $0.id == moment.id }) else { return false }
+        return mine.media.count < Moment.maxMedia
+    }
+
+    /// Adds photos or videos to one of my Moments straight from its details, after the ones it has,
+    /// up to `Moment.maxMedia` in all. Media stays on this phone, so nothing is synced.
+    /// - Returns: how many were added.
+    @discardableResult
+    public func addMedia(_ media: [MomentMedia], to id: UUID) -> Int {
+        guard let index = phone.moments.firstIndex(where: { $0.id == id }) else { return 0 }
+        let room = max(0, Moment.maxMedia - phone.moments[index].media.count)
+        let added = Array(media.prefix(room))
+        guard !added.isEmpty else { return 0 }
+        phone.moments[index].media += added
+        return added.count
+    }
+
     public func deleteMoment(id: UUID) {
         let wasShared = phone.moments.first { $0.id == id }?.isShared ?? false
         phone.moments.removeAll { $0.id == id }
@@ -747,6 +988,39 @@ public final class AppModel {
     /// The media files Moments still use, so the phone can remove the rest.
     public var mediaFileNamesInUse: Set<String> {
         Set(phone.moments.flatMap(\.media).map(\.fileName))
+    }
+
+    // MARK: Moment card
+
+    /// Only a Moment's owner decides whether it leaves the app, so a Partner's Shared Moment has no card.
+    public func canMakeMomentCard(for moment: Moment) -> Bool {
+        phone.moments.contains { $0.id == moment.id }
+    }
+
+    /// The Moment card for one of my Moments, showing the photo at `photoIndex` (the one open in the gallery).
+    /// Nil for a Moment that isn't mine.
+    public func momentCard(for id: UUID, photoIndex: Int = 0, options: MomentCardOptions) -> MomentCard? {
+        guard let moment = phone.moments.first(where: { $0.id == id }) else { return nil }
+        let days = calendar.dateComponents([.day], from: today, to: calendar.startOfDay(for: moment.date)).day ?? 0
+        let countdown: MomentCard.Countdown = days > 0 ? .daysToGo(days) : days == 0 ? .today : .daysAgo(-days)
+        let names: MomentCard.Names? = {
+            guard case .active(let partner, _, _) = relationship else { return nil }
+            return MomentCard.Names(mine: nickname, partner: partner)
+        }()
+        let photo = moment.media.isEmpty ? nil : moment.media[min(max(photoIndex, 0), moment.media.count - 1)]
+        return MomentCard(
+            style: options.style,
+            type: moment.type,
+            title: moment.title,
+            date: moment.date,
+            photo: options.showsPhoto ? photo : nil,
+            place: options.showsPlace && !moment.place.isEmpty ? moment.place : nil,
+            countdown: options.showsCountdown ? countdown : nil,
+            names: options.showsNames ? names : nil,
+            offersPhoto: photo != nil,
+            offersPlace: !moment.place.isEmpty,
+            offersNames: names != nil
+        )
     }
 
     // MARK: Reminders
@@ -869,6 +1143,50 @@ public enum RelationshipRequestProblem: Equatable, Sendable {
         switch error as? TrusteeError {
         case .scanTooOld, .scanRequired, .youAreTaken, .youAreCoolingOff, .theyAreTaken, .theyAreCoolingOff, .thatIsYou:
             self = .scanAgain
+        default:
+            self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+        }
+    }
+}
+
+public enum InviteProblem: Equatable, Sendable {
+    /// Invite links live at Trustee, so making or cancelling one needs internet.
+    case needsInternet
+    /// This Lastys ID became Taken or entered a Cooling-off period since the screen opened.
+    case notSingleNow
+    case couldNotReachLastys
+
+    init(_ error: Error) {
+        switch error as? TrusteeError {
+        case .youAreTaken, .youAreCoolingOff:
+            self = .notSingleNow
+        default:
+            self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
+        }
+    }
+}
+
+public enum ReceivedInviteProblem: Equatable, Sendable {
+    case needsInternet
+    /// Used, cancelled, more than 7 days old, or its sender is now Taken.
+    case noLongerValid
+    /// It's my own Invite link.
+    case thatIsYou
+    case youAreTaken
+    case youAreCoolingOff
+    case couldNotReachLastys
+
+    /// Public so the app's demo of the partner's phone can say why an answer didn't go through.
+    public init(_ error: Error) {
+        switch error as? TrusteeError {
+        case .inviteNotValid, .theyAreTaken, .theyAreCoolingOff, .requestNotPending, .requestNotFound:
+            self = .noLongerValid
+        case .thatIsYou:
+            self = .thatIsYou
+        case .youAreTaken:
+            self = .youAreTaken
+        case .youAreCoolingOff:
+            self = .youAreCoolingOff
         default:
             self = (error as? URLError)?.code == .notConnectedToInternet ? .needsInternet : .couldNotReachLastys
         }
@@ -1302,7 +1620,6 @@ extension AppModel {
         myDetails = nil
         whoScannedMe = []
         revealedRecoveryCode = nil
-        isOver18 = false
         acceptsTerms = false
         hasSavedRecoveryCode = false
         profileNickname = ""

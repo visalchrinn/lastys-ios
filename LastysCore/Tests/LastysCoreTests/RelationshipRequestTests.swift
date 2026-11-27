@@ -119,6 +119,92 @@ struct RelationshipRequestTests {
         #expect(me.model.outgoingRequest == nil)
     }
 
+    // MARK: Moments added on linking
+
+    /// Me having sent Dara a Relationship request that Dara accepted.
+    private func meLinkedWithDara() async throws -> (dara: TestPhone, me: TestPhone) {
+        let (dara, me) = try await meHavingScannedDara()
+        await me.model.sendRelationshipRequest()
+        try await respond(as: dara, to: try #require(me.model.outgoingRequest), accept: true)
+        return (dara, me)
+    }
+
+    private static let linkingTitles = ["Our 1st anniversary", "The day we linked"]
+
+    @Test func whenTheRequestIsAcceptedTheSenderGetsTheDayWeLinkedAndTheFirstAnniversaryBothShared() async throws {
+        let (_, me) = try await meLinkedWithDara()
+
+        await me.model.refreshOutgoingRequest()
+
+        guard case .active(_, let since, _) = me.model.relationship else {
+            Issue.record("expected an active Relationship, got \(me.model.relationship)")
+            return
+        }
+        let calendar = Calendar.current
+        let day = calendar.startOfDay(for: since)
+        let linked = try #require(me.model.moments.first { $0.title == "The day we linked" })
+        let anniversary = try #require(me.model.moments.first { $0.title == "Our 1st anniversary" })
+        #expect(linked.type == .firstDate)
+        #expect(linked.date == day)
+        #expect(anniversary.type == .anniversary)
+        #expect(anniversary.date == calendar.date(byAdding: .year, value: 1, to: day))
+        #expect(linked.isShared && anniversary.isShared)
+        #expect(me.reminders.scheduled.contains { $0.title == "Our 1st anniversary" })
+    }
+
+    @Test func theReceiverSeesThemAsSharedMomentsAndGetsNoCopiesOfTheirOwn() async throws {
+        let (dara, me) = try await meLinkedWithDara()
+        await me.model.refreshOutgoingRequest()
+
+        await dara.model.start()
+
+        #expect(dara.model.moments.isEmpty)
+        #expect(dara.model.timeline.map(\.title).sorted() == Self.linkingTitles)
+        #expect(dara.model.timeline.allSatisfy { !dara.model.isMine($0) })
+    }
+
+    @Test func seeingTheAcceptanceAgainAddsNoDuplicates() async throws {
+        let (_, me) = try await meLinkedWithDara()
+
+        await me.model.refreshOutgoingRequest()
+        await me.model.refreshOutgoingRequest()
+        await me.model.start()
+        me.relaunch()
+        await me.model.start()
+
+        #expect(me.model.moments.map(\.title).sorted() == Self.linkingTitles)
+    }
+
+    @Test func aSenderWhoOnlyLearnsOfTheAcceptanceAtTheNextLaunchStillGetsThem() async throws {
+        let (_, me) = try await meLinkedWithDara()
+
+        me.relaunch()
+        await me.model.start()
+
+        #expect(me.model.moments.map(\.title).sorted() == Self.linkingTitles)
+        #expect(me.model.moments.allSatisfy { $0.isShared })
+    }
+
+    @Test func aDeclinedRequestAddsNoMoments() async throws {
+        let (dara, me) = try await meHavingScannedDara()
+        await me.model.sendRelationshipRequest()
+        try await respond(as: dara, to: try #require(me.model.outgoingRequest), accept: false)
+
+        await me.model.refreshOutgoingRequest()
+        await me.model.start()
+
+        #expect(me.model.moments.isEmpty)
+    }
+
+    @Test func theTitlesFollowTheAppsLanguage() async throws {
+        let (_, me) = try await meLinkedWithDara()
+        me.model.linkingMomentTitles = { (dayWeLinked: "ថ្ងៃដែលយើងភ្ជាប់គ្នា", firstAnniversary: "ខួបលើកទី១") }
+
+        await me.model.refreshOutgoingRequest()
+
+        #expect(me.model.moments.map(\.title).sorted() == ["ខួបលើកទី១", "ថ្ងៃដែលយើងភ្ជាប់គ្នា"])
+    }
+
     @Test func scanningAgainForgetsAnEarlierRequestProblem() async throws {
         let (dara, me) = try await meHavingScannedDara()
         me.isOnline = false

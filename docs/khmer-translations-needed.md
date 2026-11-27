@@ -80,9 +80,42 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Khmer lunar date (sample) | ថ្ងៃខែចន្ទគតិខ្មែរ (គំរូ) |
 | repeats on Khmer lunar date (sample) | ធ្វើម្តងទៀតតាមថ្ងៃខែចន្ទគតិខ្មែរ (គំរូ) |
 | Shared Moment | ពេលវេលាសំខាន់ដែលបានចែករំលែក |
-| Has a photo | មានរូបថត |
-| Has a video | មានវីដេអូ |
 | Dismiss | បិទ |
+
+## Invite link
+
+| English | Khmer |
+|---|---|
+| Invite your partner | អញ្ជើញដៃគូរបស់អ្នក |
+| Invite sent · view | បានផ្ញើការអញ្ជើញ · មើល |
+| Partner not on Lastys yet? Send an invite link | ដៃគូមិនទាន់មាន Lastys មែនទេ? ផ្ញើតំណអញ្ជើញ |
+| Link with your partner | ភ្ជាប់ជាមួយដៃគូរបស់អ្នក |
+| Send your link. When they open it and accept, you're linked. | ផ្ញើតំណរបស់អ្នក។ ពេលគេបើកវា ហើយយល់ព្រម អ្នកទាំងពីរនឹងភ្ជាប់គ្នា។ |
+| Telegram | Telegram |
+| Messenger | Messenger |
+| Messages | សារ |
+| More | ច្រើនទៀត |
+| Waiting for your partner | កំពុងរង់ចាំដៃគូរបស់អ្នក |
+| Cancel invite | បោះបង់ការអញ្ជើញ |
+| Expires %@ | ផុតកំណត់ %@ |
+| Works for one person only. Expires after 7 days. | ប្រើបានសម្រាប់មនុស្សម្នាក់ប៉ុណ្ណោះ។ ផុតកំណត់ក្រោយ 7 ថ្ងៃ។ |
+| Link with me on Lastys: %@ | ភ្ជាប់ជាមួយខ្ញុំនៅលើ Lastys៖ %@ |
+| Invite links need an internet connection. | តំណអញ្ជើញត្រូវការអ៊ីនធឺណិត។ |
+| You can invite a partner only while you're Verified Single and not in a Cooling-off period. | អ្នកអាចអញ្ជើញដៃគូបានតែពេលអ្នកនៅលីវដែលបានផ្ទៀងផ្ទាត់ ហើយមិនស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត។ |
+| PREVIEW · YOUR PARTNER'S PHONE | មើលជាមុន · ទូរសព្ទរបស់ដៃគូអ្នក |
+| Close preview | បិទការមើលជាមុន |
+| %@ wants to link with you | %@ ចង់ភ្ជាប់ជាមួយអ្នក |
+| Accept to show you're together on Lastys. Either of you can end it later. | យល់ព្រម ដើម្បីបង្ហាញថាអ្នកនៅជាមួយគ្នានៅលើ Lastys។ អ្នកណាម្នាក់អាចបញ្ចប់វាបាននៅពេលក្រោយ។ |
+| Accept & link | យល់ព្រម និងភ្ជាប់ |
+| Not now | មិនមែនពេលនេះទេ |
+| New to Lastys? Your ID is created in seconds. No sign-up. | ទើបមកដល់ Lastys? អត្តសញ្ញាណរបស់អ្នកត្រូវបានបង្កើតក្នុងរយៈពេលប៉ុន្មានវិនាទី។ មិនចាំបាច់ចុះឈ្មោះ។ |
+| Answering an invite needs an internet connection. | ការឆ្លើយតបការអញ្ជើញត្រូវការអ៊ីនធឺណិត។ |
+| This invite is no longer valid. | ការអញ្ជើញនេះលែងមានសុពលភាពហើយ។ |
+| This is your own invite. | នេះជាការអញ្ជើញរបស់អ្នកផ្ទាល់។ |
+| You're already in a Relationship, so you can't accept this invite. | អ្នកមានទំនាក់ទំនងរួចហើយ ដូច្នេះអ្នកមិនអាចទទួលយកការអញ្ជើញនេះបានទេ។ |
+| You're in a Cooling-off period, so you can't accept an invite yet. | អ្នកកំពុងស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត ដូច្នេះអ្នកមិនទាន់អាចទទួលយកការអញ្ជើញបានទេ។ |
+| Your partner declined. You can send a new invite. | ដៃគូរបស់អ្នកបានបដិសេធ។ អ្នកអាចផ្ញើការអញ្ជើញថ្មីបាន។ |
+| Send a new invite | ផ្ញើការអញ្ជើញថ្មី |
 
 ## Lucky Day Planner
 
@@ -165,6 +198,8 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | You can't delete your data while you're in a Relationship, because that would end it one-sidedly. Ask to end it first: your Partner can agree, or the Lastys team can decide after a Team review. | អ្នកមិនអាចលុបទិន្នន័យរបស់អ្នកបានទេ ខណៈដែលអ្នកស្ថិតក្នុងទំនាក់ទំនង ព្រោះវានឹងបញ្ចប់ទំនាក់ទំនងដោយម្ខាង។ សូមស្នើសុំបញ្ចប់ជាមុនសិន៖ ដៃគូរបស់អ្នកអាចយល់ព្រម ឬក្រុមការងារ Lastys អាចសម្រេចក្រោយការត្រួតពិនិត្យដោយក្រុមការងារ។ |
 | Nickname | ឈ្មោះហៅក្រៅ |
 | Add a photo | បន្ថែមរូបថត |
+| Add photos or videos | បន្ថែមរូបថត ឬវីដេអូ |
+| Photo added | បានបន្ថែមរូបថត |
 | Change the photo | ប្តូររូបថត |
 | Remove the photo | លុបរូបថត |
 | Your nickname and photo show when someone Scans you. | ឈ្មោះហៅក្រៅ និងរូបថតរបស់អ្នកនឹងបង្ហាញនៅពេលមាននរណាស្កេនអ្នក។ |
@@ -211,6 +246,31 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Birthday | ថ្ងៃកំណើត |
 | Custom | ផ្ទាល់ខ្លួន |
 
+## Moment card
+
+| English | Khmer |
+|---|---|
+| Share card | ចែករំលែកកាត |
+| Moment card | កាតពេលវេលាពិសេស |
+| Card preview | មើលកាតជាមុន |
+| Card style | រចនាប័ទ្មកាត |
+| Rose | ផ្កាឈូក |
+| Dark | ងងឹត |
+| Countdown | រាប់ថយក្រោយ |
+| Our names | ឈ្មោះរបស់យើង |
+| Your note never goes on the card. The card has no QR and doesn't show whether you're single or taken. | កំណត់ចំណាំរបស់អ្នកមិនដែលនៅលើកាតទេ។ កាតគ្មាន QR ហើយមិនបង្ហាញថាអ្នកនៅលីវ ឬមានគូទេ។ |
+| Save image | រក្សាទុករូបភាព |
+| Sharing is always your choice. | ការចែករំលែកគឺជាជម្រើសរបស់អ្នកជានិច្ច។ |
+| Couldn't make the card image. Try again. | មិនអាចបង្កើតរូបភាពកាតបានទេ។ សូមព្យាយាមម្តងទៀត។ |
+| Lastys can't save to Photos. Allow it in Settings. | Lastys មិនអាចរក្សាទុកក្នុងរូបថតបានទេ។ សូមអនុញ្ញាតនៅក្នុងការកំណត់។ |
+| Saved to Photos | បានរក្សាទុកក្នុងរូបថត |
+| Couldn't save the card. Try again. | មិនអាចរក្សាទុកកាតបានទេ។ សូមព្យាយាមម្តងទៀត។ |
+| It's today | គឺថ្ងៃនេះ |
+| 1 day to go | នៅសល់ ១ ថ្ងៃ |
+| %lld days to go | នៅសល់ %lld ថ្ងៃ |
+| 1 day ago | ១ ថ្ងៃមុន |
+| %lld days ago | %lld ថ្ងៃមុន |
+
 ## My Lastys QR
 
 | English | Khmer |
@@ -255,14 +315,11 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 | Get started | ចាប់ផ្តើម |
 | Move my ID from another phone | ផ្ទេរអត្តសញ្ញាណរបស់ខ្ញុំពីទូរសព្ទផ្សេង |
 | I lost my phone | ខ្ញុំបាត់ទូរសព្ទ |
-| You can change it later in Me. | អ្នកអាចប្តូរវាបានពេលក្រោយនៅក្នុង "ខ្ញុំ"។ |
-| Choose your language | ជ្រើសរើសភាសារបស់អ្នក |
+| Welcome | សូមស្វាគមន៍ |
+| Love you can trust. | ស្នេហាដែលអ្នកអាចទុកចិត្តបាន។ |
+| I'm 18 or older and agree to the Terms and Privacy Policy | ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ ហើយយល់ព្រមលើលក្ខខណ្ឌ និងគោលការណ៍ឯកជនភាព |
+| No sign-up. No password. | មិនចាំបាច់ចុះឈ្មោះ។ មិនចាំបាច់ពាក្យសម្ងាត់។ |
 | Continue | បន្ត |
-| Before you start | មុនពេលអ្នកចាប់ផ្តើម |
-| Lastys is for adults, and works only if everyone plays by the same rules. | Lastys សម្រាប់មនុស្សពេញវ័យ ហើយដំណើរការបានលុះត្រាតែគ្រប់គ្នាអនុវត្តតាមច្បាប់ដូចគ្នា។ |
-| I'm 18 or older | ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ |
-| I accept the Terms and the Privacy Notice | ខ្ញុំទទួលយកលក្ខខណ្ឌ និងសេចក្តីជូនដំណឹងអំពីឯកជនភាព |
-| Create my Lastys ID | បង្កើតអត្តសញ្ញាណ Lastys របស់ខ្ញុំ |
 | Save your Recovery code | រក្សាទុកកូដសង្គ្រោះរបស់អ្នក |
 | If you lose this phone, this code gets your Lastys ID back. Anyone who has it can try to move your Lastys ID, so keep it private. | បើអ្នកបាត់ទូរសព្ទនេះ កូដនេះនឹងយកអត្តសញ្ញាណ Lastys របស់អ្នកមកវិញ។ អ្នកណាមានវាអាចព្យាយាមផ្ទេរអត្តសញ្ញាណ Lastys របស់អ្នកបាន ដូច្នេះសូមរក្សាវាជាសម្ងាត់។ |
 | Copied | បានចម្លង |
@@ -325,6 +382,8 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 
 | English | Khmer |
 |---|---|
+| The day we linked | ថ្ងៃដែលយើងភ្ជាប់គ្នា |
+| Our 1st anniversary | ខួបលើកទី១របស់យើង |
 | Send Relationship request | ផ្ញើសំណើទំនាក់ទំនង |
 | Checking for their answer… | កំពុងពិនិត្យចម្លើយរបស់គាត់… |
 | Waiting for %@ | កំពុងរង់ចាំ %@ |

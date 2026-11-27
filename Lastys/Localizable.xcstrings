@@ -65,6 +65,22 @@
         }
       }
     },
+    "%@ wants to link with you" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ wants to link with you"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%@ ចង់ភ្ជាប់ជាមួយអ្នក"
+          }
+        }
+      }
+    },
     "%@ will be asked to agree. You both stay Taken while %@ has 7 days to answer." : {
       "localizations" : {
         "en" : {
@@ -93,6 +109,38 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "%lld ថ្ងៃ"
+          }
+        }
+      }
+    },
+    "%lld days ago" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld days ago"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lld ថ្ងៃមុន"
+          }
+        }
+      }
+    },
+    "%lld days to go" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld days to go"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "នៅសល់ %lld ថ្ងៃ"
           }
         }
       }
@@ -157,6 +205,38 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "+ បន្ថែម"
+          }
+        }
+      }
+    },
+    "1 day ago" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 day ago"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "១ ថ្ងៃមុន"
+          }
+        }
+      }
+    },
+    "1 day to go" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 day to go"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "នៅសល់ ១ ថ្ងៃ"
           }
         }
       }
@@ -321,6 +401,38 @@
         }
       }
     },
+    "Accept & link" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accept & link"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "យល់ព្រម និងភ្ជាប់"
+          }
+        }
+      }
+    },
+    "Accept to show you're together on Lastys. Either of you can end it later." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accept to show you're together on Lastys. Either of you can end it later."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "យល់ព្រម ដើម្បីបង្ហាញថាអ្នកនៅជាមួយគ្នានៅលើ Lastys។ អ្នកណាម្នាក់អាចបញ្ចប់វាបាននៅពេលក្រោយ។"
+          }
+        }
+      }
+    },
     "Add a photo" : {
       "localizations" : {
         "en" : {
@@ -343,6 +455,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Add a photo or video"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បន្ថែមរូបថត ឬវីដេអូ"
+          }
+        }
+      }
+    },
+    "Add photos or videos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add photos or videos"
           }
         },
         "km" : {
@@ -449,6 +577,22 @@
         }
       }
     },
+    "Answering an invite needs an internet connection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answering an invite needs an internet connection."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ការឆ្លើយតបការអញ្ជើញត្រូវការអ៊ីនធឺណិត។"
+          }
+        }
+      }
+    },
     "Anyone who doubts it can Scan your Lastys QR to see your status live." : {
       "localizations" : {
         "en" : {
@@ -525,22 +669,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ត្រឡប់ក្រោយ"
-          }
-        }
-      }
-    },
-    "Before you start" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Before you start"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "មុនពេលអ្នកចាប់ផ្តើម"
           }
         }
       }
@@ -641,6 +769,22 @@
         }
       }
     },
+    "Cancel invite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel invite"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បោះបង់ការអញ្ជើញ"
+          }
+        }
+      }
+    },
     "Cancel this Recovery" : {
       "localizations" : {
         "en" : {
@@ -653,6 +797,38 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "បោះបង់ការសង្គ្រោះនេះ"
+          }
+        }
+      }
+    },
+    "Card preview" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Card preview"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មើលកាតជាមុន"
+          }
+        }
+      }
+    },
+    "Card style" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Card style"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "រចនាប័ទ្មកាត"
           }
         }
       }
@@ -785,22 +961,6 @@
         }
       }
     },
-    "Choose your language" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choose your language"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ជ្រើសរើសភាសារបស់អ្នក"
-          }
-        }
-      }
-    },
     "Close" : {
       "localizations" : {
         "en" : {
@@ -813,6 +973,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "បិទ"
+          }
+        }
+      }
+    },
+    "Close preview" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close preview"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បិទការមើលជាមុន"
           }
         }
       }
@@ -945,6 +1121,22 @@
         }
       }
     },
+    "Couldn't make the card image. Try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't make the card image. Try again."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មិនអាចបង្កើតរូបភាពកាតបានទេ។ សូមព្យាយាមម្តងទៀត។"
+          }
+        }
+      }
+    },
     "Couldn't reach Lastys to check your status. Try again." : {
       "localizations" : {
         "en" : {
@@ -1009,18 +1201,34 @@
         }
       }
     },
-    "Create my Lastys ID" : {
+    "Couldn't save the card. Try again." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Create my Lastys ID"
+            "value" : "Couldn't save the card. Try again."
           }
         },
         "km" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "បង្កើតអត្តសញ្ញាណ Lastys របស់ខ្ញុំ"
+            "value" : "មិនអាចរក្សាទុកកាតបានទេ។ សូមព្យាយាមម្តងទៀត។"
+          }
+        }
+      }
+    },
+    "Countdown" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Countdown"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "រាប់ថយក្រោយ"
           }
         }
       }
@@ -1069,6 +1277,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ផ្ទាល់ខ្លួន"
+          }
+        }
+      }
+    },
+    "Dark" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ងងឹត"
           }
         }
       }
@@ -1441,6 +1665,22 @@
         }
       }
     },
+    "Expires %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Expires %@"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ផុតកំណត់ %@"
+          }
+        }
+      }
+    },
     "Export as a calendar file" : {
       "localizations" : {
         "en" : {
@@ -1565,38 +1805,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ចាប់ផ្តើម"
-          }
-        }
-      }
-    },
-    "Has a photo" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Has a photo"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "មានរូបថត"
-          }
-        }
-      }
-    },
-    "Has a video" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Has a video"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "មានវីដេអូ"
           }
         }
       }
@@ -1745,22 +1953,6 @@
         }
       }
     },
-    "I accept the Terms and the Privacy Notice" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I accept the Terms and the Privacy Notice"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ខ្ញុំទទួលយកលក្ខខណ្ឌ និងសេចក្តីជូនដំណឹងអំពីឯកជនភាព"
-          }
-        }
-      }
-    },
     "I lost my phone" : {
       "localizations" : {
         "en" : {
@@ -1773,6 +1965,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ខ្ញុំបាត់ទូរសព្ទ"
+          }
+        }
+      }
+    },
+    "I'm 18 or older and agree to the Terms and Privacy Policy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I'm 18 or older and agree to the Terms and Privacy Policy"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ ហើយយល់ព្រមលើលក្ខខណ្ឌ និងគោលការណ៍ឯកជនភាព"
           }
         }
       }
@@ -1805,22 +2013,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "បើអ្នកបាត់ទូរសព្ទនេះ កូដនេះនឹងយកអត្តសញ្ញាណ Lastys របស់អ្នកមកវិញ។ អ្នកណាមានវាអាចព្យាយាមផ្ទេរអត្តសញ្ញាណ Lastys របស់អ្នកបាន ដូច្នេះសូមរក្សាវាជាសម្ងាត់។"
-          }
-        }
-      }
-    },
-    "I'm 18 or older" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "I'm 18 or older"
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ខ្ញុំមានអាយុ 18 ឆ្នាំឡើងទៅ"
           }
         }
       }
@@ -1953,6 +2145,70 @@
         }
       }
     },
+    "Invite links need an internet connection." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite links need an internet connection."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "តំណអញ្ជើញត្រូវការអ៊ីនធឺណិត។"
+          }
+        }
+      }
+    },
+    "Invite sent · view" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite sent · view"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បានផ្ញើការអញ្ជើញ · មើល"
+          }
+        }
+      }
+    },
+    "Invite your partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invite your partner"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "អញ្ជើញដៃគូរបស់អ្នក"
+          }
+        }
+      }
+    },
+    "It's today" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's today"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "គឺថ្ងៃនេះ"
+          }
+        }
+      }
+    },
     "Keep Lastys installed. You can close it; it checks again when you open it." : {
       "localizations" : {
         "en" : {
@@ -2049,18 +2305,18 @@
         }
       }
     },
-    "Lastys is for adults, and works only if everyone plays by the same rules." : {
+    "Lastys can't save to Photos. Allow it in Settings." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Lastys is for adults, and works only if everyone plays by the same rules."
+            "value" : "Lastys can't save to Photos. Allow it in Settings."
           }
         },
         "km" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Lastys សម្រាប់មនុស្សពេញវ័យ ហើយដំណើរការបានលុះត្រាតែគ្រប់គ្នាអនុវត្តតាមច្បាប់ដូចគ្នា។"
+            "value" : "Lastys មិនអាចរក្សាទុកក្នុងរូបថតបានទេ។ សូមអនុញ្ញាតនៅក្នុងការកំណត់។"
           }
         }
       }
@@ -2093,6 +2349,54 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Lastys បញ្ជាក់ថាអ្នកនៅលីវ ហើយរក្សាទំនាក់ទំនងតែមួយក្នុងពេលតែមួយ ដែលបានបញ្ជាក់ដោយអ្នកទាំងពីរ។"
+          }
+        }
+      }
+    },
+    "Link with me on Lastys: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link with me on Lastys: %@"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ភ្ជាប់ជាមួយខ្ញុំនៅលើ Lastys៖ %@"
+          }
+        }
+      }
+    },
+    "Link with your partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link with your partner"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ភ្ជាប់ជាមួយដៃគូរបស់អ្នក"
+          }
+        }
+      }
+    },
+    "Love you can trust." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Love you can trust."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ស្នេហាដែលអ្នកអាចទុកចិត្តបាន។"
           }
         }
       }
@@ -2209,6 +2513,38 @@
         }
       }
     },
+    "Messages" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messages"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "សារ"
+          }
+        }
+      }
+    },
+    "Messenger" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Messenger"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Messenger"
+          }
+        }
+      }
+    },
     "Moment" : {
       "localizations" : {
         "en" : {
@@ -2221,6 +2557,38 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ពេលវេលាសំខាន់"
+          }
+        }
+      }
+    },
+    "Moment card" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Moment card"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "កាតពេលវេលាពិសេស"
+          }
+        }
+      }
+    },
+    "More" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ច្រើនទៀត"
           }
         }
       }
@@ -2333,6 +2701,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "ទូរសព្ទថ្មី"
+          }
+        }
+      }
+    },
+    "New to Lastys? Your ID is created in seconds. No sign-up." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New to Lastys? Your ID is created in seconds. No sign-up."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ទើបមកដល់ Lastys? អត្តសញ្ញាណរបស់អ្នកត្រូវបានបង្កើតក្នុងរយៈពេលប៉ុន្មានវិនាទី។ មិនចាំបាច់ចុះឈ្មោះ។"
           }
         }
       }
@@ -2465,6 +2849,22 @@
         }
       }
     },
+    "No sign-up. No password." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No sign-up. No password."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មិនចាំបាច់ចុះឈ្មោះ។ មិនចាំបាច់ពាក្យសម្ងាត់។"
+          }
+        }
+      }
+    },
     "No upcoming moments yet. Tap + Add." : {
       "localizations" : {
         "en" : {
@@ -2525,6 +2925,22 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "មិនបានភ្ជាប់ជាមួយនរណាលើ Lastys ទេ"
+          }
+        }
+      }
+    },
+    "Not now" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មិនមែនពេលនេះទេ"
           }
         }
       }
@@ -2727,10 +3143,394 @@
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "បន្ថែម" } }
       }
     },
+    "Our 1st anniversary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Our 1st anniversary"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ខួបលើកទី១របស់យើង"
+          }
+        }
+      }
+    },
+    "Our names" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Our names"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ឈ្មោះរបស់យើង"
+          }
+        }
+      }
+    },
+    "Partner not on Lastys yet? Send an invite link" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partner not on Lastys yet? Send an invite link"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ដៃគូមិនទាន់មាន Lastys មែនទេ? ផ្ញើតំណអញ្ជើញ"
+          }
+        }
+      }
+    },
+    "Photo added" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo added"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បានបន្ថែមរូបថត"
+          }
+        }
+      }
+    },
     "Photos" : {
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photos" } },
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "រូបថត" } }
+      }
+    },
+    "PREVIEW · YOUR PARTNER'S PHONE" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PREVIEW · YOUR PARTNER'S PHONE"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "មើលជាមុន · ទូរសព្ទរបស់ដៃគូអ្នក"
+          }
+        }
+      }
+    },
+    "Rose" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rose"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ផ្កាឈូក"
+          }
+        }
+      }
+    },
+    "Save image" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save image"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "រក្សាទុករូបភាព"
+          }
+        }
+      }
+    },
+    "Saved to Photos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saved to Photos"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "បានរក្សាទុកក្នុងរូបថត"
+          }
+        }
+      }
+    },
+    "Send a new invite" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send a new invite"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ផ្ញើការអញ្ជើញថ្មី"
+          }
+        }
+      }
+    },
+    "Send your link. When they open it and accept, you're linked." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send your link. When they open it and accept, you're linked."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ផ្ញើតំណរបស់អ្នក។ ពេលគេបើកវា ហើយយល់ព្រម អ្នកទាំងពីរនឹងភ្ជាប់គ្នា។"
+          }
+        }
+      }
+    },
+    "Share card" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share card"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ចែករំលែកកាត"
+          }
+        }
+      }
+    },
+    "Sharing is always your choice." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sharing is always your choice."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ការចែករំលែកគឺជាជម្រើសរបស់អ្នកជានិច្ច។"
+          }
+        }
+      }
+    },
+    "Telegram" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Telegram"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Telegram"
+          }
+        }
+      }
+    },
+    "The day we linked" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The day we linked"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ថ្ងៃដែលយើងភ្ជាប់គ្នា"
+          }
+        }
+      }
+    },
+    "This invite is no longer valid." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This invite is no longer valid."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ការអញ្ជើញនេះលែងមានសុពលភាពហើយ។"
+          }
+        }
+      }
+    },
+    "This is your own invite." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is your own invite."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "នេះជាការអញ្ជើញរបស់អ្នកផ្ទាល់។"
+          }
+        }
+      }
+    },
+    "Waiting for your partner" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waiting for your partner"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "កំពុងរង់ចាំដៃគូរបស់អ្នក"
+          }
+        }
+      }
+    },
+    "Welcome" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "សូមស្វាគមន៍"
+          }
+        }
+      }
+    },
+    "Works for one person only. Expires after 7 days." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Works for one person only. Expires after 7 days."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ប្រើបានសម្រាប់មនុស្សម្នាក់ប៉ុណ្ណោះ។ ផុតកំណត់ក្រោយ 7 ថ្ងៃ។"
+          }
+        }
+      }
+    },
+    "You can invite a partner only while you're Verified Single and not in a Cooling-off period." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You can invite a partner only while you're Verified Single and not in a Cooling-off period."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "អ្នកអាចអញ្ជើញដៃគូបានតែពេលអ្នកនៅលីវដែលបានផ្ទៀងផ្ទាត់ ហើយមិនស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត។"
+          }
+        }
+      }
+    },
+    "You're already in a Relationship, so you can't accept this invite." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're already in a Relationship, so you can't accept this invite."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "អ្នកមានទំនាក់ទំនងរួចហើយ ដូច្នេះអ្នកមិនអាចទទួលយកការអញ្ជើញនេះបានទេ។"
+          }
+        }
+      }
+    },
+    "You're in a Cooling-off period, so you can't accept an invite yet." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You're in a Cooling-off period, so you can't accept an invite yet."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "អ្នកកំពុងស្ថិតក្នុងរយៈពេលសម្រាកចិត្ត ដូច្នេះអ្នកមិនទាន់អាចទទួលយកការអញ្ជើញបានទេ។"
+          }
+        }
+      }
+    },
+    "Your note never goes on the card. The card has no QR and doesn't show whether you're single or taken." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your note never goes on the card. The card has no QR and doesn't show whether you're single or taken."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "កំណត់ចំណាំរបស់អ្នកមិនដែលនៅលើកាតទេ។ កាតគ្មាន QR ហើយមិនបង្ហាញថាអ្នកនៅលីវ ឬមានគូទេ។"
+          }
+        }
+      }
+    },
+    "Your partner declined. You can send a new invite." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your partner declined. You can send a new invite."
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ដៃគូរបស់អ្នកបានបដិសេធ។ អ្នកអាចផ្ញើការអញ្ជើញថ្មីបាន។"
+          }
+        }
       }
     },
     "· optional, up to 6" : {
@@ -5021,22 +5821,6 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "អ្នកបានស្នើសុំបញ្ចប់ទំនាក់ទំនងរបស់អ្នក"
-          }
-        }
-      }
-    },
-    "You can change it later in Me." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "You can change it later in Me."
-          }
-        },
-        "km" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "អ្នកអាចប្តូរវាបានពេលក្រោយនៅក្នុង \"ខ្ញុំ\"។"
           }
         }
       }

@@ -22,6 +22,19 @@ public protocol TrusteeClient: Sendable {
     func relationshipRequest(id: String) async throws -> RelationshipRequest
     /// The receiver accepts or declines a Relationship request. Accepting starts the Relationship.
     func respondToRelationshipRequest(id: String, accept: Bool) async throws
+    /// Makes an Invite link: a Relationship request for someone this Lastys ID hasn't Scanned (ADR 0004).
+    /// One person can use it, for 7 days. Only one may be waiting, and only while single and not cooling off.
+    func createInviteLink() async throws -> InviteLink
+    /// This Lastys ID's Invite link still waiting, if any: not cancelled, used or expired.
+    func myInviteLink() async throws -> InviteLink?
+    /// Stops this Lastys ID's waiting Invite link, so nobody can use it.
+    func cancelInviteLink() async throws
+    /// From the phone that opened an Invite link: who sent it, if it can still be used.
+    func invite(code: String) async throws -> ReceivedInvite
+    /// Accepts an Invite link, under every Relationship request rule. Starts the Relationship.
+    func acceptInvite(code: String) async throws
+    /// Declines an Invite link: the sender is told, and the link is used up.
+    func declineInvite(code: String) async throws
     /// Asks the Partner to agree to end the Relationship. Both stay Taken while they have 7 days to answer.
     func sendEndRequest() async throws
     /// The requester takes their End request back; the Relationship carries on.
@@ -106,6 +119,12 @@ public enum TrusteeError: Error, Equatable, Sendable {
     case requestNotFound
     /// The Relationship request was already answered or has expired.
     case requestNotPending
+    /// This Lastys ID already has an Invite link waiting.
+    case inviteAlreadyWaiting
+    /// No Invite link is waiting for this Lastys ID.
+    case noInviteWaiting
+    /// The Invite link was used, cancelled, is more than 7 days old, or its sender is now Taken.
+    case inviteNotValid
     /// This Lastys ID has no active Relationship.
     case noRelationship
     /// The Relationship's current stage doesn't allow this, or this Partner can't do it.

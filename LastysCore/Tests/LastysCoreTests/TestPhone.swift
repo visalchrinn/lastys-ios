@@ -81,13 +81,11 @@ final class TestPhone {
         _ = try await trustee.client(forPhone: key.trusteeID).createLastysID()
     }
 
-    /// Goes through the intro, language and consent, stopping at the Recovery code.
+    /// Goes through the intro and Welcome, stopping at the Recovery code.
     func createLastysID() async {
         model.skipIntro()
-        model.confirmLanguage()
-        model.isOver18 = true
         model.acceptsTerms = true
-        await model.continueFromConsent()
+        await model.getStarted()
     }
 
     /// Scans `other`, sends them a Relationship request, and has them accept it, so the two become Partners.

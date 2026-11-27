@@ -17,6 +17,11 @@ struct SharedMomentTests {
         let me = TestPhone(nearby: dara)
         await me.onboard()
         try await me.becomePartners(with: dara)
+        // Linking gives me "The day we linked" and "Our 1st anniversary" (RelationshipRequestTests).
+        // These tests are about other Moments, so they start without them.
+        for moment in me.model.moments { me.model.deleteMoment(id: moment.id) }
+        await me.model.syncSharedMoments()
+        await dara.model.start()
         return (dara, me)
     }
 
@@ -151,6 +156,18 @@ struct SharedMomentTests {
 
         #expect(me.reminders.scheduled.allSatisfy { $0.title == "My secret diary day" })
         #expect(dara.reminders.scheduled.isEmpty)
+    }
+
+    @Test func onlyItsOwnerCanAddPhotosToASharedMoment() async throws {
+        let (dara, me) = try await partners()
+        let shared = try #require(me.model.addMoment(firstDate))
+        await me.model.share(shared.id)
+        await dara.model.start()
+        let darasCopy = try #require(dara.model.timeline.first)
+
+        #expect(!dara.model.canAddMedia(to: darasCopy))
+        #expect(dara.model.addMedia([MomentMedia(kind: .photo, fileName: "mine.jpg")], to: darasCopy.id) == 0)
+        #expect(dara.model.timeline.first?.media.isEmpty == true)
     }
 
     @Test func sharingWithoutInternetSaysSoAndSharesNothing() async throws {

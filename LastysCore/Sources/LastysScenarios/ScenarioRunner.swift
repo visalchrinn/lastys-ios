@@ -59,6 +59,8 @@ private final class Run: @unchecked Sendable {
     private var requestIDs: [String: [String: String]] = [:]
     /// The QR number each phone is on, raised by every `revoke-qr`.
     private var qrNumbers: [String: Int] = [:]
+    /// Each phone's latest Invite link code, which `open-invite`, `accept-invite` and `decline-invite` name by `from`.
+    private var inviteCodes: [String: String] = [:]
 
     private func key(of phone: String) -> SoftwarePhoneKey {
         if let key = keys[phone] { return key }
@@ -97,6 +99,27 @@ private final class Run: @unchecked Sendable {
         case "accept-relationship-request", "decline-relationship-request":
             let id = try requestID(from: step.arguments["from"], to: step.phone)
             try await client.respondToRelationshipRequest(id: id, accept: step.action == "accept-relationship-request")
+            return [:]
+        case "create-invite-link":
+            let link = try await client.createInviteLink()
+            inviteCodes[step.phone] = link.code
+            let now = lock.withLock { self.now }
+            return ["expiresInDays": String(Int(link.expiresAt.timeIntervalSince(now) / 86_400))]
+        case "get-my-invite-link":
+            return ["waiting": String(try await client.myInviteLink() != nil)]
+        case "cancel-invite-link":
+            try await client.cancelInviteLink()
+            return [:]
+        case "open-invite":
+            let invite = try await client.invite(code: inviteCodes[step.arguments["from"] ?? ""] ?? "no-invite")
+            return ["from": invite.senderNickname]
+        case "accept-invite", "decline-invite":
+            let code = inviteCodes[step.arguments["from"] ?? ""] ?? "no-invite"
+            if step.action == "accept-invite" {
+                try await client.acceptInvite(code: code)
+            } else {
+                try await client.declineInvite(code: code)
+            }
             return [:]
         case "send-end-request":
             try await client.sendEndRequest()
@@ -288,6 +311,9 @@ extension TrusteeError {
         case .thatIsYou: return "that-is-you"
         case .requestNotFound: return "request-not-found"
         case .requestNotPending: return "request-not-pending"
+        case .inviteAlreadyWaiting: return "invite-already-waiting"
+        case .noInviteWaiting: return "no-invite-waiting"
+        case .inviteNotValid: return "invite-not-valid"
         case .noRelationship: return "no-relationship"
         case .notAllowedNow: return "not-allowed-now"
         case .cannotEscalateYet: return "cannot-escalate-yet"

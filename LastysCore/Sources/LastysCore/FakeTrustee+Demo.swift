@@ -45,6 +45,18 @@ extension FakeTrustee {
         try respondToRelationshipRequest(phone: demo.key.trusteeID, id: id, accept: accept)
     }
 
+    /// Demo: Vanna, a sample person with no Relationship, opens an Invite link and accepts or declines it,
+    /// as her phone would. Every rule applies, so it fails if she's Taken from an earlier demo.
+    public func demoRespondToInvite(code: String, accept: Bool) throws {
+        addIfMissing(.vanna)
+        let phone = DemoPerson.vanna.key.trusteeID
+        if accept {
+            try acceptInvite(phone: phone, code: code)
+        } else {
+            try declineInvite(phone: phone, code: code)
+        }
+    }
+
     /// Demo: the Partner of `personalID` agrees to or declines their End request, as the Partner's phone would.
     public func demoPartnerRespondsToEndRequest(of personalID: String, agree: Bool) throws {
         try respondToEndRequest(phone: try phoneOfPartner(of: personalID), agree: agree)

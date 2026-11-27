@@ -29,7 +29,8 @@ struct QuickHideTests {
     @Test func quickHideHidesTheStatusCardAndSharedMomentsButNotPersonalOnes() async throws {
         let (_, me) = try await partners()
         #expect(me.model.showsStatusCard)
-        #expect(me.model.upcomingMoments.map(\.moment.title) == ["Mom's birthday", "Our first date"])
+        // "The day we linked" is today's Moment from linking, and shared like "Our first date".
+        #expect(me.model.upcomingMoments.map(\.moment.title) == ["The day we linked", "Mom's birthday", "Our first date"])
 
         me.model.setQuickHide(true)
 

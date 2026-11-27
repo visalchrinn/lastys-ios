@@ -7,6 +7,12 @@ struct MyLastysQRView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     @State private var confirmingRevoke = false
+    @State private var inviting = false
+    #if DEBUG
+    @Environment(\.demoTrustee) private var demoTrustee
+    #else
+    private let demoTrustee: FakeTrustee? = nil
+    #endif
 
     var body: some View {
         VStack(spacing: 20) {
@@ -87,6 +93,14 @@ struct MyLastysQRView: View {
                     .font(.jakarta(13))
                     .foregroundStyle(Theme.muted)
                     .multilineTextAlignment(.center)
+
+                if model.canInvite {
+                    Button("Partner not on Lastys yet? Send an invite link") { inviting = true }
+                        .font(.jakarta(14, .semibold))
+                        .underline()
+                        .foregroundStyle(Theme.roseDark)
+                        .frame(minHeight: 44)
+                }
             }
 
             Spacer(minLength: 0)
@@ -98,6 +112,12 @@ struct MyLastysQRView: View {
             }
         } message: {
             Text("The QR you are showing now, and any screenshot or shared card that has it, will stop working. Share the new one instead.")
+        }
+        .sheet(isPresented: $inviting) {
+            InvitePartnerSheet()
+                .environment(model)
+                .demoTrustee(demoTrustee)
+                .presentationDragIndicator(.visible)
         }
         .foregroundStyle(Theme.ink)
         .padding(20)

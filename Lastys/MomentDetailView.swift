@@ -1,8 +1,10 @@
 import AVKit
 import LastysCore
+import PhotosUI
 import SwiftUI
 
 /// One Moment in full: its photos, countdown, details and note, with Edit and Delete for my own.
+/// The owner can add photos or videos here without opening the editor.
 struct MomentDetailView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -12,10 +14,16 @@ struct MomentDetailView: View {
     @State private var editing = false
     @State private var confirmingDelete = false
     @State private var selectedMedia = 0
+    @State private var pickedItems: [PhotosPickerItem] = []
+    @State private var isAddingMedia = false
+    @State private var showsMediaAdded = false
+    @State private var hideMediaAdded: Task<Void, Never>?
+    @State private var makingCard = false
 
     private var moment: Moment { model.currentMoment(id: opened.id) ?? opened }
     private var isGone: Bool { model.currentMoment(id: opened.id) == nil }
     private var isPartners: Bool { !model.isMine(moment) }
+    private var canAddMedia: Bool { model.canAddMedia(to: moment) }
     private var upcoming: UpcomingMoment { model.nextTime(for: moment) }
 
     var body: some View {
@@ -40,6 +48,11 @@ struct MomentDetailView: View {
             MomentEditorView(editing: .existing(moment))
                 .environment(model)
         }
+        .sheet(isPresented: $makingCard) {
+            // The card uses the photo open in the gallery.
+            MomentCardSheet(momentID: moment.id, photoIndex: selectedMedia)
+                .environment(model)
+        }
         .confirmationDialog("Delete this Moment?", isPresented: $confirmingDelete, titleVisibility: .visible) {
             Button("Delete", role: .destructive) {
                 model.deleteMoment(id: moment.id)
@@ -49,6 +62,59 @@ struct MomentDetailView: View {
         .onChange(of: isGone) { _, gone in
             if gone { dismiss() }
         }
+        .onChange(of: pickedItems) { _, items in
+            guard !items.isEmpty else { return }
+            pickedItems = []
+            Task { await addPicked(items) }
+        }
+        .overlay(alignment: .bottom) {
+            if showsMediaAdded {
+                Text("Photo added")
+                    .font(.jakarta(14, .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity)
+                    .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Theme.ink))
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 24)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: showsMediaAdded)
+    }
+
+    /// Copies the picked photos or videos onto the phone and adds them after the ones already there.
+    private func addPicked(_ items: [PhotosPickerItem]) async {
+        isAddingMedia = true
+        defer { isAddingMedia = false }
+        let room = Moment.maxMedia - moment.media.count
+        var saved: [MomentMedia] = []
+        for item in items.prefix(max(0, room)) {
+            if let media = try? await MomentMediaFiles.save(item) { saved.append(media) }
+        }
+        let firstNew = moment.media.count
+        guard model.addMedia(saved, to: moment.id) > 0 else { return }
+        selectedMedia = firstNew
+        UIAccessibility.post(notification: .announcement, argument: AppText.string("Photo added"))
+        showsMediaAdded = true
+        hideMediaAdded?.cancel()
+        hideMediaAdded = Task {
+            try? await Task.sleep(for: .seconds(2))
+            if !Task.isCancelled { showsMediaAdded = false }
+        }
+    }
+
+    /// The system photo picker, for what still fits in this Moment.
+    private func mediaPicker<Label: View>(@ViewBuilder label: () -> Label) -> some View {
+        PhotosPicker(
+            selection: $pickedItems,
+            maxSelectionCount: max(1, Moment.maxMedia - moment.media.count),
+            matching: .any(of: [.images, .videos])
+        ) {
+            label()
+        }
+        .disabled(isAddingMedia)
     }
 
     private var header: some View {
@@ -85,10 +151,16 @@ struct MomentDetailView: View {
                 Text("No photo yet")
                     .font(.jakarta(14, .semibold))
                     .foregroundStyle(Theme.roseDeep)
-                if !isPartners {
-                    Button("Add a photo") { editing = true }
-                        .buttonStyle(GhostButtonStyle())
-                        .fixedSize()
+                if canAddMedia {
+                    mediaPicker {
+                        if isAddingMedia {
+                            ProgressView()
+                        } else {
+                            Text("Add a photo")
+                        }
+                    }
+                    .buttonStyle(GhostButtonStyle())
+                    .fixedSize()
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 220)
@@ -111,7 +183,7 @@ struct MomentDetailView: View {
                             .padding(12)
                     }
                 }
-                if moment.media.count > 1 {
+                if moment.media.count > 1 || canAddMedia {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 8) {
                             ForEach(Array(moment.media.enumerated()), id: \.element) { i, media in
@@ -127,6 +199,26 @@ struct MomentDetailView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityLabel(Text(verbatim: "\(i + 1)/\(moment.media.count)"))
+                            }
+                            if canAddMedia {
+                                mediaPicker {
+                                    Group {
+                                        if isAddingMedia {
+                                            ProgressView()
+                                        } else {
+                                            Image(systemName: "plus").font(.system(size: 20, weight: .semibold))
+                                        }
+                                    }
+                                    .foregroundStyle(Theme.muted)
+                                    .frame(width: 56, height: 56)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                            .strokeBorder(Color(hex: 0xD6CFCA), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                                    )
+                                    .padding(2)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(Text("Add photos or videos"))
                             }
                         }
                     }
@@ -258,6 +350,12 @@ struct MomentDetailView: View {
                     }
                     .buttonStyle(GhostButtonStyle())
                 }
+            }
+            if model.canMakeMomentCard(for: moment) {
+                Button { makingCard = true } label: {
+                    Label("Share card", systemImage: "square.and.arrow.up")
+                }
+                .buttonStyle(GhostButtonStyle())
             }
             Button("Delete this Moment", role: .destructive) { confirmingDelete = true }
                 .font(.jakarta(14, .semibold))

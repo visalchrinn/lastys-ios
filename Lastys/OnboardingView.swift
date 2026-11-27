@@ -4,7 +4,7 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-/// The first-run flow: intro, language, consent, Recovery code, profile.
+/// The first-run flow: intro, Welcome, Recovery code, profile.
 /// Every decision lives in `AppModel`; these screens only render it and pass on taps.
 struct OnboardingView: View {
     let step: OnboardingStep
@@ -13,8 +13,7 @@ struct OnboardingView: View {
         Group {
             switch step {
             case .intro(let page): IntroStep(page: page)
-            case .language: LanguageStep()
-            case .consent: ConsentStep()
+            case .welcome: WelcomeStep()
             case .recoveryCode: RecoveryCodeStep()
             case .profile: ProfileStep()
             case .moveFromAnotherPhone: MoveFromAnotherPhoneStep()
@@ -177,40 +176,103 @@ private struct IntroStep: View {
     }
 }
 
-// MARK: Language
+// MARK: Welcome
 
-private struct LanguageStep: View {
+/// Language, the one consent line, and Get started, on one screen.
+private struct WelcomeStep: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        StepLayout(title: "Choose your language", subtitle: "You can change it later in Me.") {
-            VStack(spacing: 10) {
-                ForEach(Language.allCases, id: \.self) { language in
-                    Button {
-                        model.chooseLanguage(language)
-                    } label: {
-                        HStack {
-                            Text(verbatim: language.nativeName)
-                                .font(.jakarta(17, .bold))
-                            Spacer()
-                            if model.language == language {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 22))
-                                    .foregroundStyle(Theme.rose)
-                            }
-                        }
-                        .frame(minHeight: 44)
-                        .card(border: model.language == language ? Theme.rose : Theme.cardBorder)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(model.language == language ? .isSelected : [])
-                }
+        @Bindable var model = model
+        VStack(spacing: 0) {
+            HStack {
+                Wordmark(size: 22)
+                Spacer()
+                LanguageSwitch()
             }
-        } footer: {
-            Button("Continue") { model.confirmLanguage() }
+            .padding(.horizontal, 24)
+            .padding(.top, 8)
+
+            Spacer()
+
+            VStack(alignment: .leading, spacing: 10) {
+                Image(systemName: "heart")
+                    .font(.system(size: 32, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 72, height: 72)
+                    .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(Theme.rose))
+                    .padding(.bottom, 14)
+                    .accessibilityHidden(true)
+                Text("Welcome")
+                    .font(.jakarta(34, .heavy))
+                    .tracking(-1)
+                    .accessibilityAddTraits(.isHeader)
+                Text("Love you can trust.")
+                    .font(.jakarta(16))
+                    .foregroundStyle(Theme.muted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 24)
+
+            Spacer()
+
+            VStack(spacing: 12) {
+                CheckboxRow(title: "I'm 18 or older and agree to the Terms and Privacy Policy", isOn: $model.acceptsTerms)
+                ProblemText(problem: model.onboardingProblem)
+                Button {
+                    Task { await model.getStarted() }
+                } label: {
+                    if model.isCreatingLastysID {
+                        ProgressView().tint(.white)
+                    } else {
+                        Text("Get started")
+                    }
+                }
                 .buttonStyle(PrimaryButtonStyle())
+                .disabled(!model.canGetStarted)
+                Text("No sign-up. No password.")
+                    .font(.jakarta(12))
+                    .foregroundStyle(Theme.muted)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
         }
+    }
+}
+
+/// ខ្មែរ / EN, applied the moment it's tapped.
+private struct LanguageSwitch: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Language.allCases, id: \.self) { language in
+                let isOn = model.language == language
+                Button {
+                    model.chooseLanguage(language)
+                } label: {
+                    Text(verbatim: language.shortName)
+                        .font(.jakarta(14, .bold))
+                        .foregroundStyle(isOn ? Theme.ink : Theme.muted)
+                        .frame(minWidth: 52, maxHeight: .infinity)
+                        .padding(.horizontal, 6)
+                        .background(
+                            Capsule()
+                                .fill(isOn ? Theme.surface : .clear)
+                                .shadow(color: .black.opacity(isOn ? 0.1 : 0), radius: 1.5, y: 1)
+                        )
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(verbatim: language.nativeName))
+                .accessibilityAddTraits(isOn ? .isSelected : [])
+            }
+        }
+        .padding(3)
+        .frame(height: 44)
+        .background(Capsule().fill(Theme.divider))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(Text("Language"))
     }
 }
 
@@ -222,37 +284,12 @@ extension Language {
         case .english: return "English"
         }
     }
-}
 
-// MARK: Consent
-
-private struct ConsentStep: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        @Bindable var model = model
-        StepLayout(
-            title: "Before you start",
-            subtitle: "Lastys is for adults, and works only if everyone plays by the same rules."
-        ) {
-            VStack(alignment: .leading, spacing: 4) {
-                CheckboxRow(title: "I'm 18 or older", isOn: $model.isOver18)
-                CheckboxRow(title: "I accept the Terms and the Privacy Notice", isOn: $model.acceptsTerms)
-            }
-            .card()
-            ProblemText(problem: model.onboardingProblem)
-        } footer: {
-            Button {
-                Task { await model.continueFromConsent() }
-            } label: {
-                if model.isCreatingLastysID {
-                    ProgressView().tint(.white)
-                } else {
-                    Text("Create my Lastys ID")
-                }
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            .disabled(!model.canContinueFromConsent)
+    /// The label on Welcome's language switch.
+    var shortName: String {
+        switch self {
+        case .khmer: return "ខ្មែរ"
+        case .english: return "EN"
         }
     }
 }
