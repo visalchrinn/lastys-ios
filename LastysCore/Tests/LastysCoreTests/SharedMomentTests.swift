@@ -17,6 +17,11 @@ struct SharedMomentTests {
         let me = TestPhone(nearby: dara)
         await me.onboard()
         try await me.becomePartners(with: dara)
+        // Linking gives me "The day we linked" and "Our 1st anniversary" (RelationshipRequestTests).
+        // These tests are about other Moments, so they start without them.
+        for moment in me.model.moments { me.model.deleteMoment(id: moment.id) }
+        await me.model.syncSharedMoments()
+        await dara.model.start()
         return (dara, me)
     }
 

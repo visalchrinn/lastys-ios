@@ -35,6 +35,9 @@ public struct PhoneState: Codable, Equatable, Sendable {
     public var recoveryInProgress = false
     /// Which Lastys QR this phone shows. Each Revoke raises it by one; Trustee accepts only the latest.
     public var qrNumber = 0
+    /// The Relationship request this phone sent and hasn't yet seen answered. Kept across launches so the
+    /// sender still gets the Moments added on linking if they only learn of the acceptance later.
+    public var sentRelationshipRequestID: String?
 
     public init() {}
 
@@ -64,6 +67,7 @@ public struct PhoneState: Codable, Equatable, Sendable {
         partnerBirthDateRelationshipSince = try? c.decodeIfPresent(Date.self, forKey: .partnerBirthDateRelationshipSince)
         recoveryInProgress = (try? c.decodeIfPresent(Bool.self, forKey: .recoveryInProgress)) ?? nil ?? false
         qrNumber = (try? c.decodeIfPresent(Int.self, forKey: .qrNumber)) ?? nil ?? 0
+        sentRelationshipRequestID = (try? c.decodeIfPresent(String.self, forKey: .sentRelationshipRequestID)) ?? nil
     }
 }
 

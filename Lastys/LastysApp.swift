@@ -47,6 +47,9 @@ enum Launch {
         )
         MomentMediaFiles.removeUnused(keeping: model.mediaFileNamesInUse)
         AppText.language = model.language
+        model.linkingMomentTitles = {
+            (dayWeLinked: AppText.string("The day we linked"), firstAnniversary: AppText.string("Our 1st anniversary"))
+        }
         return .ready(model, trustee)
     }
 }

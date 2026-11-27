@@ -2663,6 +2663,22 @@
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "បន្ថែម" } }
       }
     },
+    "Our 1st anniversary" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Our 1st anniversary"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ខួបលើកទី១របស់យើង"
+          }
+        }
+      }
+    },
     "Photo added" : {
       "localizations" : {
         "en" : {
@@ -2683,6 +2699,22 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photos" } },
         "km" : { "stringUnit" : { "state" : "needs_review", "value" : "រូបថត" } }
+      }
+    },
+    "The day we linked" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The day we linked"
+          }
+        },
+        "km" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ថ្ងៃដែលយើងភ្ជាប់គ្នា"
+          }
+        }
       }
     },
     "Welcome" : {

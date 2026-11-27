@@ -230,7 +230,9 @@ public final class AppModel {
         isSendingRequest = true
         defer { isSendingRequest = false }
         do {
-            outgoingRequest = try await trustee.sendRelationshipRequest(scanID: scanID)
+            let request = try await trustee.sendRelationshipRequest(scanID: scanID)
+            outgoingRequest = request
+            phone.sentRelationshipRequestID = request.id
             requestProblem = nil
         } catch {
             requestProblem = RelationshipRequestProblem(error)
@@ -246,8 +248,50 @@ public final class AppModel {
             if request.status == .accepted {
                 phone.relationship = try await trustee.relationshipStatus()
             }
+            await followUpSentRequest(knownAs: request)
         } catch {
             requestProblem = RelationshipRequestProblem(error)
+        }
+    }
+
+    /// The titles of the Moments added on linking, in the app's language. The app sets this; LastysCore
+    /// has no translations of its own.
+    public var linkingMomentTitles: () -> (dayWeLinked: String, firstAnniversary: String) = {
+        (dayWeLinked: "The day we linked", firstAnniversary: "Our 1st anniversary")
+    }
+
+    /// Once the request this phone sent is answered, stops following it. If it was accepted, the sender gets
+    /// "The day we linked" and "Our 1st anniversary", shared so each Partner sees one copy. The Moments and
+    /// the forgotten request are saved together, so they are never added twice.
+    private func followUpSentRequest(knownAs known: RelationshipRequest? = nil) async {
+        guard let id = phone.sentRelationshipRequestID else { return }
+        let request: RelationshipRequest
+        if let known, known.id == id {
+            request = known
+        } else {
+            guard connectivity.isOnline, let fetched = try? await trustee.relationshipRequest(id: id) else { return }
+            request = fetched
+        }
+        switch request.status {
+        case .pending:
+            return
+        case .declined, .expired:
+            phone.sentRelationshipRequestID = nil
+        case .accepted:
+            guard case .active(_, let since, _) = relationship else { return }
+            let day = calendar.startOfDay(for: since)
+            let titles = linkingMomentTitles()
+            var linked = phone
+            linked.sentRelationshipRequestID = nil
+            linked.moments += [
+                Moment(type: .firstDate, title: titles.dayWeLinked, date: day, isShared: true),
+                Moment(
+                    type: .anniversary, title: titles.firstAnniversary,
+                    date: calendar.date(byAdding: .year, value: 1, to: day) ?? day, isShared: true
+                ),
+            ]
+            phone = linked
+            await syncSharedMoments()
         }
     }
 
@@ -349,6 +393,7 @@ public final class AppModel {
             // Errors surface in later slices; for now the last known state stays on screen.
         }
         forgetFormerPartnersBirthDate()
+        await followUpSentRequest()
         await syncSharedMoments()
         await deliverNotices()
     }

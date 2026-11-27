@@ -322,6 +322,8 @@ Notes: `%@` and `%lld` are filled in by the app (a name or a number); keep them 
 
 | English | Khmer |
 |---|---|
+| The day we linked | ថ្ងៃដែលយើងភ្ជាប់គ្នា |
+| Our 1st anniversary | ខួបលើកទី១របស់យើង |
 | Send Relationship request | ផ្ញើសំណើទំនាក់ទំនង |
 | Checking for their answer… | កំពុងពិនិត្យចម្លើយរបស់គាត់… |
 | Waiting for %@ | កំពុងរង់ចាំ %@ |
